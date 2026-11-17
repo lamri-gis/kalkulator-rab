@@ -3,240 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kalkulator RAB Desa | by Lamri, S.P.</title>
-<meta name="description" content="Kalkulator RAB kegiatan desa: hitung Total RAB dari material atau rincian dari pagu. Disusun oleh Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam.">
-<meta name="author" content="Lamri, S.P.">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Kalkulator RAB | by Lamri, S.P.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root{
-    --navy:#0b3954; --blue:#1f4e78; --soft:#eef4fa; --line:#d6e0ea;
-    --text:#1d2733; --muted:#5f6b78; --ok:#1e7d3a; --okbg:#e6f4ea;
-    --bad:#b3261e; --badbg:#fdecea; --input:#fffbe6;
-  }
+  :root{--navy:#0b3954;--blue:#1f4e78;--soft:#eef4fa;--line:#d6e0ea;--text:#1d2733;--muted:#5f6b78;--ok:#1e7d3a;--okbg:#e6f4ea;--bad:#b3261e;--badbg:#fdecea;--warn:#8a5a00;--warnbg:#fff4d6}
   *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);line-height:1.45}
-  header{background:var(--navy);color:#fff;padding:22px 16px 18px;text-align:center}
-  header h1{margin:0;font-size:22px;letter-spacing:.3px}
-  header p{margin:6px 0 0;font-size:13px;opacity:.85}
-  .brand{display:inline-block;margin-top:10px;font-size:12px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px}
-  .brand a{color:#fff}
-  main{max-width:760px;margin:0 auto;padding:18px 14px 40px}
-  .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px;font-weight:bold;color:var(--blue);cursor:pointer}
-  .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
-  .card h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
-  .card .sub{margin:0 0 6px;font-size:13px;color:var(--muted)}
-  label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
-  input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
-  input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .dim{display:grid;grid-template-columns:110px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
-  .dim .dl{font-size:13px;font-weight:bold}
-  .dim input{text-align:right}
-  select.unit{padding:12px 8px}
-  #volPreview{font-weight:bold;color:var(--navy)}
-  @media (max-width:520px){ .dim{grid-template-columns:90px 1fr 72px} }
-  .prefix{position:relative}
-  .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
-  .prefix.rp input{padding-left:40px;font-weight:bold}
-  .prefix.rt input{padding-left:44px}
-  .fixed{margin-top:6px;font-size:12px;color:var(--muted)}
-  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .pct{position:relative}
-  .pct input{padding-right:28px;text-align:right}
-  .pct span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
-  details{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
-  summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:bold}
-  .note{font-size:12px;color:var(--muted);margin:8px 0 0}
-  table{width:100%;border-collapse:collapse;font-size:15px}
-  td{padding:11px 6px;border-bottom:1px solid #edf1f5}
-  td.v{text-align:right;font-weight:bold;white-space:nowrap}
-  tr.total td{background:var(--soft);font-size:17px;color:var(--navy);border-bottom:none}
-  tr.main td{font-size:16px}
-  .info td{font-size:13px;padding:5px 6px;border:none;color:var(--muted)}
-  .info td:first-child{width:120px}
-  .info{margin-bottom:8px}
-  .status{margin-top:14px;padding:11px;border-radius:8px;text-align:center;font-weight:bold;font-size:14px}
-  .status.ok{background:var(--okbg);color:var(--ok)}
-  .status.bad{background:var(--badbg);color:var(--bad)}
-  .empty{color:var(--muted);text-align:center;padding:18px 6px;font-size:14px}
-  .actions{display:flex;gap:10px;margin-top:14px}
-  .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);font-size:14px}
+  header{background:var(--navy);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  header h1{margin:0;font-size:18px}
+  header small{opacity:.8;font-size:12px}
+  main{max-width:1200px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--navy)}
+  .login{max-width:380px;margin:60px auto}
+  label{display:block;font-size:12px;font-weight:bold;margin:10px 0 4px;color:var(--muted)}
+  input,select{width:100%;padding:10px;font-size:14px;border:1px solid #c9d4df;border-radius:8px;font-family:inherit;background:#fff}
+  .btn{padding:10px 14px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:13px;cursor:pointer;font-family:inherit}
   .btn.primary{background:var(--blue);color:#fff}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+  .btn.small{padding:5px 9px;font-size:12px}
+  .btn.ok{border-color:var(--ok);color:var(--ok)}
+  .btn.bad{border-color:var(--bad);color:var(--bad)}
+  .btn.ghost{border-color:#fff;color:#fff;background:transparent}
+  .err{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stat .n{font-size:24px;font-weight:bold;color:var(--navy)}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .chart{display:flex;align-items:flex-end;gap:6px;height:160px;padding-top:10px;border-bottom:1px solid var(--line)}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar .b{width:100%;max-width:34px;background:var(--blue);border-radius:4px 4px 0 0;min-height:2px}
+  .bar .c{font-size:11px;color:var(--muted);margin-bottom:3px}
+  .labels{display:flex;gap:6px}
+  .labels span{flex:1;text-align:center;font-size:10px;color:var(--muted);padding-top:4px}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1400px}
+  th{background:var(--soft);text-align:left;padding:9px 8px;font-size:12px;color:var(--navy);border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px;border-bottom:1px solid #edf1f5;vertical-align:top}
+  td.num{text-align:right;white-space:nowrap}
+  .pill{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:bold}
+  .pill.baru{background:var(--warnbg);color:var(--warn)}
+  .pill.real{background:var(--okbg);color:var(--ok)}
+  .pill.abaikan{background:#eceff2;color:var(--muted)}
+  .act{display:flex;gap:4px;flex-wrap:wrap}
+  .muted{color:var(--muted)}
   .hidden{display:none}
-  footer{text-align:center;font-size:12px;color:var(--muted);padding:0 16px 30px}
-  footer a{color:var(--blue)}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
-  .toast.show{opacity:1}
-  .print-only{display:none}
-  @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
-  @media print{
-    @page{size:A4;margin:18mm 16mm}
-    body{background:#fff}
-    header,.tabs,.input-card,.actions,.privacy,footer,.toast,.screen-only{display:none!important}
-    main{padding:0;max-width:none}
-    .card{border:none;padding:0}
-    .print-only{display:block}
-    .kop{text-align:center;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:16px}
-    .kop .l1{font-size:15px;font-weight:bold}
-    .kop .l2{font-size:17px;font-weight:bold}
-    .kop .l3{font-size:12px}
-    .judul{text-align:center;font-weight:bold;font-size:15px;margin-bottom:12px;text-decoration:underline}
-    .info td{color:#000;font-size:13px}
-    td{border-bottom:1px solid #999}
-    tr.total td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .status{border:1px solid #999}
-    .sign{margin-top:36px;font-size:10px;color:#555;text-align:center;border-top:1px solid #ccc;padding-top:6px}
-  }
+  footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 16px 30px}
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Kalkulator RAB Desa</h1>
-  <p>Hitung RAB kegiatan dengan cepat, material tetap aman</p>
-  <div class="brand">by <a href="https://lamri.vercel.app" target="_blank" rel="noopener">Lamri, S.P.</a> &middot; Kaur Perencanaan Desa Susuk Dalam</div>
+  <div>
+    <h1>Admin Kalkulator RAB Desa</h1>
+    <small>by Lamri, S.P. &middot; Kaur Perencanaan Desa Susuk Dalam</small>
+  </div>
+  <div id="userBox" class="hidden">
+    <small id="userEmail"></small>
+    <button class="btn ghost small" id="btnLogout">Keluar</button>
+  </div>
 </header>
 
-<main>
-  <div class="tabs">
-    <button class="tab active" data-mode="material">Dari Material</button>
-    <button class="tab" data-mode="pagu">Dari Pagu</button>
+<!-- LOGIN -->
+<section id="viewLogin" class="card login">
+  <h2>Masuk Admin</h2>
+  <form id="formLogin">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <div style="margin-top:14px"><button class="btn primary" type="submit" style="width:100%">Masuk</button></div>
+    <div class="err" id="loginErr"></div>
+  </form>
+</section>
+
+<!-- DASHBOARD -->
+<main id="viewDash" class="hidden">
+  <div class="stats">
+    <div class="stat"><div class="n" id="sToday">-</div><div class="l">Kunjungan hari ini</div></div>
+    <div class="stat"><div class="n" id="s7">-</div><div class="l">Kunjungan 7 hari</div></div>
+    <div class="stat"><div class="n" id="sAll">-</div><div class="l">Total kunjungan</div></div>
+    <div class="stat"><div class="n" id="sArsip">-</div><div class="l">Total RAB tersimpan</div></div>
+    <div class="stat"><div class="n" id="sBaru">-</div><div class="l">Belum diseleksi</div></div>
+    <div class="stat"><div class="n" id="sReal">-</div><div class="l">Ditandai Real</div></div>
   </div>
 
-  <section class="card input-card">
-    <h2>Data Kegiatan</h2>
-    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
-
-    <label for="nama">Nama Kegiatan</label>
-    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
-
-    <label>Ukuran Keluaran/Output (opsional)</label>
-    <div class="dim">
-      <span class="dl">Panjang</span>
-      <input id="dimP" type="text" inputmode="decimal" maxlength="12" placeholder="0">
-      <select id="uP" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Lebar</span>
-      <input id="dimL" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uL" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Tinggi/Tebal</span>
-      <input id="dimT" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uT" class="unit"><option value="mm">mm</option><option value="cm" selected>cm</option><option value="m">m</option><option value="km">km</option></select>
-    </div>
-    <div class="fixed" id="volPreview">Volume terhitung otomatis dari ukuran.</div>
-
-    <div class="row2">
-      <div>
-        <label for="bahanUtama">Bahan Konstruksi Utama</label>
-        <select id="bahanUtama">
-          <option value="">Pilih bahan</option>
-          <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
-          <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
-          <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
-          <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
-          <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
-          <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
-          <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
-          <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
-          <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
-          <option value="Lainnya">Lainnya (ketik sendiri)</option>
-        </select>
-        <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan konstruksi" style="margin-top:8px">
-      </div>
-      <div>
-        <label for="sifat">Sifat Konstruksi</label>
-        <select id="sifat">
-          <option value="">Pilih sifat</option>
-          <option value="Permanen">Permanen (&gt; 15 tahun)</option>
-          <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
-          <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="row2">
-      <div>
-        <label for="dana">Jenis Dana</label>
-        <select id="dana">
-          <option value="">Pilih jenis dana</option>
-          <option value="DD - Dana Desa">DD - Dana Desa</option>
-          <option value="ADD - Alokasi Dana Desa">ADD - Alokasi Dana Desa</option>
-          <option value="BHPRD - Bagi Hasil Pajak dan Retribusi Daerah">BHPRD - Bagi Hasil Pajak dan Retribusi Daerah</option>
-          <option value="PADes - Pendapatan Asli Desa">PADes - Pendapatan Asli Desa</option>
-          <option value="Bankeususdes - Bantuan Keuangan Khusus Desa Kutim">Bankeususdes - Bantuan Keuangan Khusus Desa Kutim</option>
-          <option value="Bankeu Provinsi Kaltim">Bankeu Provinsi Kaltim</option>
-          <option value="SiLPA">SiLPA</option>
-          <option value="Lain-lain">Lain-lain</option>
-        </select>
-      </div>
-      <div>
-        <label for="tahun">Tahun Anggaran</label>
-        <input id="tahun" type="text" inputmode="numeric" maxlength="4">
-      </div>
-    </div>
-
-    <label for="rt">Lokasi RT</label>
-    <div class="prefix rt"><span>RT.</span><input id="rt" type="text" inputmode="numeric" maxlength="3" placeholder="02"></div>
-    <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
-  </section>
-
-  <section class="card input-card">
-    <h2 id="inTitle">Input Bahan dan Sewa</h2>
-    <p class="sub" id="inSub">Masukkan nilai bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
-
-    <label for="nilai" id="nilaiLabel">Bahan/Material (tanpa pajak)</label>
-    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
-
-    <label for="sewa">Sewa Peralatan (tanpa pajak, opsional)</label>
-    <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
-
-    <details>
-      <summary>Pengaturan persentase</summary>
-      <div class="grid2">
-        <div><label for="pTukang">Upah Tenaga Kerja</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div></div>
-        <div><label for="pTpk">TPK</label><div class="pct"><input id="pTpk" type="text" inputmode="decimal" value="3"><span>%</span></div></div>
-        <div><label for="pPajak">Pajak Bahan</label><div class="pct"><input id="pPajak" type="text" inputmode="decimal" value="12,5"><span>%</span></div></div>
-        <div><label for="pPajakSewa">Pajak Sewa</label><div class="pct"><input id="pPajakSewa" type="text" inputmode="decimal" value="13"><span>%</span></div></div>
-      </div>
-      <p class="note">Upah tenaga kerja dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. Persentase menyesuaikan ketentuan dan kesepakatan daerah.</p>
-    </details>
+  <section class="card" style="margin-top:14px">
+    <h2>Kunjungan 14 Hari Terakhir</h2>
+    <div class="chart" id="chart"></div>
+    <div class="labels" id="chartLabels"></div>
+    <div class="legend" id="chartInfo"></div>
   </section>
 
   <section class="card">
-    <div class="print-only">
-      <div class="kop">
-        <div class="l1">PEMERINTAH KABUPATEN KUTAI TIMUR</div>
-        <div class="l1">KECAMATAN SANDARAN</div>
-        <div class="l2">DESA SUSUK DALAM</div>
-      </div>
-      <div class="judul">RENCANA ANGGARAN BIAYA (RAB) PENGADAAN SECARA SWAKELOLA</div>
+    <h2>Arsip RAB</h2>
+    <div class="filters">
+      <div><label for="fStatus">Status</label>
+        <select id="fStatus"><option value="">Semua</option><option value="baru">Baru</option><option value="real">Real</option><option value="abaikan">Abaikan</option></select></div>
+      <div><label for="fDana">Jenis Dana</label>
+        <select id="fDana"><option value="">Semua</option>
+          <option>DD - Dana Desa</option><option>ADD - Alokasi Dana Desa</option><option>BHPRD - Bagi Hasil Pajak dan Retribusi Daerah</option><option>PADes - Pendapatan Asli Desa</option><option>Bankeususdes - Bantuan Keuangan Khusus Desa Kutim</option><option>Bankeu Provinsi Kaltim</option><option>SiLPA</option><option>Lain-lain</option></select></div>
+      <div><label for="fRt">RT</label><input id="fRt" type="text" inputmode="numeric" placeholder="contoh: 2"></div>
+      <div><label for="fTahun">Tahun</label><input id="fTahun" type="text" inputmode="numeric" placeholder="contoh: 2027"></div>
+      <div><label for="fAksi">Aksi</label>
+        <select id="fAksi"><option value="">Semua</option><option value="cetak">Cetak</option><option value="salin">Salin</option></select></div>
+      <div><label for="fCari">Cari Nama Kegiatan</label><input id="fCari" type="text" placeholder="kata kunci"></div>
     </div>
-    <h2 class="screen-only">Hasil</h2>
-    <div id="empty" class="empty">Isi nilai bahan, sewa, atau pagu untuk melihat hasil.</div>
-    <div id="result" class="hidden">
-      <table class="info" id="info"></table>
-      <table id="tbl"></table>
-      <div id="status" class="status"></div>
+    <div class="tools">
+      <button class="btn primary" id="btnFilter">Terapkan Filter</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <button class="btn" id="btnCsv">Export CSV (hasil filter)</button>
+      <button class="btn ok" id="btnCsvReal">Export CSV (Real saja)</button>
+      <span class="muted" id="countInfo" style="align-self:center"></span>
     </div>
-    <div class="actions">
-      <button class="btn primary" id="btnPrint" disabled>Cetak / PDF</button>
+    <div class="tablewrap" style="margin-top:12px">
+      <table>
+        <thead><tr>
+          <th>Waktu</th><th>Nama Kegiatan</th><th>Keluaran</th><th>Konstruksi</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th><th>Aksi</th>
+          <th>Input</th><th>Bahan (Rp)</th><th>Sewa (Rp)</th><th>Total</th><th>Status</th><th>Seleksi</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
-    <p class="privacy">Data kegiatan yang dicetak atau disimpan sebagai PDF tersimpan untuk arsip perencanaan desa.</p>
-    <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
   </section>
 </main>
 
-<footer>
-  Disusun oleh <b>Lamri, S.P.</b>, Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur<br>
-  <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
-</footer>
-
+<footer>Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur</footer>
 
 <script>
 /* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
@@ -244,245 +139,188 @@ const SUPABASE_URL = "https://tutgjaxuvjbyxiibxhtz.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 /* ========================================================================================== */
 
-(function(){
-  var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
-  var mode = "material", last = null;
-  var $ = function(id){ return document.getElementById(id); };
-  var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
-  var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
-  var parsePct = function(s){ var v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? 0 : v/100; };
-  var parseNum = function(s){ var v = parseFloat(String(s).replace(/\./g,"").replace(",", ".")); return isNaN(v) ? null : v; };
-  var pctLabel = function(x){ return (Math.round(x*1000)/10).toString().replace(".", ",") + "%"; };
-  var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+const rp = (n) => n == null ? "-" : "Rp " + Number(n).toLocaleString("id-ID");
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tgl = (d) => new Date(d).toLocaleString("id-ID", {day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+let rows = [];
 
-  $("tahun").value = new Date().getFullYear();
-
-  function rtLabel(){
-    var d = $("rt").value.replace(/\D/g,"");
-    return d ? "RT." + (d.length < 2 ? "0" + d : d) : "";
+/* ---------- Auth ---------- */
+async function cekSesi(){
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return tampilLogin();
+  const { data: admin, error } = await sb.rpc("is_rab_admin");
+  if (error || !admin) {
+    await sb.auth.signOut();
+    tampilLogin("Akun ini bukan admin.");
+    return;
   }
-  function lokasiLengkap(){
-    var rt = rtLabel();
-    return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
-  }
-  var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
-  function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
-  function dimensi(){
-    var label = ["P","L","T"], ids = [["dimP","uP"],["dimL","uL"],["dimT","uT"]], isi = [];
-    for (var i = 0; i < 3; i++) {
-      var v = parseNum($(ids[i][0]).value), u = $(ids[i][1]).value;
-      if (v !== null && v > 0) isi.push({ lbl:label[i], v:v, u:u, m:v * FAKTOR[u], idx:i });
-    }
-    if (!isi.length || isi[0].idx !== 0) return null;          /* panjang wajib diisi lebih dulu */
-    var vol = 1; isi.forEach(function(d){ vol *= d.m; });
-    var satuan = isi.length === 1 ? "m" : (isi.length === 2 ? "m²" : "m³");
-    var teks = isi.map(function(d){ return d.lbl + " " + angka(d.v, 3) + " " + d.u; }).join(" x ")
-             + (isi.length > 1 || isi[0].u !== "m" ? " = " + angka(vol, 3) + " " + satuan : "");
-    return {
-      teks: teks, volume: vol, satuan: satuan,
-      p: isi[0] ? isi[0].m : null,
-      l: (isi.filter(function(d){ return d.idx === 1; })[0] || {}).m || null,
-      t: (isi.filter(function(d){ return d.idx === 2; })[0] || {}).m || null
-    };
-  }
-  function bahanKonstruksi(){
-    var v = $("bahanUtama").value;
-    if (v === "Lainnya") return $("bahanLain").value.trim();
-    return v;
-  }
-  function sifatLabel(){
-    var v = $("sifat").value;
-    return { "Permanen":"Permanen (> 15 tahun)", "Semi Permanen":"Semi Permanen (5 - 15 tahun)", "Sementara/Darurat":"Sementara/Darurat (< 5 tahun)" }[v] || "";
-  }
+  $("userEmail").textContent = data.session.user.email + " ";
+  $("viewLogin").classList.add("hidden");
+  $("viewDash").classList.remove("hidden");
+  $("userBox").classList.remove("hidden");
+  muatSemua();
+}
+function tampilLogin(msg){
+  $("viewDash").classList.add("hidden");
+  $("userBox").classList.add("hidden");
+  $("viewLogin").classList.remove("hidden");
+  $("loginErr").textContent = msg || "";
+}
+$("formLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginErr").textContent = "Memeriksa...";
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  if (error) { $("loginErr").textContent = "Email atau password salah."; return; }
+  $("password").value = "";
+  cekSesi();
+});
+$("btnLogout").addEventListener("click", async () => { await sb.auth.signOut(); tampilLogin(); });
 
-  /* ---------- Perhitungan ---------- */
-  function hitung(){
-    var nilai = parseMoney($("nilai").value);
-    var sewa = parseMoney($("sewa").value);
-    var t = parsePct($("pTukang").value), k = parsePct($("pTpk").value);
-    var p = parsePct($("pPajak").value), ps = parsePct($("pPajakSewa").value);
-    $("lokasiPreview").textContent = lokasiLengkap();
-    var dm = dimensi();
-    $("volPreview").textContent = dm ? "Volume: " + angka(dm.volume, 3) + " " + dm.satuan : "Volume terhitung otomatis dari ukuran (isi panjang lebih dulu).";
-    if (t + k >= 1) { tampil(null); return; }
-    if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
-    if (mode === "pagu" && !nilai) { tampil(null); return; }
+/* ---------- Statistik ---------- */
+function awalHari(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - offset); return d; }
 
-    var pajakSewa = Math.round(sewa * ps);
-    var total, tukang, tpk;
-    if (mode === "material") {
-      var dasar = nilai * (1 + p) + sewa + pajakSewa;
-      total = Math.ceil((dasar / (1 - t - k)) - 1e-7);
-      tukang = Math.floor(total * t + 1e-7);
-      tpk = Math.floor(total * k + 1e-7);
-    } else {
-      total = nilai;
-      tukang = Math.round(total * t);
-      tpk = Math.round(total * k);
-    }
-    var sisa = total - tukang - tpk - sewa - pajakSewa;
-    var cukup = sisa >= 0;
-    var material = cukup ? Math.floor(sisa / (1 + p) + 1e-7) : 0;
-    var pajak = cukup ? sisa - material : 0;
-    var aman = mode === "material"
-      ? (cukup && material >= nilai)
-      : (cukup && (tukang + tpk + sewa + pajakSewa + material + pajak) === total);
+async function hitungKunjungan(sejak){
+  let q = sb.from("rab_kunjungan").select("id", { count: "exact", head: true });
+  if (sejak) q = q.gte("created_at", sejak.toISOString());
+  const { count } = await q;
+  return count || 0;
+}
+async function hitungArsip(status){
+  let q = sb.from("rab_arsip").select("id", { count: "exact", head: true });
+  if (status) q = q.eq("status", status);
+  const { count } = await q;
+  return count || 0;
+}
 
-    tampil({ nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk,
-             pajak:pajak, material:material, aman:aman, cukup:cukup, t:t, k:k, p:p, ps:ps });
-  }
+async function muatStatistik(){
+  const [today, w7, all, ars, baru, real] = await Promise.all([
+    hitungKunjungan(awalHari(0)), hitungKunjungan(awalHari(6)), hitungKunjungan(null),
+    hitungArsip(null), hitungArsip("baru"), hitungArsip("real")
+  ]);
+  $("sToday").textContent = today.toLocaleString("id-ID");
+  $("s7").textContent = w7.toLocaleString("id-ID");
+  $("sAll").textContent = all.toLocaleString("id-ID");
+  $("sArsip").textContent = ars.toLocaleString("id-ID");
+  $("sBaru").textContent = baru.toLocaleString("id-ID");
+  $("sReal").textContent = real.toLocaleString("id-ID");
+}
 
-  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-
-  function tampil(r){
-    last = r;
-    $("btnPrint").disabled = !r || !r.cukup;
-    if (!r) { $("empty").classList.remove("hidden"); $("result").classList.add("hidden"); return; }
-    $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
-
-    var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
-    var dm = dimensi();
-    if (dm) info.push(["Keluaran/Output", dm.teks]);
-    if (bahanKonstruksi()) info.push(["Bahan Konstruksi", bahanKonstruksi()]);
-    if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
-    info.push(
-      ["Jenis Dana", $("dana").value || "-"],
-      ["Tahun Anggaran", $("tahun").value || "-"],
-      ["Lokasi", lokasiLengkap()],
-      ["Pelaksanaan", "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? "Nilai Bahan dan Sewa" : "Pagu Anggaran"]
-    );
-    $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
-
-    var rows = [
-      [mode === "material" ? "Bahan/Material" : "Bahan/Material Tersedia", r.material, "main"],
-      ["Pajak Bahan (" + pctLabel(r.p) + ")", r.pajak, ""]
-    ];
-    if (r.sewa > 0) {
-      rows.push(["Sewa Peralatan", r.sewa, "main"]);
-      rows.push(["Pajak Sewa (" + pctLabel(r.ps) + ")", r.pajakSewa, ""]);
-    }
-    rows.push(
-      ["Upah Tenaga Kerja (" + pctLabel(r.t) + ")", r.tukang, ""],
-      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
-      [mode === "material" ? "TOTAL RAB" : "PAGU ANGGARAN", r.total, "total"]
-    );
-    $("tbl").innerHTML = rows.map(function(x){
-      return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
-    }).join("");
-
-    var st = $("status");
-    st.className = "status " + (r.aman ? "ok" : "bad");
-    if (!r.cukup) st.textContent = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa";
-    else if (mode === "material") st.textContent = r.aman ? (r.sewa > 0 ? "AMAN, bahan dan sewa utuh" : "AMAN, bahan utuh") : "Periksa kembali, bahan kurang";
-    else st.textContent = r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu";
-  }
-
-  /* ---------- Arsip & kunjungan ke Supabase ---------- */
-  function kirim(tabel, data){
-    if (!dbReady) return;
-    var headers = {
-      "apikey": SUPABASE_ANON_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=minimal"
-    };
-    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
-    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) headers["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
-    try {
-      fetch(SUPABASE_URL + "/rest/v1/" + tabel, {
-        method: "POST",
-        keepalive: true,
-        headers: headers,
-        body: JSON.stringify(data)
-      }).catch(function(){});
-    } catch(e) {}
-  }
-
-  function arsip(aksi){
-    if (!last || !last.cukup) return;
-    var th = parseInt($("tahun").value, 10);
-    var dm = dimensi();
-    var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
-    kirim("rab_arsip", {
-      aksi: aksi,
-      mode: mode,
-      nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
-      panjang: dm ? r3(dm.p) : null,
-      lebar: dm ? r3(dm.l) : null,
-      tinggi: dm ? r3(dm.t) : null,
-      volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
-      satuan: dm ? dm.satuan : null,
-      bahan_utama: bahanKonstruksi().slice(0,60) || null,
-      sifat_konstruksi: $("sifat").value || null,
-      jenis_dana: $("dana").value || null,
-      rt: rtLabel() || null,
-      tahun: (th >= 2000 && th <= 2100) ? th : null,
-      nilai_input: last.nilai,
-      tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
-      material: last.material, sewa: last.sewa, pajak_sewa: last.pajakSewa, total: last.total,
-      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p, p_pajak_sewa: last.ps
-    });
-  }
-
-  (function catatKunjungan(){
-    try { if (sessionStorage.getItem("rab_v")) return; sessionStorage.setItem("rab_v","1"); } catch(e) {}
-    var sumber = "langsung";
-    try { if (document.referrer) sumber = new URL(document.referrer).hostname.slice(0,120); } catch(e) {}
-    kirim("rab_kunjungan", {
-      path: location.pathname.slice(0,100),
-      perangkat: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "hp" : "laptop",
-      sumber: sumber
-    });
-  })();
-
-  /* ---------- Mode & event ---------- */
-  function setMode(m){
-    mode = m;
-    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === m); });
-    if (m === "material") {
-      $("inTitle").textContent = "Input Bahan dan Sewa";
-      $("inSub").textContent = "Masukkan nilai bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.";
-      $("nilaiLabel").textContent = "Bahan/Material (tanpa pajak)";
-    } else {
-      $("inTitle").textContent = "Input Pagu";
-      $("inSub").textContent = "Masukkan pagu anggaran dan sewa peralatan (jika ada). Sewa diamankan lebih dulu, sisanya menjadi bahan/material.";
-      $("nilaiLabel").textContent = "Pagu Anggaran";
-    }
-    $("nilai").value = "";
-    hitung();
-  }
-  document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
-
-  ["nilai","sewa"].forEach(function(id){
-    $(id).addEventListener("input", function(e){
-      var n = parseMoney(e.target.value);
-      e.target.value = n ? n.toLocaleString("id-ID") : "";
-      hitung();
-    });
+async function muatGrafik(){
+  const mulai = awalHari(13);
+  const { data } = await sb.from("rab_kunjungan").select("created_at,perangkat").gte("created_at", mulai.toISOString()).limit(10000);
+  const hari = [];
+  for (let i = 13; i >= 0; i--) { const d = awalHari(i); hari.push({ key: d.toDateString(), label: d.getDate() + "/" + (d.getMonth()+1), n: 0 }); }
+  let hp = 0, laptop = 0;
+  (data || []).forEach(r => {
+    const k = new Date(r.created_at).toDateString();
+    const h = hari.find(x => x.key === k); if (h) h.n++;
+    if (r.perangkat === "hp") hp++; else laptop++;
   });
-  $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  ["dimP","dimL","dimT"].forEach(function(id){
-    $(id).addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
-  });
-  ["uP","uL","uT","sifat"].forEach(function(id){ $(id).addEventListener("change", hitung); });
-  $("bahanUtama").addEventListener("change", function(e){
-    var opt = e.target.selectedOptions[0];
-    var lain = e.target.value === "Lainnya";
-    $("bahanLain").classList.toggle("hidden", !lain);
-    if (opt && opt.dataset.sifat) $("sifat").value = opt.dataset.sifat;
-    if (lain) $("bahanLain").focus();
-    hitung();
-  });
-  ["pTukang","pTpk","pPajak","pPajakSewa","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
-  $("dana").addEventListener("change", hitung);
+  const max = Math.max(1, ...hari.map(h => h.n));
+  $("chart").innerHTML = hari.map(h => `<div class="bar"><div class="c">${h.n || ""}</div><div class="b" style="height:${(h.n/max)*100}%"></div></div>`).join("");
+  $("chartLabels").innerHTML = hari.map(h => `<span>${h.label}</span>`).join("");
+  $("chartInfo").textContent = `Perangkat 14 hari: HP ${hp}, Laptop ${laptop}`;
+}
 
-  $("btnPrint").addEventListener("click", function(){
-    if (!last) return;
-    arsip("cetak");
-    setTimeout(function(){ window.print(); }, 150);
-  });
-})();
+/* ---------- Arsip ---------- */
+function bacaFilter(){
+  const rt = $("fRt").value.replace(/\D/g,"");
+  return {
+    status: $("fStatus").value, dana: $("fDana").value, aksi: $("fAksi").value,
+    rt: rt ? "RT." + (rt.length < 2 ? "0" + rt : rt) : "",
+    tahun: $("fTahun").value.replace(/\D/g,""), cari: $("fCari").value.trim()
+  };
+}
+async function ambilArsip(f){
+  let q = sb.from("rab_arsip").select("*").order("created_at", { ascending: false }).limit(1000);
+  if (f.status) q = q.eq("status", f.status);
+  if (f.dana) q = q.eq("jenis_dana", f.dana);
+  if (f.aksi) q = q.eq("aksi", f.aksi);
+  if (f.rt) q = q.eq("rt", f.rt);
+  if (f.tahun) q = q.eq("tahun", parseInt(f.tahun, 10));
+  if (f.cari) q = q.ilike("nama_kegiatan", "%" + f.cari.replace(/[%_]/g, "") + "%");
+  const { data, error } = await q;
+  if (error) { alert("Gagal memuat arsip: " + error.message); return []; }
+  return data || [];
+}
+async function muatArsip(){
+  rows = await ambilArsip(bacaFilter());
+  $("countInfo").textContent = rows.length + " data" + (rows.length >= 1000 ? " (maksimal 1000, persempit filter)" : "");
+  $("tbody").innerHTML = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}">
+      <td>${esc(tgl(r.created_at))}</td>
+      <td>${esc(r.nama_kegiatan || "-")}</td>
+      <td>${r.volume ? esc(Number(r.volume).toLocaleString("id-ID") + (r.satuan ? " " + r.satuan : "")) : "-"}</td>
+      <td>${esc(r.bahan_utama || "-")}${r.sifat_konstruksi ? "<br><span class=\"muted\">" + esc(r.sifat_konstruksi) + "</span>" : ""}</td>
+      <td>${esc(r.jenis_dana || "-")}</td>
+      <td>${esc(r.rt || "-")}</td>
+      <td>${esc(r.tahun || "-")}</td>
+      <td>${r.mode === "material" ? "Bahan" : "Pagu"}</td>
+      <td>${r.aksi === "cetak" ? "Cetak" : "Salin"}</td>
+      <td class="num">${rp(r.nilai_input)}</td>
+      <td class="num">${rp(r.material)}</td>
+      <td class="num">${r.sewa ? rp(r.sewa) : "-"}</td>
+      <td class="num">${rp(r.total)}</td>
+      <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td>
+      <td><div class="act">
+        <button class="btn small ok" data-act="real">Real</button>
+        <button class="btn small" data-act="abaikan">Abaikan</button>
+        <button class="btn small bad" data-act="hapus">Hapus</button>
+      </div></td>
+    </tr>`).join("") : `<tr><td colspan="15" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
+}
+
+$("tbody").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const id = btn.closest("tr").dataset.id, act = btn.dataset.act;
+  btn.disabled = true;
+  let error;
+  if (act === "hapus") {
+    if (!confirm("Hapus data ini permanen?")) { btn.disabled = false; return; }
+    ({ error } = await sb.from("rab_arsip").delete().eq("id", id));
+  } else {
+    ({ error } = await sb.from("rab_arsip").update({ status: act }).eq("id", id));
+  }
+  if (error) { alert("Gagal: " + error.message); btn.disabled = false; return; }
+  await Promise.all([muatArsip(), muatStatistik()]);
+});
+
+/* ---------- CSV ---------- */
+function unduhCsv(data, nama){
+  const kolom = ["Waktu","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Aksi","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const baris = data.map(r => [
+    tgl(r.created_at), r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
+    r.mode === "material" ? "Bahan dan Sewa" : "Pagu", "Swakelola oleh TPK",
+    r.aksi, r.nilai_input, r.material, r.pajak, r.sewa || 0, r.pajak_sewa || 0, r.tukang, r.tpk, r.total,
+    r.p_tukang * 100, r.p_tpk * 100, r.p_pajak * 100, r.p_pajak_sewa != null ? r.p_pajak_sewa * 100 : "", r.status
+  ].map(q).join(";"));
+  const csv = "﻿" + kolom.map(q).join(";") + "\n" + baris.join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = nama; document.body.appendChild(a); a.click(); a.remove();
+}
+const stamp = () => new Date().toISOString().slice(0,10);
+$("btnCsv").addEventListener("click", () => unduhCsv(rows, `arsip-rab-${stamp()}.csv`));
+$("btnCsvReal").addEventListener("click", async () => {
+  const f = bacaFilter(); f.status = "real";
+  unduhCsv(await ambilArsip(f), `arsip-rab-real-${stamp()}.csv`);
+});
+
+/* ---------- Filter ---------- */
+$("btnFilter").addEventListener("click", muatArsip);
+$("btnReset").addEventListener("click", () => {
+  ["fStatus","fDana","fAksi"].forEach(id => $(id).value = "");
+  ["fRt","fTahun","fCari"].forEach(id => $(id).value = "");
+  muatArsip();
+});
+["fRt","fTahun","fCari"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") muatArsip(); }));
+
+function muatSemua(){ muatStatistik(); muatGrafik(); muatArsip(); }
+
+cekSesi();
 </script>
 </body>
 </html>
