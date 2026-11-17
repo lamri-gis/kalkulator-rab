@@ -695,6 +695,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
       baris.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + x[1] + "</td></tr>"; }).join("") + "</table>";
     show("ovNama", false);
+    /* nama file PDF otomatis = judul halaman saat dicetak */
+    var judulAsli = document.title;
+    var namaFile = ("RAB " + $("nama").value.trim() + " " + rtLabel() + " " + hasil.kode)
+      .replace(/[\\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 150);
+    document.title = namaFile;
+    var kembalikan = function(){ document.title = judulAsli; window.removeEventListener("afterprint", kembalikan); };
+    window.addEventListener("afterprint", kembalikan);
     setTimeout(function(){ window.print(); }, 200);
   });
 
