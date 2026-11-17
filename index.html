@@ -48,6 +48,8 @@
   details{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
   summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:bold}
   .note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  input.lock{background:#eceff2;color:var(--muted);cursor:not-allowed}
+  input.lock:focus{outline:none;border-color:#c9d4df}
   .warn{font-size:11px;color:var(--bad);margin-top:4px}
   table{width:100%;border-collapse:collapse;font-size:15px}
   td{padding:11px 6px;border-bottom:1px solid #edf1f5}
@@ -217,11 +219,11 @@
       <summary>Pengaturan persentase</summary>
       <div class="grid2">
         <div><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
-        <div><label for="pTpk">TPK</label><div class="pct"><input id="pTpk" type="text" inputmode="decimal" value="3"><span>%</span></div></div>
-        <div><label for="pPajak">Pajak Bahan</label><div class="pct"><input id="pPajak" type="text" inputmode="decimal" value="12,5"><span>%</span></div></div>
-        <div><label for="pPajakSewa">Pajak Sewa</label><div class="pct"><input id="pPajakSewa" type="text" inputmode="decimal" value="13"><span>%</span></div></div>
+        <div><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
       </div>
-      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. Persentase menyesuaikan ketentuan dan kesepakatan daerah.</p>
+      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK 3% sesuai kesepakatan DPMDes. TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
     </details>
   </section>
 
@@ -321,7 +323,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var rt = rtLabel();
     return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
   }
-  var MAKS_UPAH = 0.30;
+  var MAKS_UPAH = 0.30, TPK = 0.03, PAJAK_BAHAN = 0.125, PAJAK_SEWA = 0.13;
   var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
   function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
   function dimensi(){
@@ -357,8 +359,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (generated) { generated = false; gen = null; berubah = true; }
     var nilai = parseMoney($("nilai").value);
     var sewa = parseMoney($("sewa").value);
-    var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH), k = parsePct($("pTpk").value);
-    var p = parsePct($("pPajak").value), ps = parsePct($("pPajakSewa").value);
+    var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH);
+    var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;          /* ditetapkan, tidak dibaca dari kolom */
     $("lokasiPreview").textContent = lokasiLengkap();
     var dm = dimensi();
     $("volPreview").textContent = dm ? "Volume: " + angka(dm.volume, 3) + " " + dm.satuan : "Volume terhitung otomatis dari ukuran (isi panjang lebih dulu).";
@@ -588,7 +590,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("upahNote").classList.toggle("hidden", !lebih);
     if (lebih) setTimeout(function(){ $("upahNote").classList.add("hidden"); }, 3000);
   });
-  ["pTukang","pTpk","pPajak","pPajakSewa","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  ["pTukang","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("dana").addEventListener("change", hitung);
 
   /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
