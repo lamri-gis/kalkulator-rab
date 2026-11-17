@@ -40,7 +40,7 @@
   .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
   .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .tablewrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1400px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:2000px}
   th{background:var(--soft);text-align:left;padding:9px 8px;font-size:12px;color:var(--navy);border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:8px;border-bottom:1px solid #edf1f5;vertical-align:top}
   td.num{text-align:right;white-space:nowrap}
@@ -86,7 +86,8 @@
     <div class="stat"><div class="n" id="sToday">-</div><div class="l">Kunjungan hari ini</div></div>
     <div class="stat"><div class="n" id="s7">-</div><div class="l">Kunjungan 7 hari</div></div>
     <div class="stat"><div class="n" id="sAll">-</div><div class="l">Total kunjungan</div></div>
-    <div class="stat"><div class="n" id="sArsip">-</div><div class="l">Total RAB tersimpan</div></div>
+    <div class="stat"><div class="n" id="sArsip">-</div><div class="l">Total Generate</div></div>
+    <div class="stat"><div class="n" id="sCetak">-</div><div class="l">Sudah dicetak</div></div>
     <div class="stat"><div class="n" id="sBaru">-</div><div class="l">Belum diseleksi</div></div>
     <div class="stat"><div class="n" id="sReal">-</div><div class="l">Ditandai Real</div></div>
   </div>
@@ -108,8 +109,9 @@
           <option>DD - Dana Desa</option><option>ADD - Alokasi Dana Desa</option><option>BHPRD - Bagi Hasil Pajak dan Retribusi Daerah</option><option>PADes - Pendapatan Asli Desa</option><option>Bankeususdes - Bantuan Keuangan Khusus Desa Kutim</option><option>Bankeu Provinsi Kaltim</option><option>SiLPA</option><option>Lain-lain</option></select></div>
       <div><label for="fRt">RT</label><input id="fRt" type="text" inputmode="numeric" placeholder="contoh: 2"></div>
       <div><label for="fTahun">Tahun</label><input id="fTahun" type="text" inputmode="numeric" placeholder="contoh: 2027"></div>
-      <div><label for="fAksi">Aksi</label>
-        <select id="fAksi"><option value="">Semua</option><option value="cetak">Cetak</option><option value="salin">Salin</option></select></div>
+      <div><label for="fCetak">Cetak</label>
+        <select id="fCetak"><option value="">Semua</option><option value="ya">Ya</option><option value="tidak">Tidak</option></select></div>
+      <div><label for="fKode">Cari Kode Verifikasi</label><input id="fKode" type="text" placeholder="RAB-261117-..."></div>
       <div><label for="fCari">Cari Nama Kegiatan</label><input id="fCari" type="text" placeholder="kata kunci"></div>
     </div>
     <div class="tools">
@@ -117,12 +119,14 @@
       <button class="btn" id="btnReset">Reset</button>
       <button class="btn" id="btnCsv">Export CSV (hasil filter)</button>
       <button class="btn ok" id="btnCsvReal">Export CSV (Real saja)</button>
+      <button class="btn bad" id="btnRetensi">Hapus data lebih dari 2 tahun</button>
       <span class="muted" id="countInfo" style="align-self:center"></span>
     </div>
     <div class="tablewrap" style="margin-top:12px">
       <table>
         <thead><tr>
-          <th>Waktu</th><th>Nama Kegiatan</th><th>Keluaran</th><th>Konstruksi</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th><th>Aksi</th>
+          <th>Waktu Generate</th><th>Generate</th><th>Cetak</th><th>Waktu Cetak</th><th>Nama Pemohon</th><th>Kode Verifikasi</th><th>Koordinat</th><th>Akurasi</th>
+          <th>Nama Kegiatan</th><th>Keluaran</th><th>Konstruksi</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th>
           <th>Input</th><th>Bahan (Rp)</th><th>Sewa (Rp)</th><th>Total</th><th>Status</th><th>Seleksi</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
@@ -187,17 +191,18 @@ async function hitungKunjungan(sejak){
   const { count } = await q;
   return count || 0;
 }
-async function hitungArsip(status){
+async function hitungArsip(status, cetak){
   let q = sb.from("rab_arsip").select("id", { count: "exact", head: true });
   if (status) q = q.eq("status", status);
+  if (cetak) q = q.eq("dicetak", true);
   const { count } = await q;
   return count || 0;
 }
 
 async function muatStatistik(){
-  const [today, w7, all, ars, baru, real] = await Promise.all([
+  const [today, w7, all, ars, baru, real, cetak] = await Promise.all([
     hitungKunjungan(awalHari(0)), hitungKunjungan(awalHari(6)), hitungKunjungan(null),
-    hitungArsip(null), hitungArsip("baru"), hitungArsip("real")
+    hitungArsip(null), hitungArsip("baru"), hitungArsip("real"), hitungArsip(null, true)
   ]);
   $("sToday").textContent = today.toLocaleString("id-ID");
   $("s7").textContent = w7.toLocaleString("id-ID");
@@ -205,6 +210,7 @@ async function muatStatistik(){
   $("sArsip").textContent = ars.toLocaleString("id-ID");
   $("sBaru").textContent = baru.toLocaleString("id-ID");
   $("sReal").textContent = real.toLocaleString("id-ID");
+  $("sCetak").textContent = cetak.toLocaleString("id-ID");
 }
 
 async function muatGrafik(){
@@ -225,10 +231,18 @@ async function muatGrafik(){
 }
 
 /* ---------- Arsip ---------- */
+function fmtAkurasi(m){ return m >= 1000 ? "± " + (m / 1000).toLocaleString("id-ID", { maximumFractionDigits: 1 }) + " km" : "± " + Math.round(m) + " m"; }
+function linkMaps(r){
+  if (r.lat == null || r.lng == null) return "-";
+  const lat = Number(r.lat), lng = Number(r.lng);
+  const url = "https://www.google.com/maps?q=" + lat + "," + lng;
+  return '<a href="' + url + '" target="_blank" rel="noopener">' + lat.toFixed(6) + ", " + lng.toFixed(6) + " ↗</a>";
+}
 function bacaFilter(){
   const rt = $("fRt").value.replace(/\D/g,"");
   return {
-    status: $("fStatus").value, dana: $("fDana").value, aksi: $("fAksi").value,
+    status: $("fStatus").value, dana: $("fDana").value, cetak: $("fCetak").value,
+    kode: $("fKode").value.trim().toUpperCase(),
     rt: rt ? "RT." + (rt.length < 2 ? "0" + rt : rt) : "",
     tahun: $("fTahun").value.replace(/\D/g,""), cari: $("fCari").value.trim()
   };
@@ -237,7 +251,9 @@ async function ambilArsip(f){
   let q = sb.from("rab_arsip").select("*").order("created_at", { ascending: false }).limit(1000);
   if (f.status) q = q.eq("status", f.status);
   if (f.dana) q = q.eq("jenis_dana", f.dana);
-  if (f.aksi) q = q.eq("aksi", f.aksi);
+  if (f.cetak === "ya") q = q.eq("dicetak", true);
+  if (f.cetak === "tidak") q = q.eq("dicetak", false);
+  if (f.kode) q = q.ilike("kode_verifikasi", "%" + f.kode.replace(/[%_]/g, "") + "%");
   if (f.rt) q = q.eq("rt", f.rt);
   if (f.tahun) q = q.eq("tahun", parseInt(f.tahun, 10));
   if (f.cari) q = q.ilike("nama_kegiatan", "%" + f.cari.replace(/[%_]/g, "") + "%");
@@ -251,6 +267,13 @@ async function muatArsip(){
   $("tbody").innerHTML = rows.length ? rows.map(r => `
     <tr data-id="${r.id}">
       <td>${esc(tgl(r.created_at))}</td>
+      <td>${r.token ? "Ya" : "-"}</td>
+      <td>${r.dicetak ? '<span class="pill real">Ya</span>' : (r.token ? '<span class="pill abaikan">Tidak</span>' : (r.aksi === "cetak" ? "Ya (lama)" : "-"))}</td>
+      <td>${r.waktu_cetak ? esc(tgl(r.waktu_cetak)) : "-"}</td>
+      <td>${esc(r.nama_pemohon || "-")}</td>
+      <td>${r.kode_verifikasi ? "<b>" + esc(r.kode_verifikasi) + "</b>" : "-"}</td>
+      <td>${linkMaps(r)}</td>
+      <td class="num">${r.akurasi != null ? esc(fmtAkurasi(Number(r.akurasi))) : "-"}</td>
       <td>${esc(r.nama_kegiatan || "-")}</td>
       <td>${r.volume ? esc(Number(r.volume).toLocaleString("id-ID") + (r.satuan ? " " + r.satuan : "")) : "-"}</td>
       <td>${esc(r.bahan_utama || "-")}${r.sifat_konstruksi ? "<br><span class=\"muted\">" + esc(r.sifat_konstruksi) + "</span>" : ""}</td>
@@ -258,7 +281,6 @@ async function muatArsip(){
       <td>${esc(r.rt || "-")}</td>
       <td>${esc(r.tahun || "-")}</td>
       <td>${r.mode === "material" ? "Bahan" : "Pagu"}</td>
-      <td>${r.aksi === "cetak" ? "Cetak" : "Salin"}</td>
       <td class="num">${rp(r.nilai_input)}</td>
       <td class="num">${rp(r.material)}</td>
       <td class="num">${r.sewa ? rp(r.sewa) : "-"}</td>
@@ -269,7 +291,7 @@ async function muatArsip(){
         <button class="btn small" data-act="abaikan">Abaikan</button>
         <button class="btn small bad" data-act="hapus">Hapus</button>
       </div></td>
-    </tr>`).join("") : `<tr><td colspan="15" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="21" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
 }
 
 $("tbody").addEventListener("click", async (e) => {
@@ -289,12 +311,15 @@ $("tbody").addEventListener("click", async (e) => {
 
 /* ---------- CSV ---------- */
 function unduhCsv(data, nama){
-  const kolom = ["Waktu","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Aksi","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
+  const kolom = ["Waktu Generate","Generate","Cetak","Waktu Cetak","Nama Pemohon","Kode Verifikasi","Latitude","Longitude","Akurasi (m)","Link Google Maps","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
   const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
   const baris = data.map(r => [
-    tgl(r.created_at), r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
+    tgl(r.created_at), r.token ? "Ya" : "", r.dicetak ? "Ya" : (r.token ? "Tidak" : ""), r.waktu_cetak ? tgl(r.waktu_cetak) : "",
+    r.nama_pemohon, r.kode_verifikasi, r.lat, r.lng, r.akurasi,
+    r.lat != null ? "https://www.google.com/maps?q=" + r.lat + "," + r.lng : "",
+    r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
     r.mode === "material" ? "Bahan dan Sewa" : "Pagu", "Swakelola oleh TPK",
-    r.aksi, r.nilai_input, r.material, r.pajak, r.sewa || 0, r.pajak_sewa || 0, r.tukang, r.tpk, r.total,
+    r.nilai_input, r.material, r.pajak, r.sewa || 0, r.pajak_sewa || 0, r.tukang, r.tpk, r.total,
     r.p_tukang * 100, r.p_tpk * 100, r.p_pajak * 100, r.p_pajak_sewa != null ? r.p_pajak_sewa * 100 : "", r.status
   ].map(q).join(";"));
   const csv = "﻿" + kolom.map(q).join(";") + "\n" + baris.join("\n");
@@ -312,11 +337,21 @@ $("btnCsvReal").addEventListener("click", async () => {
 /* ---------- Filter ---------- */
 $("btnFilter").addEventListener("click", muatArsip);
 $("btnReset").addEventListener("click", () => {
-  ["fStatus","fDana","fAksi"].forEach(id => $(id).value = "");
+  ["fStatus","fDana","fCetak"].forEach(id => $(id).value = "");
+  $("fKode").value = "";
   ["fRt","fTahun","fCari"].forEach(id => $(id).value = "");
   muatArsip();
 });
-["fRt","fTahun","fCari"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") muatArsip(); }));
+["fRt","fTahun","fCari","fKode"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") muatArsip(); }));
+
+$("btnRetensi").addEventListener("click", async () => {
+  const batas = new Date(); batas.setFullYear(batas.getFullYear() - 2);
+  if (!confirm("Hapus permanen semua arsip RAB sebelum " + batas.toLocaleDateString("id-ID") + "? (sesuai janji retensi 2 tahun)")) return;
+  const { error } = await sb.from("rab_arsip").delete().lt("created_at", batas.toISOString());
+  if (error) { alert("Gagal: " + error.message); return; }
+  alert("Data lebih dari 2 tahun sudah dihapus.");
+  muatSemua();
+});
 
 function muatSemua(){ muatStatistik(); muatGrafik(); muatArsip(); }
 
