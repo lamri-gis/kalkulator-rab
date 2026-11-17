@@ -65,18 +65,34 @@
   .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
   .btn.primary{background:var(--blue);color:#fff}
   .btn:disabled{opacity:.45;cursor:not-allowed}
+  .notice{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--badbg);color:var(--bad);font-size:13px;font-weight:bold;text-align:center}
+  .overlay{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .overlay.hidden{display:none}
+  .modal{background:#fff;border-radius:14px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .modal h3{margin:0 0 8px;color:var(--navy);font-size:18px}
+  .modal p{font-size:14px;color:var(--text);margin:0 0 12px}
+  .modal .small{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .chk{display:flex;gap:8px;align-items:center;font-weight:bold;font-size:14px;margin:6px 0 4px}
+  .chk input{width:20px;height:20px;padding:0}
+  .mact{display:flex;gap:10px;margin-top:14px}
+  .bar{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
+  #barFill{height:100%;width:0;background:var(--blue);transition:width .2s linear}
+  .err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
   .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
   .hidden{display:none}
   footer{text-align:center;font-size:12px;color:var(--muted);padding:0 16px 30px}
   footer a{color:var(--blue)}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
-  .toast.show{opacity:1}
   .print-only{display:none}
   @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
   @media print{
     @page{size:A4;margin:18mm 16mm}
     body{background:#fff}
-    header,.tabs,.input-card,.actions,.privacy,footer,.toast,.screen-only{display:none!important}
+    header,.tabs,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
+    .verif{margin-top:22px;border:1.5px solid #000;border-radius:6px;padding:10px 14px;font-size:12px;page-break-inside:avoid}
+    .verif .vt{text-align:center;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
+    .verif table td{border:none;padding:3px 4px;font-size:12px}
+    .verif table td:first-child{width:130px}
+    .verif .ok{font-weight:bold}
     main{padding:0;max-width:none}
     .card{border:none;padding:0}
     .print-only{display:block}
@@ -219,16 +235,19 @@
       <div class="judul">RENCANA ANGGARAN BIAYA (RAB) PENGADAAN SECARA SWAKELOLA</div>
     </div>
     <h2 class="screen-only">Hasil</h2>
-    <div id="empty" class="empty">Isi nilai bahan, sewa, atau pagu untuk melihat hasil.</div>
+    <div id="empty" class="empty">Lengkapi data, lalu klik Generate RAB untuk melihat hasil.</div>
     <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <table id="tbl"></table>
       <div id="status" class="status"></div>
+      <div class="print-only verif" id="verif"></div>
     </div>
     <div class="actions">
-      <button class="btn primary" id="btnPrint" disabled>Cetak / PDF</button>
+      <button class="btn primary" id="btnGenerate" disabled>Generate RAB</button>
+      <button class="btn primary hidden" id="btnPrint">Cetak / PDF</button>
     </div>
-    <p class="privacy">Data kegiatan yang dicetak atau disimpan sebagai PDF tersimpan untuk arsip perencanaan desa.</p>
+    <div class="notice hidden" id="notice"></div>
+    <p class="privacy">Lokasi perangkat wajib aktif untuk membuat RAB. Data kegiatan, lokasi, dan nama pemohon tersimpan sebagai arsip perencanaan desa paling lama 2 tahun dan hanya dapat dilihat admin.</p>
     <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
   </section>
 </main>
@@ -237,6 +256,41 @@
   Disusun oleh <b>Lamri, S.P.</b>, Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur<br>
   <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
 </footer>
+
+<div class="overlay hidden" id="ovConsent">
+  <div class="modal">
+    <h3>Persetujuan Lokasi</h3>
+    <p>Untuk membuat RAB, lokasi perangkat Anda akan diambil dan disimpan bersama data kegiatan sebagai arsip perencanaan Desa Susuk Dalam. Saat mencetak, nama pemohon juga disimpan. Data hanya dapat dilihat admin dan disimpan paling lama 2 tahun.</p>
+    <label class="chk"><input type="checkbox" id="chkSetuju"> Saya mengerti dan setuju</label>
+    <div class="mact">
+      <button class="btn" id="btnBatalSetuju">Batal</button>
+      <button class="btn primary" id="btnLanjut" disabled>Lanjut</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovLoading">
+  <div class="modal">
+    <h3>Menyusun RAB...</h3>
+    <p id="loadText">Mengambil akurasi lokasi, mohon tunggu 20 detik.</p>
+    <div class="bar"><div id="barFill"></div></div>
+    <p class="small" id="loadAcc">Menunggu sinyal lokasi...</p>
+    <div class="mact"><button class="btn" id="btnBatalLoad">Batal</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovNama">
+  <div class="modal">
+    <h3>Izin Cetak</h3>
+    <p>Masukkan nama pemohon untuk mendapatkan izin cetak dan kode verifikasi.</p>
+    <input id="namaPemohon" type="text" maxlength="100" placeholder="Nama lengkap pemohon">
+    <div class="err" id="namaErr"></div>
+    <div class="mact">
+      <button class="btn" id="btnBatalNama">Batal</button>
+      <button class="btn primary" id="btnIzin">Cetak / PDF</button>
+    </div>
+  </div>
+</div>
 
 
 <script>
@@ -248,6 +302,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 (function(){
   var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
   var mode = "material", last = null;
+  var generated = false, berubah = false, gen = null;
   var $ = function(id){ return document.getElementById(id); };
   var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
   var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
@@ -299,6 +354,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   /* ---------- Perhitungan ---------- */
   function hitung(){
+    if (generated) { generated = false; gen = null; berubah = true; }
     var nilai = parseMoney($("nilai").value);
     var sewa = parseMoney($("sewa").value);
     var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH), k = parsePct($("pTpk").value);
@@ -338,9 +394,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   function tampil(r){
     last = r;
-    $("btnPrint").disabled = !r || !r.cukup;
-    if (!r) { $("empty").classList.remove("hidden"); $("result").classList.add("hidden"); return; }
-    $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
+    if (!r) { render(); return; }
 
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
     var dm = dimensi();
@@ -378,35 +432,61 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!r.cukup) st.textContent = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa";
     else if (mode === "material") st.textContent = r.aman ? (r.sewa > 0 ? "AMAN, bahan dan sewa utuh" : "AMAN, bahan utuh") : "Periksa kembali, bahan kurang";
     else st.textContent = r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu";
+    render();
+  }
+
+  /* ---------- Tampilan: hasil hanya muncul setelah Generate ---------- */
+  function render(){
+    var dm = dimensi();
+    var siap = !!(last && last.cukup && dm);
+    $("btnGenerate").disabled = !siap;
+    $("btnGenerate").classList.toggle("hidden", generated);
+    $("btnPrint").classList.toggle("hidden", !generated);
+    $("result").classList.toggle("hidden", !generated);
+    $("empty").classList.toggle("hidden", generated);
+    if (!generated) {
+      var pesan;
+      if (!dm) pesan = "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
+      else if (!last) pesan = mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
+      else if (!last.cukup) pesan = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
+      else pesan = "Data lengkap. Klik Generate RAB untuk menyusun hasil.";
+      $("empty").textContent = (berubah ? "Data berubah. " : "") + pesan;
+    }
+  }
+  function notice(msg){
+    var n = $("notice");
+    if (!msg) { n.classList.add("hidden"); return; }
+    n.textContent = msg; n.classList.remove("hidden");
   }
 
   /* ---------- Arsip & kunjungan ke Supabase ---------- */
+  function headersDb(){
+    var h = { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" };
+    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
+    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) h["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
+    return h;
+  }
   function kirim(tabel, data){
     if (!dbReady) return;
-    var headers = {
-      "apikey": SUPABASE_ANON_KEY,
-      "Content-Type": "application/json",
-      "Prefer": "return=minimal"
-    };
-    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
-    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) headers["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
+    var h = headersDb(); h["Prefer"] = "return=minimal";
     try {
-      fetch(SUPABASE_URL + "/rest/v1/" + tabel, {
-        method: "POST",
-        keepalive: true,
-        headers: headers,
-        body: JSON.stringify(data)
-      }).catch(function(){});
+      fetch(SUPABASE_URL + "/rest/v1/" + tabel, { method:"POST", keepalive:true, headers:h, body:JSON.stringify(data) }).catch(function(){});
     } catch(e) {}
   }
 
-  function arsip(aksi){
-    if (!last || !last.cukup) return;
+  function buatToken(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var b = new Uint8Array(16); crypto.getRandomValues(b);
+    b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    var h = Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("");
+    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+  }
+
+  function dataArsip(){
     var th = parseInt($("tahun").value, 10);
     var dm = dimensi();
     var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
-    kirim("rab_arsip", {
-      aksi: aksi,
+    return {
       mode: mode,
       nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
       panjang: dm ? r3(dm.p) : null,
@@ -423,7 +503,33 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
       material: last.material, sewa: last.sewa, pajak_sewa: last.pajakSewa, total: last.total,
       p_tukang: last.t, p_tpk: last.k, p_pajak: last.p, p_pajak_sewa: last.ps
-    });
+    };
+  }
+
+  async function simpanGenerate(token, lok){
+    if (!dbReady) return true;
+    var d = dataArsip();
+    d.aksi = "generate"; d.token = token;
+    d.lat = Math.round(lok.lat * 1e6) / 1e6;
+    d.lng = Math.round(lok.lng * 1e6) / 1e6;
+    d.akurasi = Math.min(Math.round(lok.acc * 10) / 10, 99999999);
+    var h = headersDb(); h["Prefer"] = "return=minimal";
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rab_arsip", { method:"POST", headers:h, body:JSON.stringify(d) });
+      return res.ok;
+    } catch(e) { return false; }
+  }
+
+  async function mintaIzinCetak(token, nama){
+    if (!dbReady) return { kode: "RAB-DEMO" };
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_tandai_cetak", {
+        method:"POST", headers:headersDb(), body:JSON.stringify({ p_token: token, p_nama: nama })
+      });
+      var j = await res.json().catch(function(){ return null; });
+      if (!res.ok) return { error: (j && j.message) || "Izin cetak gagal, coba lagi." };
+      return { kode: j };
+    } catch(e) { return { error: "Tidak ada koneksi internet, coba lagi." }; }
   }
 
   (function catatKunjungan(){
@@ -485,11 +591,98 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   ["pTukang","pTpk","pPajak","pPajakSewa","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("dana").addEventListener("change", hitung);
 
-  $("btnPrint").addEventListener("click", function(){
-    if (!last) return;
-    arsip("cetak");
-    setTimeout(function(){ window.print(); }, 150);
+  /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
+  var DURASI = 20000, watchId = null, timer = null, terbaik = null;
+
+  function show(id, on){ $(id).classList.toggle("hidden", !on); }
+  function fmtAkurasi(m){ return m >= 1000 ? "± " + angka(m / 1000, 1) + " km" : "± " + Math.round(m) + " m"; }
+
+  $("btnGenerate").addEventListener("click", function(){
+    if ($("btnGenerate").disabled) return;
+    notice("");
+    $("chkSetuju").checked = false; $("btnLanjut").disabled = true;
+    show("ovConsent", true);
   });
+  $("chkSetuju").addEventListener("change", function(e){ $("btnLanjut").disabled = !e.target.checked; });
+  $("btnBatalSetuju").addEventListener("click", function(){ show("ovConsent", false); });
+  $("btnLanjut").addEventListener("click", function(){ show("ovConsent", false); mulaiLokasi(); });
+  $("btnBatalLoad").addEventListener("click", function(){ batalLokasi("Generate dibatalkan."); });
+
+  function hentikan(){
+    if (timer) { clearInterval(timer); timer = null; }
+    if (watchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  }
+  function batalLokasi(msg){ hentikan(); show("ovLoading", false); notice(msg); }
+
+  function mulaiLokasi(){
+    if (!navigator.geolocation) { notice("Perangkat atau browser ini tidak mendukung lokasi, RAB tidak dapat dibuat."); return; }
+    terbaik = null;
+    $("barFill").style.width = "0%";
+    $("loadText").textContent = "Mengambil akurasi lokasi, mohon tunggu 20 detik.";
+    $("loadAcc").textContent = "Menunggu sinyal lokasi...";
+    show("ovLoading", true);
+    var mulai = Date.now();
+    watchId = navigator.geolocation.watchPosition(function(pos){
+      var c = pos.coords;
+      if (!terbaik || c.accuracy < terbaik.acc) terbaik = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
+      $("loadAcc").textContent = "Akurasi terbaik: " + fmtAkurasi(terbaik.acc);
+    }, function(err){
+      if (err.code === 1) batalLokasi("Izin lokasi ditolak. Aktifkan lokasi perangkat dan izinkan browser untuk membuat RAB.");
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: DURASI });
+    timer = setInterval(function(){
+      var jalan = Date.now() - mulai;
+      $("barFill").style.width = Math.min(100, jalan / DURASI * 100) + "%";
+      $("loadText").textContent = "Menyusun RAB... " + Math.max(0, Math.ceil((DURASI - jalan) / 1000)) + " detik";
+      if (jalan >= DURASI) selesaiLokasi();
+    }, 200);
+  }
+
+  async function selesaiLokasi(){
+    hentikan();
+    if (!terbaik) { batalLokasi("Lokasi tidak didapat. Pastikan GPS/lokasi aktif, lalu coba lagi."); return; }
+    $("loadText").textContent = "Menyimpan RAB...";
+    var token = buatToken();
+    var ok = await simpanGenerate(token, terbaik);
+    if (!ok) { batalLokasi("Gagal menyimpan data. Periksa koneksi internet, lalu Generate ulang."); return; }
+    show("ovLoading", false);
+    gen = { token: token, acc: terbaik.acc };
+    generated = true; berubah = false;
+    render();
+    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- Izin Cetak: nama pemohon wajib, kode dari server ---------- */
+  $("btnPrint").addEventListener("click", function(){
+    if (!generated || !gen) return;
+    $("namaErr").textContent = "";
+    show("ovNama", true);
+    setTimeout(function(){ $("namaPemohon").focus(); }, 50);
+  });
+  $("btnBatalNama").addEventListener("click", function(){ show("ovNama", false); });
+  $("namaPemohon").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnIzin").click(); });
+
+  $("btnIzin").addEventListener("click", async function(){
+    var nama = $("namaPemohon").value.replace(/\s+/g, " ").trim();
+    if (nama.length < 3) { $("namaErr").textContent = "Nama pemohon wajib diisi (minimal 3 huruf)."; return; }
+    var btn = $("btnIzin"); btn.disabled = true; btn.textContent = "Memverifikasi...";
+    var hasil = await mintaIzinCetak(gen.token, nama);
+    btn.disabled = false; btn.textContent = "Cetak / PDF";
+    if (hasil.error) { $("namaErr").textContent = hasil.error; return; }
+    var waktu = new Date().toLocaleString("id-ID", { timeZone:"Asia/Makassar", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" }) + " WITA";
+    var baris = [
+      ["Status", "<span class=\"ok\">DIIZINKAN</span>"],
+      ["Nama Pemohon", esc(nama)],
+      ["Waktu Cetak", esc(waktu)],
+      ["Lokasi", "Terverifikasi (akurasi " + esc(fmtAkurasi(gen.acc)) + ")"],
+      ["Kode Verifikasi", "<b>" + esc(hasil.kode) + "</b>"]
+    ];
+    $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
+      baris.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + x[1] + "</td></tr>"; }).join("") + "</table>";
+    show("ovNama", false);
+    setTimeout(function(){ window.print(); }, 200);
+  });
+
+  render();
 })();
 </script>
 </body>
