@@ -168,10 +168,9 @@
       <div id="status" class="status"></div>
     </div>
     <div class="actions">
-      <button class="btn" id="btnCopy" disabled>Salin Hasil</button>
       <button class="btn primary" id="btnPrint" disabled>Cetak / PDF</button>
     </div>
-    <p class="privacy">Data kegiatan yang disalin atau dicetak tersimpan untuk arsip perencanaan desa.</p>
+    <p class="privacy">Data kegiatan yang dicetak atau disimpan sebagai PDF tersimpan untuk arsip perencanaan desa.</p>
     <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
   </section>
 </main>
@@ -238,7 +237,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   function tampil(r){
     last = r;
-    $("btnCopy").disabled = $("btnPrint").disabled = !r;
+    $("btnPrint").disabled = !r;
     if (!r) { $("empty").classList.remove("hidden"); $("result").classList.add("hidden"); return; }
     $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
 
@@ -346,36 +345,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   $("dana").addEventListener("change", hitung);
 
   function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); }, 1800); }
-
-  $("btnCopy").addEventListener("click", function(){
-    if (!last) return;
-    var r = last;
-    var lines = [
-      "RINCIAN RAB KEGIATAN",
-      "Nama Kegiatan  : " + ($("nama").value.trim() || "-"),
-      "Jenis Dana     : " + ($("dana").value || "-"),
-      "Tahun Anggaran : " + ($("tahun").value || "-"),
-      "Lokasi         : " + lokasiLengkap(),
-      "Dasar Hitung   : " + (mode === "material" ? "Nilai Material" : "Pagu Anggaran"),
-      "",
-      "Upah Tukang (" + pctLabel(r.t) + ") : " + fmt(r.tukang),
-      "TPK (" + pctLabel(r.k) + ") : " + fmt(r.tpk),
-      "Pajak Material (" + pctLabel(r.p) + ") : " + fmt(r.pajak),
-      "Material : " + fmt(r.material),
-      (mode === "material" ? "TOTAL RAB" : "PAGU") + " : " + fmt(r.total),
-      "",
-      "Kalkulator RAB Desa by Lamri, S.P."
-    ];
-    var text = lines.join("\n");
-    arsip("salin");
-    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function(){ toast("Hasil disalin"); }, function(){ fallback(text); });
-    else fallback(text);
-  });
-  function fallback(text){
-    var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
-    try { document.execCommand("copy"); toast("Hasil disalin"); } catch(e) { toast("Gagal menyalin"); }
-    document.body.removeChild(ta);
-  }
 
   $("btnPrint").addEventListener("click", function(){
     if (!last) return;
