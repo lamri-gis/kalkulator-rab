@@ -35,7 +35,7 @@
   .prefix.rp input{padding-left:40px;font-weight:bold}
   .prefix.rt input{padding-left:44px}
   .fixed{margin-top:6px;font-size:12px;color:var(--muted)}
-  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
   .pct{position:relative}
   .pct input{padding-right:28px;text-align:right}
   .pct span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
@@ -65,7 +65,7 @@
   .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
   .toast.show{opacity:1}
   .print-only{display:none}
-  @media (max-width:520px){ .grid3{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
+  @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
   @media print{
     @page{size:A4;margin:18mm 16mm}
     body{background:#fff}
@@ -102,10 +102,25 @@
 
   <section class="card input-card">
     <h2>Data Kegiatan</h2>
-    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</p>
+    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
 
     <label for="nama">Nama Kegiatan</label>
-    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Pembangunan Drainase">
+    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
+
+    <div class="row2">
+      <div>
+        <label for="volume">Volume (opsional)</label>
+        <input id="volume" type="text" inputmode="decimal" maxlength="12" placeholder="Contoh: 150">
+      </div>
+      <div>
+        <label for="satuan">Satuan</label>
+        <input id="satuan" type="text" maxlength="20" list="daftarSatuan" placeholder="Pilih atau ketik">
+        <datalist id="daftarSatuan">
+          <option value="m"><option value="m²"><option value="m³"><option value="unit">
+          <option value="titik"><option value="buah"><option value="paket">
+        </datalist>
+      </div>
+    </div>
 
     <div class="row2">
       <div>
@@ -134,20 +149,24 @@
   </section>
 
   <section class="card input-card">
-    <h2 id="inTitle">Input Material</h2>
-    <p class="sub" id="inSub">Masukkan nilai material tanpa pajak. Total RAB keluar otomatis dan material tidak berkurang.</p>
+    <h2 id="inTitle">Input Bahan dan Sewa</h2>
+    <p class="sub" id="inSub">Masukkan nilai bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
 
-    <label for="nilai" id="nilaiLabel">Total Material (tanpa pajak)</label>
+    <label for="nilai" id="nilaiLabel">Bahan/Material (tanpa pajak)</label>
     <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+
+    <label for="sewa">Sewa Peralatan (tanpa pajak, opsional)</label>
+    <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
 
     <details>
       <summary>Pengaturan persentase</summary>
-      <div class="grid3">
-        <div><label for="pTukang">Upah Tukang</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div></div>
+      <div class="grid2">
+        <div><label for="pTukang">Upah Tenaga Kerja</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div></div>
         <div><label for="pTpk">TPK</label><div class="pct"><input id="pTpk" type="text" inputmode="decimal" value="3"><span>%</span></div></div>
-        <div><label for="pPajak">Pajak Material</label><div class="pct"><input id="pPajak" type="text" inputmode="decimal" value="12,5"><span>%</span></div></div>
+        <div><label for="pPajak">Pajak Bahan</label><div class="pct"><input id="pPajak" type="text" inputmode="decimal" value="12,5"><span>%</span></div></div>
+        <div><label for="pPajakSewa">Pajak Sewa</label><div class="pct"><input id="pPajakSewa" type="text" inputmode="decimal" value="13"><span>%</span></div></div>
       </div>
-      <p class="note">Tukang dan TPK dihitung dari total. Pajak hanya dikenakan pada material. Persentase menyesuaikan ketentuan daerah.</p>
+      <p class="note">Upah tenaga kerja dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. Persentase menyesuaikan ketentuan dan kesepakatan daerah.</p>
     </details>
   </section>
 
@@ -158,10 +177,10 @@
         <div class="l1">KECAMATAN SANDARAN</div>
         <div class="l2">DESA SUSUK DALAM</div>
       </div>
-      <div class="judul">RINCIAN RENCANA ANGGARAN BIAYA (RAB)</div>
+      <div class="judul">RENCANA ANGGARAN BIAYA (RAB) PENGADAAN SECARA SWAKELOLA</div>
     </div>
     <h2 class="screen-only">Hasil</h2>
-    <div id="empty" class="empty">Isi nilai material atau pagu untuk melihat hasil.</div>
+    <div id="empty" class="empty">Isi nilai bahan, sewa, atau pagu untuk melihat hasil.</div>
     <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <table id="tbl"></table>
@@ -180,7 +199,6 @@
   <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
 </footer>
 
-<div class="toast" id="toast"></div>
 
 <script>
 /* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
@@ -195,6 +213,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
   var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
   var parsePct = function(s){ var v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? 0 : v/100; };
+  var parseNum = function(s){ var v = parseFloat(String(s).replace(/\./g,"").replace(",", ".")); return isNaN(v) ? null : v; };
   var pctLabel = function(x){ return (Math.round(x*1000)/10).toString().replace(".", ",") + "%"; };
   var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
 
@@ -208,17 +227,28 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var rt = rtLabel();
     return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
   }
+  function keluaran(){
+    var v = parseNum($("volume").value), s = $("satuan").value.trim();
+    if (v === null || v <= 0) return "";
+    return v.toLocaleString("id-ID") + (s ? " " + s : "");
+  }
 
   /* ---------- Perhitungan ---------- */
   function hitung(){
     var nilai = parseMoney($("nilai").value);
-    var t = parsePct($("pTukang").value), k = parsePct($("pTpk").value), p = parsePct($("pPajak").value);
+    var sewa = parseMoney($("sewa").value);
+    var t = parsePct($("pTukang").value), k = parsePct($("pTpk").value);
+    var p = parsePct($("pPajak").value), ps = parsePct($("pPajakSewa").value);
     $("lokasiPreview").textContent = lokasiLengkap();
-    if (!nilai || t + k >= 1) { tampil(null); return; }
+    if (t + k >= 1) { tampil(null); return; }
+    if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
+    if (mode === "pagu" && !nilai) { tampil(null); return; }
 
+    var pajakSewa = Math.round(sewa * ps);
     var total, tukang, tpk;
     if (mode === "material") {
-      total = Math.ceil(((nilai * (1 + p)) / (1 - t - k)) - 1e-7);
+      var dasar = nilai * (1 + p) + sewa + pajakSewa;
+      total = Math.ceil((dasar / (1 - t - k)) - 1e-7);
       tukang = Math.floor(total * t + 1e-7);
       tpk = Math.floor(total * k + 1e-7);
     } else {
@@ -226,46 +256,60 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       tukang = Math.round(total * t);
       tpk = Math.round(total * k);
     }
-    var sisa = total - tukang - tpk;
-    var material = Math.floor(sisa / (1 + p) + 1e-7);
-    var pajak = sisa - material;
-    var aman = mode === "material" ? material >= nilai : (tukang + tpk + pajak + material) === total;
-    tampil({ nilai:nilai, total:total, tukang:tukang, tpk:tpk, pajak:pajak, material:material, aman:aman, t:t, k:k, p:p });
+    var sisa = total - tukang - tpk - sewa - pajakSewa;
+    var cukup = sisa >= 0;
+    var material = cukup ? Math.floor(sisa / (1 + p) + 1e-7) : 0;
+    var pajak = cukup ? sisa - material : 0;
+    var aman = mode === "material"
+      ? (cukup && material >= nilai)
+      : (cukup && (tukang + tpk + sewa + pajakSewa + material + pajak) === total);
+
+    tampil({ nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk,
+             pajak:pajak, material:material, aman:aman, cukup:cukup, t:t, k:k, p:p, ps:ps });
   }
 
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 
   function tampil(r){
     last = r;
-    $("btnPrint").disabled = !r;
+    $("btnPrint").disabled = !r || !r.cukup;
     if (!r) { $("empty").classList.remove("hidden"); $("result").classList.add("hidden"); return; }
     $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
 
-    var info = [
-      ["Nama Kegiatan", $("nama").value.trim() || "-"],
+    var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
+    var out = keluaran();
+    if (out) info.push(["Keluaran/Output", out]);
+    info.push(
       ["Jenis Dana", $("dana").value || "-"],
       ["Tahun Anggaran", $("tahun").value || "-"],
       ["Lokasi", lokasiLengkap()],
-      ["Dasar Hitung", mode === "material" ? "Nilai Material" : "Pagu Anggaran"]
-    ];
+      ["Pelaksanaan", "Swakelola oleh TPK"],
+      ["Dasar Hitung", mode === "material" ? "Nilai Bahan dan Sewa" : "Pagu Anggaran"]
+    );
     $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
 
     var rows = [
-      ["Upah Tukang (" + pctLabel(r.t) + ")", r.tukang, ""],
-      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
-      ["Pajak Material (" + pctLabel(r.p) + ")", r.pajak, ""],
-      [mode === "material" ? "Material" : "Material Tersedia", r.material, "main"],
-      [mode === "material" ? "TOTAL RAB" : "PAGU ANGGARAN", r.total, "total"]
+      [mode === "material" ? "Bahan/Material" : "Bahan/Material Tersedia", r.material, "main"],
+      ["Pajak Bahan (" + pctLabel(r.p) + ")", r.pajak, ""]
     ];
+    if (r.sewa > 0) {
+      rows.push(["Sewa Peralatan", r.sewa, "main"]);
+      rows.push(["Pajak Sewa (" + pctLabel(r.ps) + ")", r.pajakSewa, ""]);
+    }
+    rows.push(
+      ["Upah Tenaga Kerja (" + pctLabel(r.t) + ")", r.tukang, ""],
+      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
+      [mode === "material" ? "TOTAL RAB" : "PAGU ANGGARAN", r.total, "total"]
+    );
     $("tbl").innerHTML = rows.map(function(x){
       return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
     }).join("");
 
     var st = $("status");
     st.className = "status " + (r.aman ? "ok" : "bad");
-    st.textContent = mode === "material"
-      ? (r.aman ? "AMAN, material utuh" : "Periksa kembali, material kurang")
-      : (r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu");
+    if (!r.cukup) st.textContent = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa";
+    else if (mode === "material") st.textContent = r.aman ? (r.sewa > 0 ? "AMAN, bahan dan sewa utuh" : "AMAN, bahan utuh") : "Periksa kembali, bahan kurang";
+    else st.textContent = r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu";
   }
 
   /* ---------- Arsip & kunjungan ke Supabase ---------- */
@@ -289,19 +333,22 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
 
   function arsip(aksi){
-    if (!last) return;
+    if (!last || !last.cukup) return;
     var th = parseInt($("tahun").value, 10);
+    var vol = parseNum($("volume").value);
     kirim("rab_arsip", {
       aksi: aksi,
       mode: mode,
       nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
+      volume: (vol !== null && vol > 0 && vol < 1e12) ? Math.round(vol * 100) / 100 : null,
+      satuan: $("satuan").value.trim().slice(0,20) || null,
       jenis_dana: $("dana").value || null,
       rt: rtLabel() || null,
       tahun: (th >= 2000 && th <= 2100) ? th : null,
       nilai_input: last.nilai,
       tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
-      material: last.material, total: last.total,
-      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p
+      material: last.material, sewa: last.sewa, pajak_sewa: last.pajakSewa, total: last.total,
+      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p, p_pajak_sewa: last.ps
     });
   }
 
@@ -321,12 +368,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     mode = m;
     document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === m); });
     if (m === "material") {
-      $("inTitle").textContent = "Input Material";
-      $("inSub").textContent = "Masukkan nilai material tanpa pajak. Total RAB keluar otomatis dan material tidak berkurang.";
-      $("nilaiLabel").textContent = "Total Material (tanpa pajak)";
+      $("inTitle").textContent = "Input Bahan dan Sewa";
+      $("inSub").textContent = "Masukkan nilai bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.";
+      $("nilaiLabel").textContent = "Bahan/Material (tanpa pajak)";
     } else {
       $("inTitle").textContent = "Input Pagu";
-      $("inSub").textContent = "Masukkan pagu anggaran. Rincian tukang, TPK, pajak, dan material yang bisa dibelanjakan keluar otomatis.";
+      $("inSub").textContent = "Masukkan pagu anggaran dan sewa peralatan (jika ada). Sewa diamankan lebih dulu, sisanya menjadi bahan/material.";
       $("nilaiLabel").textContent = "Pagu Anggaran";
     }
     $("nilai").value = "";
@@ -334,17 +381,18 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
   document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
 
-  $("nilai").addEventListener("input", function(e){
-    var n = parseMoney(e.target.value);
-    e.target.value = n ? n.toLocaleString("id-ID") : "";
-    hitung();
+  ["nilai","sewa"].forEach(function(id){
+    $(id).addEventListener("input", function(e){
+      var n = parseMoney(e.target.value);
+      e.target.value = n ? n.toLocaleString("id-ID") : "";
+      hitung();
+    });
   });
   $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
   $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  ["pTukang","pTpk","pPajak","nama"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  $("volume").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
+  ["pTukang","pTpk","pPajak","pPajakSewa","nama","satuan"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("dana").addEventListener("change", hitung);
-
-  function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); }, 1800); }
 
   $("btnPrint").addEventListener("click", function(){
     if (!last) return;
