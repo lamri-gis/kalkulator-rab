@@ -40,7 +40,7 @@
   .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
   .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
   .tablewrap{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1250px}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1400px}
   th{background:var(--soft);text-align:left;padding:9px 8px;font-size:12px;color:var(--navy);border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:8px;border-bottom:1px solid #edf1f5;vertical-align:top}
   td.num{text-align:right;white-space:nowrap}
@@ -122,8 +122,8 @@
     <div class="tablewrap" style="margin-top:12px">
       <table>
         <thead><tr>
-          <th>Waktu</th><th>Nama Kegiatan</th><th>Keluaran</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th><th>Aksi</th>
-          <th>Input</th><th>Bahan</th><th>Sewa</th><th>Total</th><th>Status</th><th>Seleksi</th>
+          <th>Waktu</th><th>Nama Kegiatan</th><th>Keluaran</th><th>Konstruksi</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th><th>Aksi</th>
+          <th>Input</th><th>Bahan (Rp)</th><th>Sewa (Rp)</th><th>Total</th><th>Status</th><th>Seleksi</th>
         </tr></thead>
         <tbody id="tbody"></tbody>
       </table>
@@ -253,6 +253,7 @@ async function muatArsip(){
       <td>${esc(tgl(r.created_at))}</td>
       <td>${esc(r.nama_kegiatan || "-")}</td>
       <td>${r.volume ? esc(Number(r.volume).toLocaleString("id-ID") + (r.satuan ? " " + r.satuan : "")) : "-"}</td>
+      <td>${esc(r.bahan_utama || "-")}${r.sifat_konstruksi ? "<br><span class=\"muted\">" + esc(r.sifat_konstruksi) + "</span>" : ""}</td>
       <td>${esc(r.jenis_dana || "-")}</td>
       <td>${esc(r.rt || "-")}</td>
       <td>${esc(r.tahun || "-")}</td>
@@ -268,7 +269,7 @@ async function muatArsip(){
         <button class="btn small" data-act="abaikan">Abaikan</button>
         <button class="btn small bad" data-act="hapus">Hapus</button>
       </div></td>
-    </tr>`).join("") : `<tr><td colspan="14" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="15" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
 }
 
 $("tbody").addEventListener("click", async (e) => {
@@ -288,10 +289,10 @@ $("tbody").addEventListener("click", async (e) => {
 
 /* ---------- CSV ---------- */
 function unduhCsv(data, nama){
-  const kolom = ["Waktu","Nama Kegiatan","Volume","Satuan","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Aksi","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
+  const kolom = ["Waktu","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Aksi","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
   const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
   const baris = data.map(r => [
-    tgl(r.created_at), r.nama_kegiatan, r.volume, r.satuan, r.jenis_dana, r.rt, r.tahun,
+    tgl(r.created_at), r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
     r.mode === "material" ? "Bahan dan Sewa" : "Pagu", "Swakelola oleh TPK",
     r.aksi, r.nilai_input, r.material, r.pajak, r.sewa || 0, r.pajak_sewa || 0, r.tukang, r.tpk, r.total,
     r.p_tukang * 100, r.p_tpk * 100, r.p_pajak * 100, r.p_pajak_sewa != null ? r.p_pajak_sewa * 100 : "", r.status
