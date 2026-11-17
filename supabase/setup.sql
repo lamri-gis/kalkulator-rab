@@ -10,7 +10,7 @@
 create table if not exists public.rab_arsip (
   id             bigint generated always as identity primary key,
   created_at     timestamptz not null default now(),
-  aksi           text not null check (aksi in ('cetak','salin')),
+  aksi           text not null check (aksi in ('generate','cetak','salin','pdf')),
   mode           text not null check (mode in ('material','pagu')),
   nama_kegiatan  text check (char_length(nama_kegiatan) <= 200),
   panjang        numeric(14,3) check (panjang > 0 and panjang < 1000000000),
@@ -37,12 +37,21 @@ create table if not exists public.rab_arsip (
   p_tpk          numeric(6,4) check (p_tpk between 0 and 1),
   p_pajak        numeric(6,4) check (p_pajak between 0 and 1),
   p_pajak_sewa   numeric(6,4) check (p_pajak_sewa between 0 and 1),
+  token          uuid unique,
+  lat            numeric(9,6) check (lat between -90 and 90),
+  lng            numeric(9,6) check (lng between -180 and 180),
+  akurasi        numeric(10,1) check (akurasi >= 0 and akurasi < 100000000),
+  dicetak        boolean not null default false,
+  waktu_cetak    timestamptz,
+  nama_pemohon   text check (char_length(nama_pemohon) between 3 and 100),
+  kode_verifikasi text unique,
   status         text not null default 'baru' check (status in ('baru','real','abaikan')),
   catatan        text check (char_length(catatan) <= 300)
 );
 
 create index if not exists rab_arsip_created_idx on public.rab_arsip (created_at desc);
 create index if not exists rab_arsip_status_idx  on public.rab_arsip (status);
+create index if not exists rab_arsip_dicetak_idx on public.rab_arsip (dicetak);
 
 -- 2. TABEL KUNJUNGAN ---------------------------------------------------
 create table if not exists public.rab_kunjungan (
@@ -84,11 +93,17 @@ alter table public.rab_kunjungan enable row level security;
 alter table public.rab_admin     enable row level security;
 -- rab_admin sengaja tanpa policy: tidak bisa dibaca siapa pun lewat API
 
--- Umum: hanya boleh MENAMBAH, status wajib 'baru', tanpa catatan
+-- Umum: hanya boleh MENAMBAH baris GENERATE (wajib token + lokasi)
 drop policy if exists "umum tambah arsip" on public.rab_arsip;
 create policy "umum tambah arsip" on public.rab_arsip
   for insert to anon, authenticated
-  with check (status = 'baru' and catatan is null);
+  with check (
+    status = 'baru' and catatan is null
+    and aksi = 'generate'
+    and token is not null and lat is not null and lng is not null and akurasi is not null
+    and dicetak = false and waktu_cetak is null
+    and nama_pemohon is null and kode_verifikasi is null
+  );
 
 drop policy if exists "umum tambah kunjungan" on public.rab_kunjungan;
 create policy "umum tambah kunjungan" on public.rab_kunjungan
@@ -112,6 +127,53 @@ create policy "admin hapus arsip" on public.rab_arsip
 drop policy if exists "admin baca kunjungan" on public.rab_kunjungan;
 create policy "admin baca kunjungan" on public.rab_kunjungan
   for select to authenticated using (public.is_rab_admin());
+
+-- 4b. Fungsi Izin Cetak: tandai Cetak = Ya, simpan nama, buat kode verifikasi
+create or replace function public.rab_tandai_cetak(p_token uuid, p_nama text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id   bigint;
+  v_kode text;
+  v_nama text := btrim(coalesce(p_nama, ''));
+begin
+  if char_length(v_nama) < 3 or char_length(v_nama) > 100 then
+    raise exception 'Nama pemohon minimal 3 karakter';
+  end if;
+
+  select id, kode_verifikasi into v_id, v_kode
+  from public.rab_arsip
+  where token = p_token and created_at > now() - interval '1 day'
+  for update;
+
+  if v_id is null then
+    raise exception 'Data generate tidak ditemukan atau sudah kedaluwarsa, silakan Generate ulang';
+  end if;
+
+  if v_kode is not null then
+    return v_kode;                       -- cetak ulang: kode tetap sama
+  end if;
+
+  loop
+    v_kode := 'RAB-' || to_char(now() at time zone 'Asia/Makassar', 'YYMMDD') || '-'
+              || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 5));
+    exit when not exists (select 1 from public.rab_arsip where kode_verifikasi = v_kode);
+  end loop;
+
+  update public.rab_arsip
+     set dicetak = true, waktu_cetak = now(), nama_pemohon = v_nama,
+         kode_verifikasi = v_kode, aksi = 'cetak'
+   where id = v_id;
+
+  return v_kode;
+end;
+$$;
+
+revoke all on function public.rab_tandai_cetak(uuid, text) from public;
+grant execute on function public.rab_tandai_cetak(uuid, text) to anon, authenticated;
 
 -- 5. HAK AKSES TABEL ---------------------------------------------------
 revoke all on public.rab_arsip, public.rab_kunjungan, public.rab_admin from anon, authenticated;
