@@ -125,7 +125,7 @@
     <div class="tablewrap" style="margin-top:12px">
       <table>
         <thead><tr>
-          <th>Waktu Generate</th><th>Generate</th><th>Cetak</th><th>Waktu Cetak</th><th>Nama Pemohon</th><th>Kode Verifikasi</th><th>Koordinat</th><th>Akurasi</th>
+          <th>Waktu Generate</th><th>Generate</th><th>Cetak</th><th>Waktu Cetak</th><th>Nama Pemohon</th><th>Kode Verifikasi</th><th>Koordinat</th><th>Akurasi</th><th>Percobaan</th>
           <th>Nama Kegiatan</th><th>Keluaran</th><th>Konstruksi</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th>
           <th>Input</th><th>Bahan (Rp)</th><th>Sewa (Rp)</th><th>Total</th><th>Status</th><th>Seleksi</th>
         </tr></thead>
@@ -274,6 +274,7 @@ async function muatArsip(){
       <td>${r.kode_verifikasi ? "<b>" + esc(r.kode_verifikasi) + "</b>" : "-"}</td>
       <td>${linkMaps(r)}</td>
       <td class="num">${r.akurasi != null ? esc(fmtAkurasi(Number(r.akurasi))) : "-"}</td>
+      <td style="text-align:center">${r.percobaan ? (r.percobaan === 2 ? '<span class="pill baru">2</span>' : '1') : "-"}</td>
       <td>${esc(r.nama_kegiatan || "-")}</td>
       <td>${r.volume ? esc(Number(r.volume).toLocaleString("id-ID") + (r.satuan ? " " + r.satuan : "")) : "-"}</td>
       <td>${esc(r.bahan_utama || "-")}${r.sifat_konstruksi ? "<br><span class=\"muted\">" + esc(r.sifat_konstruksi) + "</span>" : ""}</td>
@@ -291,7 +292,7 @@ async function muatArsip(){
         <button class="btn small" data-act="abaikan">Abaikan</button>
         <button class="btn small bad" data-act="hapus">Hapus</button>
       </div></td>
-    </tr>`).join("") : `<tr><td colspan="21" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="22" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
 }
 
 $("tbody").addEventListener("click", async (e) => {
@@ -311,11 +312,11 @@ $("tbody").addEventListener("click", async (e) => {
 
 /* ---------- CSV ---------- */
 function unduhCsv(data, nama){
-  const kolom = ["Waktu Generate","Generate","Cetak","Waktu Cetak","Nama Pemohon","Kode Verifikasi","Latitude","Longitude","Akurasi (m)","Link Google Maps","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
+  const kolom = ["Waktu Generate","Generate","Cetak","Waktu Cetak","Nama Pemohon","Kode Verifikasi","Latitude","Longitude","Akurasi (m)","Percobaan","Link Google Maps","Nama Kegiatan","Panjang (m)","Lebar (m)","Tinggi (m)","Volume","Satuan","Bahan Konstruksi","Sifat Konstruksi","Jenis Dana","RT","Tahun","Dasar Hitung","Pelaksanaan","Nilai Input","Bahan/Material","Pajak Bahan","Sewa Peralatan","Pajak Sewa","Upah Tenaga Kerja","TPK","Total","% Upah","% TPK","% Pajak Bahan","% Pajak Sewa","Status"];
   const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
   const baris = data.map(r => [
     tgl(r.created_at), r.token ? "Ya" : "", r.dicetak ? "Ya" : (r.token ? "Tidak" : ""), r.waktu_cetak ? tgl(r.waktu_cetak) : "",
-    r.nama_pemohon, r.kode_verifikasi, r.lat, r.lng, r.akurasi,
+    r.nama_pemohon, r.kode_verifikasi, r.lat, r.lng, r.akurasi, r.percobaan,
     r.lat != null ? "https://www.google.com/maps?q=" + r.lat + "," + r.lng : "",
     r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
     r.mode === "material" ? "Bahan dan Sewa" : "Pagu", "Swakelola oleh TPK",
