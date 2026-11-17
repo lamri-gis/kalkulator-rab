@@ -185,8 +185,8 @@
 
 <script>
 /* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
-const SUPABASE_URL = "ISI_PROJECT_URL";
-const SUPABASE_ANON_KEY = "ISI_ANON_PUBLIC_KEY";
+const SUPABASE_URL = "https://tutgjaxuvjbyxiibxhtz.supabase.co";
+const SUPABASE_ANON_KEY = "ISI_PUBLISHABLE_KEY";
 /* ========================================================================================== */
 
 (function(){
@@ -272,16 +272,18 @@ const SUPABASE_ANON_KEY = "ISI_ANON_PUBLIC_KEY";
   /* ---------- Arsip & kunjungan ke Supabase ---------- */
   function kirim(tabel, data){
     if (!dbReady) return;
+    var headers = {
+      "apikey": SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    };
+    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
+    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) headers["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
     try {
       fetch(SUPABASE_URL + "/rest/v1/" + tabel, {
         method: "POST",
         keepalive: true,
-        headers: {
-          "apikey": SUPABASE_ANON_KEY,
-          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
-          "Content-Type": "application/json",
-          "Prefer": "return=minimal"
-        },
+        headers: headers,
         body: JSON.stringify(data)
       }).catch(function(){});
     } catch(e) {}
