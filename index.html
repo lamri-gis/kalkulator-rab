@@ -87,15 +87,16 @@
   .print-only{display:none}
   @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
   @media print{
-    @page{size:A4;margin:18mm 16mm}
-    body{background:#fff}
+    @page{size:A4;margin:0}                 /* margin 0: browser tidak mencetak judul, tanggal, dan alamat web */
+    body{background:#fff;margin:0}
+    main{padding:16mm 16mm 14mm!important}
     header,.tabs,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
     .verif{margin-top:22px;border:1.5px solid #000;border-radius:6px;padding:10px 14px;font-size:12px;page-break-inside:avoid}
     .verif .vt{text-align:center;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
     .verif table td{border:none;padding:3px 4px;font-size:12px}
     .verif table td:first-child{width:130px}
     .verif .ok{font-weight:bold}
-    main{padding:0;max-width:none}
+    main{max-width:none}
     .card{border:none;padding:0}
     .print-only{display:block}
     .kop{text-align:center;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:16px}
