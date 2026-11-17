@@ -237,19 +237,17 @@
       <div class="judul">RENCANA ANGGARAN BIAYA (RAB) PENGADAAN SECARA SWAKELOLA</div>
     </div>
     <h2 class="screen-only">Hasil</h2>
-    <div id="empty" class="empty">Lengkapi data, lalu klik Generate RAB untuk melihat hasil.</div>
-    <div id="result" class="hidden">
+        <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <table id="tbl"></table>
       <div id="status" class="status"></div>
       <div class="print-only verif" id="verif"></div>
     </div>
     <div class="actions">
-      <button class="btn primary" id="btnGenerate" disabled>Generate RAB</button>
+      <button class="btn primary" id="btnGenerate">Generate RAB</button>
       <button class="btn primary hidden" id="btnPrint">Cetak / PDF</button>
     </div>
     <div class="notice hidden" id="notice"></div>
-    <p class="privacy">Lokasi perangkat wajib aktif untuk membuat RAB. Data kegiatan, lokasi, dan nama pemohon tersimpan sebagai arsip perencanaan desa paling lama 2 tahun dan hanya dapat dilihat admin.</p>
     <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
   </section>
 </main>
@@ -355,6 +353,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   /* ---------- Perhitungan ---------- */
   function hitung(){
+    notice("");
     if (generated) { generated = false; gen = null; berubah = true; }
     var nilai = parseMoney($("nilai").value);
     var sewa = parseMoney($("sewa").value);
@@ -434,21 +433,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   /* ---------- Tampilan: hasil hanya muncul setelah Generate ---------- */
   function render(){
-    var dm = dimensi();
-    var siap = !!(last && last.cukup && dm);
-    $("btnGenerate").disabled = !siap;
     $("btnGenerate").classList.toggle("hidden", generated);
     $("btnPrint").classList.toggle("hidden", !generated);
     $("result").classList.toggle("hidden", !generated);
-    $("empty").classList.toggle("hidden", generated);
-    if (!generated) {
-      var pesan;
-      if (!dm) pesan = "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
-      else if (!last) pesan = mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
-      else if (!last.cukup) pesan = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
-      else pesan = "Data lengkap. Klik Generate RAB untuk menyusun hasil.";
-      $("empty").textContent = (berubah ? "Data berubah. " : "") + pesan;
-    }
+    if (generated) notice("");
+  }
+  /* alasan belum bisa Generate; kosong berarti siap */
+  function alasanBelumSiap(){
+    if (!dimensi()) return "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
+    if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
+    if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
+    return "";
   }
   function notice(msg){
     var n = $("notice");
@@ -596,7 +591,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function fmtAkurasi(m){ return m >= 1000 ? "± " + angka(m / 1000, 1) + " km" : "± " + Math.round(m) + " m"; }
 
   $("btnGenerate").addEventListener("click", function(){
-    if ($("btnGenerate").disabled) return;
+    var alasan = alasanBelumSiap();
+    if (alasan) { notice(alasan); return; }
     notice("");
     $("chkSetuju").checked = false; $("btnLanjut").disabled = true;
     show("ovConsent", true);
