@@ -3,7 +3,7 @@
 -- Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur
 --
 -- Jalankan SEKALI di Supabase: SQL Editor > New query > tempel > Run
--- WAJIB: ganti EMAIL_ADMIN_KAMU@gmail.com di bagian 3 dengan email admin
+-- Email admin sudah diisi di bagian 3: lamri96sp@gmail.com
 -- =====================================================================
 
 -- 1. TABEL ARSIP RAB ---------------------------------------------------
@@ -60,9 +60,9 @@ create table if not exists public.rab_admin (
   email text primary key
 );
 
--- GANTI email di bawah ini dengan email akun admin di Supabase Auth
+-- Email akun admin di Supabase Auth
 insert into public.rab_admin (email)
-values ('EMAIL_ADMIN_KAMU@gmail.com')
+values ('lamri96sp@gmail.com')
 on conflict do nothing;
 
 create or replace function public.is_rab_admin()
