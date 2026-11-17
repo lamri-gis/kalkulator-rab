@@ -129,10 +129,10 @@
     <h2>Data Kegiatan</h2>
     <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
 
-    <label for="nama">Nama Kegiatan</label>
+    <label for="nama">Nama Kegiatan (wajib, minimal 2 kata)</label>
     <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
 
-    <label>Ukuran Keluaran/Output (opsional)</label>
+    <label>Ukuran Keluaran/Output (wajib, minimal Panjang)</label>
     <div class="dim">
       <span class="dl">Panjang</span>
       <input id="dimP" type="text" inputmode="decimal" maxlength="12" placeholder="0">
@@ -200,7 +200,7 @@
       </div>
     </div>
 
-    <label for="rt">Lokasi RT</label>
+    <label for="rt">Lokasi RT (wajib)</label>
     <div class="prefix rt"><span>RT.</span><input id="rt" type="text" inputmode="numeric" maxlength="3" placeholder="02"></div>
     <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
   </section>
@@ -440,6 +440,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
   /* alasan belum bisa Generate; kosong berarti siap */
   function alasanBelumSiap(){
+    var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
+    if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
+    if (!rtLabel()) return "Isi lokasi RT.";
     if (!dimensi()) return "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
     if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
     if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
