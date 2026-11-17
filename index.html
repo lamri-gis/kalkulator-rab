@@ -67,6 +67,10 @@
   .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
   .btn.primary{background:var(--blue);color:#fff}
   .btn:disabled{opacity:.45;cursor:not-allowed}
+  .pbj{margin-top:14px;border:1px dashed var(--blue);border-radius:8px;padding:10px 12px;background:#f7fbff}
+  .pbj-t{font-size:13px;font-weight:bold;color:var(--blue);margin-bottom:6px}
+  .pbj-r{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
+  .pbj-r.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px}
   .notice{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--badbg);color:var(--bad);font-size:13px;font-weight:bold;text-align:center}
   .overlay{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
   .overlay.hidden{display:none}
@@ -248,6 +252,7 @@
         <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <table id="tbl"></table>
+      <div class="pbj screen-only" id="pbj"></div>
       <div id="status" class="status"></div>
       <div class="print-only verif" id="verif"></div>
     </div>
@@ -430,6 +435,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("tbl").innerHTML = rows.map(function(x){
       return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
     }).join("");
+
+    /* PBJ Murni (tanpa pajak): hanya tampil di layar, tidak ikut dicetak */
+    var pbj = [["Bahan/Material", r.material]];
+    if (r.sewa > 0) pbj.push(["Sewa Peralatan", r.sewa]);
+    if (r.sewa > 0) pbj.push(["Jumlah PBJ Murni", r.material + r.sewa]);
+    $("pbj").innerHTML = '<div class="pbj-t">PBJ Murni (tanpa pajak)</div>' +
+      pbj.map(function(x, i){ return '<div class="pbj-r' + (i === 2 ? ' tot' : '') + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
 
     var st = $("status");
     st.className = "status " + (r.aman ? "ok" : "bad");
