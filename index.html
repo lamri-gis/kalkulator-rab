@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator RAB Desa | by Lamri, S.P.</title>
+<meta name="description" content="Kalkulator RAB kegiatan desa: hitung Total RAB dari material atau rincian dari pagu. Disusun oleh Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam.">
+<meta name="author" content="Lamri, S.P.">
+<style>
+  :root{
+    --navy:#0b3954; --blue:#1f4e78; --soft:#eef4fa; --line:#d6e0ea;
+    --text:#1d2733; --muted:#5f6b78; --ok:#1e7d3a; --okbg:#e6f4ea;
+    --bad:#b3261e; --badbg:#fdecea; --input:#fffbe6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);line-height:1.45}
+  header{background:var(--navy);color:#fff;padding:22px 16px 18px;text-align:center}
+  header h1{margin:0;font-size:22px;letter-spacing:.3px}
+  header p{margin:6px 0 0;font-size:13px;opacity:.85}
+  .brand{display:inline-block;margin-top:10px;font-size:12px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px}
+  .brand a{color:#fff}
+  main{max-width:760px;margin:0 auto;padding:18px 14px 40px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px;font-weight:bold;color:var(--blue);cursor:pointer}
+  .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+  .card h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
+  .card .sub{margin:0 0 6px;font-size:13px;color:var(--muted)}
+  label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
+  input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
+  input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .prefix{position:relative}
+  .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+  .prefix.rp input{padding-left:40px;font-weight:bold}
+  .prefix.rt input{padding-left:44px}
+  .fixed{margin-top:6px;font-size:12px;color:var(--muted)}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pct{position:relative}
+  .pct input{padding-right:28px;text-align:right}
+  .pct span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  details{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+  summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:bold}
+  .note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  td{padding:11px 6px;border-bottom:1px solid #edf1f5}
+  td.v{text-align:right;font-weight:bold;white-space:nowrap}
+  tr.total td{background:var(--soft);font-size:17px;color:var(--navy);border-bottom:none}
+  tr.main td{font-size:16px}
+  .info td{font-size:13px;padding:5px 6px;border:none;color:var(--muted)}
+  .info td:first-child{width:120px}
+  .info{margin-bottom:8px}
+  .status{margin-top:14px;padding:11px;border-radius:8px;text-align:center;font-weight:bold;font-size:14px}
+  .status.ok{background:var(--okbg);color:var(--ok)}
+  .status.bad{background:var(--badbg);color:var(--bad)}
+  .empty{color:var(--muted);text-align:center;padding:18px 6px;font-size:14px}
+  .actions{display:flex;gap:10px;margin-top:14px}
+  .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+  .hidden{display:none}
+  footer{text-align:center;font-size:12px;color:var(--muted);padding:0 16px 30px}
+  footer a{color:var(--blue)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1d2733;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+  .print-only{display:none}
+  @media (max-width:520px){ .grid3{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
+  @media print{
+    @page{size:A4;margin:18mm 16mm}
+    body{background:#fff}
+    header,.tabs,.input-card,.actions,.privacy,footer,.toast,.screen-only{display:none!important}
+    main{padding:0;max-width:none}
+    .card{border:none;padding:0}
+    .print-only{display:block}
+    .kop{text-align:center;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:16px}
+    .kop .l1{font-size:15px;font-weight:bold}
+    .kop .l2{font-size:17px;font-weight:bold}
+    .kop .l3{font-size:12px}
+    .judul{text-align:center;font-weight:bold;font-size:15px;margin-bottom:12px;text-decoration:underline}
+    .info td{color:#000;font-size:13px}
+    td{border-bottom:1px solid #999}
+    tr.total td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .status{border:1px solid #999}
+    .sign{margin-top:36px;font-size:10px;color:#555;text-align:center;border-top:1px solid #ccc;padding-top:6px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Kalkulator RAB Desa</h1>
+  <p>Hitung RAB kegiatan dengan cepat, material tetap aman</p>
+  <div class="brand">by <a href="https://lamri.vercel.app" target="_blank" rel="noopener">Lamri, S.P.</a> &middot; Kaur Perencanaan Desa Susuk Dalam</div>
+</header>
+
+<main>
+  <div class="tabs">
+    <button class="tab active" data-mode="material">Dari Material</button>
+    <button class="tab" data-mode="pagu">Dari Pagu</button>
+  </div>
+
+  <section class="card input-card">
+    <h2>Data Kegiatan</h2>
+    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</p>
+
+    <label for="nama">Nama Kegiatan</label>
+    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Pembangunan Drainase">
+
+    <div class="row2">
+      <div>
+        <label for="dana">Jenis Dana</label>
+        <select id="dana">
+          <option value="">Pilih jenis dana</option>
+          <option value="DDS - Dana Desa">DDS - Dana Desa</option>
+          <option value="ADD - Alokasi Dana Desa">ADD - Alokasi Dana Desa</option>
+          <option value="PBH - Bagi Hasil Pajak dan Retribusi">PBH - Bagi Hasil Pajak dan Retribusi</option>
+          <option value="PAD - Pendapatan Asli Desa">PAD - Pendapatan Asli Desa</option>
+          <option value="Bantuan Keuangan Provinsi">Bantuan Keuangan Provinsi</option>
+          <option value="Bantuan Keuangan Kabupaten">Bantuan Keuangan Kabupaten</option>
+          <option value="SiLPA">SiLPA</option>
+          <option value="Lain-lain">Lain-lain</option>
+        </select>
+      </div>
+      <div>
+        <label for="tahun">Tahun Anggaran</label>
+        <input id="tahun" type="text" inputmode="numeric" maxlength="4">
+      </div>
+    </div>
+
+    <label for="rt">Lokasi RT</label>
+    <div class="prefix rt"><span>RT.</span><input id="rt" type="text" inputmode="numeric" maxlength="3" placeholder="02"></div>
+    <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
+  </section>
+
+  <section class="card input-card">
+    <h2 id="inTitle">Input Material</h2>
+    <p class="sub" id="inSub">Masukkan nilai material tanpa pajak. Total RAB keluar otomatis dan material tidak berkurang.</p>
+
+    <label for="nilai" id="nilaiLabel">Total Material (tanpa pajak)</label>
+    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+
+    <details>
+      <summary>Pengaturan persentase</summary>
+      <div class="grid3">
+        <div><label for="pTukang">Upah Tukang</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div></div>
+        <div><label for="pTpk">TPK</label><div class="pct"><input id="pTpk" type="text" inputmode="decimal" value="3"><span>%</span></div></div>
+        <div><label for="pPajak">Pajak Material</label><div class="pct"><input id="pPajak" type="text" inputmode="decimal" value="12,5"><span>%</span></div></div>
+      </div>
+      <p class="note">Tukang dan TPK dihitung dari total. Pajak hanya dikenakan pada material. Persentase menyesuaikan ketentuan daerah.</p>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="print-only">
+      <div class="kop">
+        <div class="l1">PEMERINTAH KABUPATEN KUTAI TIMUR</div>
+        <div class="l1">KECAMATAN SANDARAN</div>
+        <div class="l2">DESA SUSUK DALAM</div>
+      </div>
+      <div class="judul">RINCIAN RENCANA ANGGARAN BIAYA (RAB)</div>
+    </div>
+    <h2 class="screen-only">Hasil</h2>
+    <div id="empty" class="empty">Isi nilai material atau pagu untuk melihat hasil.</div>
+    <div id="result" class="hidden">
+      <table class="info" id="info"></table>
+      <table id="tbl"></table>
+      <div id="status" class="status"></div>
+    </div>
+    <div class="actions">
+      <button class="btn" id="btnCopy" disabled>Salin Hasil</button>
+      <button class="btn primary" id="btnPrint" disabled>Cetak / PDF</button>
+    </div>
+    <p class="privacy">Data kegiatan yang disalin atau dicetak tersimpan untuk arsip perencanaan desa.</p>
+    <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
+  </section>
+</main>
+
+<footer>
+  Disusun oleh <b>Lamri, S.P.</b>, Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur<br>
+  <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
+const SUPABASE_URL = "ISI_PROJECT_URL";
+const SUPABASE_ANON_KEY = "ISI_ANON_PUBLIC_KEY";
+/* ========================================================================================== */
+
+(function(){
+  var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
+  var mode = "material", last = null;
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
+  var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
+  var parsePct = function(s){ var v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? 0 : v/100; };
+  var pctLabel = function(x){ return (Math.round(x*1000)/10).toString().replace(".", ",") + "%"; };
+  var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
+
+  $("tahun").value = new Date().getFullYear();
+
+  function rtLabel(){
+    var d = $("rt").value.replace(/\D/g,"");
+    return d ? "RT." + (d.length < 2 ? "0" + d : d) : "";
+  }
+  function lokasiLengkap(){
+    var rt = rtLabel();
+    return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
+  }
+
+  /* ---------- Perhitungan ---------- */
+  function hitung(){
+    var nilai = parseMoney($("nilai").value);
+    var t = parsePct($("pTukang").value), k = parsePct($("pTpk").value), p = parsePct($("pPajak").value);
+    $("lokasiPreview").textContent = lokasiLengkap();
+    if (!nilai || t + k >= 1) { tampil(null); return; }
+
+    var total, tukang, tpk;
+    if (mode === "material") {
+      total = Math.ceil(((nilai * (1 + p)) / (1 - t - k)) - 1e-7);
+      tukang = Math.floor(total * t + 1e-7);
+      tpk = Math.floor(total * k + 1e-7);
+    } else {
+      total = nilai;
+      tukang = Math.round(total * t);
+      tpk = Math.round(total * k);
+    }
+    var sisa = total - tukang - tpk;
+    var material = Math.floor(sisa / (1 + p) + 1e-7);
+    var pajak = sisa - material;
+    var aman = mode === "material" ? material >= nilai : (tukang + tpk + pajak + material) === total;
+    tampil({ nilai:nilai, total:total, tukang:tukang, tpk:tpk, pajak:pajak, material:material, aman:aman, t:t, k:k, p:p });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  function tampil(r){
+    last = r;
+    $("btnCopy").disabled = $("btnPrint").disabled = !r;
+    if (!r) { $("empty").classList.remove("hidden"); $("result").classList.add("hidden"); return; }
+    $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
+
+    var info = [
+      ["Nama Kegiatan", $("nama").value.trim() || "-"],
+      ["Jenis Dana", $("dana").value || "-"],
+      ["Tahun Anggaran", $("tahun").value || "-"],
+      ["Lokasi", lokasiLengkap()],
+      ["Dasar Hitung", mode === "material" ? "Nilai Material" : "Pagu Anggaran"]
+    ];
+    $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
+
+    var rows = [
+      ["Upah Tukang (" + pctLabel(r.t) + ")", r.tukang, ""],
+      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
+      ["Pajak Material (" + pctLabel(r.p) + ")", r.pajak, ""],
+      [mode === "material" ? "Material" : "Material Tersedia", r.material, "main"],
+      [mode === "material" ? "TOTAL RAB" : "PAGU ANGGARAN", r.total, "total"]
+    ];
+    $("tbl").innerHTML = rows.map(function(x){
+      return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
+    }).join("");
+
+    var st = $("status");
+    st.className = "status " + (r.aman ? "ok" : "bad");
+    st.textContent = mode === "material"
+      ? (r.aman ? "AMAN, material utuh" : "Periksa kembali, material kurang")
+      : (r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu");
+  }
+
+  /* ---------- Arsip & kunjungan ke Supabase ---------- */
+  function kirim(tabel, data){
+    if (!dbReady) return;
+    try {
+      fetch(SUPABASE_URL + "/rest/v1/" + tabel, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": "Bearer " + SUPABASE_ANON_KEY,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(data)
+      }).catch(function(){});
+    } catch(e) {}
+  }
+
+  function arsip(aksi){
+    if (!last) return;
+    var th = parseInt($("tahun").value, 10);
+    kirim("rab_arsip", {
+      aksi: aksi,
+      mode: mode,
+      nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
+      jenis_dana: $("dana").value || null,
+      rt: rtLabel() || null,
+      tahun: (th >= 2000 && th <= 2100) ? th : null,
+      nilai_input: last.nilai,
+      tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
+      material: last.material, total: last.total,
+      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p
+    });
+  }
+
+  (function catatKunjungan(){
+    try { if (sessionStorage.getItem("rab_v")) return; sessionStorage.setItem("rab_v","1"); } catch(e) {}
+    var sumber = "langsung";
+    try { if (document.referrer) sumber = new URL(document.referrer).hostname.slice(0,120); } catch(e) {}
+    kirim("rab_kunjungan", {
+      path: location.pathname.slice(0,100),
+      perangkat: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "hp" : "laptop",
+      sumber: sumber
+    });
+  })();
+
+  /* ---------- Mode & event ---------- */
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === m); });
+    if (m === "material") {
+      $("inTitle").textContent = "Input Material";
+      $("inSub").textContent = "Masukkan nilai material tanpa pajak. Total RAB keluar otomatis dan material tidak berkurang.";
+      $("nilaiLabel").textContent = "Total Material (tanpa pajak)";
+    } else {
+      $("inTitle").textContent = "Input Pagu";
+      $("inSub").textContent = "Masukkan pagu anggaran. Rincian tukang, TPK, pajak, dan material yang bisa dibelanjakan keluar otomatis.";
+      $("nilaiLabel").textContent = "Pagu Anggaran";
+    }
+    $("nilai").value = "";
+    hitung();
+  }
+  document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
+
+  $("nilai").addEventListener("input", function(e){
+    var n = parseMoney(e.target.value);
+    e.target.value = n ? n.toLocaleString("id-ID") : "";
+    hitung();
+  });
+  $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
+  $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
+  ["pTukang","pTpk","pPajak","nama"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  $("dana").addEventListener("change", hitung);
+
+  function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(function(){ t.classList.remove("show"); }, 1800); }
+
+  $("btnCopy").addEventListener("click", function(){
+    if (!last) return;
+    var r = last;
+    var lines = [
+      "RINCIAN RAB KEGIATAN",
+      "Nama Kegiatan  : " + ($("nama").value.trim() || "-"),
+      "Jenis Dana     : " + ($("dana").value || "-"),
+      "Tahun Anggaran : " + ($("tahun").value || "-"),
+      "Lokasi         : " + lokasiLengkap(),
+      "Dasar Hitung   : " + (mode === "material" ? "Nilai Material" : "Pagu Anggaran"),
+      "",
+      "Upah Tukang (" + pctLabel(r.t) + ") : " + fmt(r.tukang),
+      "TPK (" + pctLabel(r.k) + ") : " + fmt(r.tpk),
+      "Pajak Material (" + pctLabel(r.p) + ") : " + fmt(r.pajak),
+      "Material : " + fmt(r.material),
+      (mode === "material" ? "TOTAL RAB" : "PAGU") + " : " + fmt(r.total),
+      "",
+      "Kalkulator RAB Desa by Lamri, S.P."
+    ];
+    var text = lines.join("\n");
+    arsip("salin");
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(function(){ toast("Hasil disalin"); }, function(){ fallback(text); });
+    else fallback(text);
+  });
+  function fallback(text){
+    var ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); toast("Hasil disalin"); } catch(e) { toast("Gagal menyalin"); }
+    document.body.removeChild(ta);
+  }
+
+  $("btnPrint").addEventListener("click", function(){
+    if (!last) return;
+    arsip("cetak");
+    setTimeout(function(){ window.print(); }, 150);
+  });
+})();
+</script>
+</body>
+</html>

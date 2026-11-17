@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Kalkulator RAB | by Lamri, S.P.</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{--navy:#0b3954;--blue:#1f4e78;--soft:#eef4fa;--line:#d6e0ea;--text:#1d2733;--muted:#5f6b78;--ok:#1e7d3a;--okbg:#e6f4ea;--bad:#b3261e;--badbg:#fdecea;--warn:#8a5a00;--warnbg:#fff4d6}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);font-size:14px}
+  header{background:var(--navy);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  header h1{margin:0;font-size:18px}
+  header small{opacity:.8;font-size:12px}
+  main{max-width:1200px;margin:0 auto;padding:16px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card h2{margin:0 0 12px;font-size:16px;color:var(--navy)}
+  .login{max-width:380px;margin:60px auto}
+  label{display:block;font-size:12px;font-weight:bold;margin:10px 0 4px;color:var(--muted)}
+  input,select{width:100%;padding:10px;font-size:14px;border:1px solid #c9d4df;border-radius:8px;font-family:inherit;background:#fff}
+  .btn{padding:10px 14px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:13px;cursor:pointer;font-family:inherit}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn.small{padding:5px 9px;font-size:12px}
+  .btn.ok{border-color:var(--ok);color:var(--ok)}
+  .btn.bad{border-color:var(--bad);color:var(--bad)}
+  .btn.ghost{border-color:#fff;color:#fff;background:transparent}
+  .err{color:var(--bad);font-size:13px;margin-top:10px;min-height:18px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stat .n{font-size:24px;font-weight:bold;color:var(--navy)}
+  .stat .l{font-size:12px;color:var(--muted);margin-top:2px}
+  .chart{display:flex;align-items:flex-end;gap:6px;height:160px;padding-top:10px;border-bottom:1px solid var(--line)}
+  .bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar .b{width:100%;max-width:34px;background:var(--blue);border-radius:4px 4px 0 0;min-height:2px}
+  .bar .c{font-size:11px;color:var(--muted);margin-bottom:3px}
+  .labels{display:flex;gap:6px}
+  .labels span{flex:1;text-align:center;font-size:10px;color:var(--muted);padding-top:4px}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  .filters{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .tablewrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:1000px}
+  th{background:var(--soft);text-align:left;padding:9px 8px;font-size:12px;color:var(--navy);border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:8px;border-bottom:1px solid #edf1f5;vertical-align:top}
+  td.num{text-align:right;white-space:nowrap}
+  .pill{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:bold}
+  .pill.baru{background:var(--warnbg);color:var(--warn)}
+  .pill.real{background:var(--okbg);color:var(--ok)}
+  .pill.abaikan{background:#eceff2;color:var(--muted)}
+  .act{display:flex;gap:4px;flex-wrap:wrap}
+  .muted{color:var(--muted)}
+  .hidden{display:none}
+  footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 16px 30px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Admin Kalkulator RAB Desa</h1>
+    <small>by Lamri, S.P. &middot; Kaur Perencanaan Desa Susuk Dalam</small>
+  </div>
+  <div id="userBox" class="hidden">
+    <small id="userEmail"></small>
+    <button class="btn ghost small" id="btnLogout">Keluar</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<section id="viewLogin" class="card login">
+  <h2>Masuk Admin</h2>
+  <form id="formLogin">
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+    <div style="margin-top:14px"><button class="btn primary" type="submit" style="width:100%">Masuk</button></div>
+    <div class="err" id="loginErr"></div>
+  </form>
+</section>
+
+<!-- DASHBOARD -->
+<main id="viewDash" class="hidden">
+  <div class="stats">
+    <div class="stat"><div class="n" id="sToday">-</div><div class="l">Kunjungan hari ini</div></div>
+    <div class="stat"><div class="n" id="s7">-</div><div class="l">Kunjungan 7 hari</div></div>
+    <div class="stat"><div class="n" id="sAll">-</div><div class="l">Total kunjungan</div></div>
+    <div class="stat"><div class="n" id="sArsip">-</div><div class="l">Total RAB tersimpan</div></div>
+    <div class="stat"><div class="n" id="sBaru">-</div><div class="l">Belum diseleksi</div></div>
+    <div class="stat"><div class="n" id="sReal">-</div><div class="l">Ditandai Real</div></div>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <h2>Kunjungan 14 Hari Terakhir</h2>
+    <div class="chart" id="chart"></div>
+    <div class="labels" id="chartLabels"></div>
+    <div class="legend" id="chartInfo"></div>
+  </section>
+
+  <section class="card">
+    <h2>Arsip RAB</h2>
+    <div class="filters">
+      <div><label for="fStatus">Status</label>
+        <select id="fStatus"><option value="">Semua</option><option value="baru">Baru</option><option value="real">Real</option><option value="abaikan">Abaikan</option></select></div>
+      <div><label for="fDana">Jenis Dana</label>
+        <select id="fDana"><option value="">Semua</option>
+          <option>DDS - Dana Desa</option><option>ADD - Alokasi Dana Desa</option><option>PBH - Bagi Hasil Pajak dan Retribusi</option>
+          <option>PAD - Pendapatan Asli Desa</option><option>Bantuan Keuangan Provinsi</option><option>Bantuan Keuangan Kabupaten</option>
+          <option>SiLPA</option><option>Lain-lain</option></select></div>
+      <div><label for="fRt">RT</label><input id="fRt" type="text" inputmode="numeric" placeholder="contoh: 2"></div>
+      <div><label for="fTahun">Tahun</label><input id="fTahun" type="text" inputmode="numeric" placeholder="contoh: 2027"></div>
+      <div><label for="fAksi">Aksi</label>
+        <select id="fAksi"><option value="">Semua</option><option value="cetak">Cetak</option><option value="salin">Salin</option></select></div>
+      <div><label for="fCari">Cari Nama Kegiatan</label><input id="fCari" type="text" placeholder="kata kunci"></div>
+    </div>
+    <div class="tools">
+      <button class="btn primary" id="btnFilter">Terapkan Filter</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <button class="btn" id="btnCsv">Export CSV (hasil filter)</button>
+      <button class="btn ok" id="btnCsvReal">Export CSV (Real saja)</button>
+      <span class="muted" id="countInfo" style="align-self:center"></span>
+    </div>
+    <div class="tablewrap" style="margin-top:12px">
+      <table>
+        <thead><tr>
+          <th>Waktu</th><th>Nama Kegiatan</th><th>Jenis Dana</th><th>RT</th><th>Tahun</th><th>Dasar</th><th>Aksi</th>
+          <th>Input</th><th>Total</th><th>Material</th><th>Status</th><th>Seleksi</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur</footer>
+
+<script>
+/* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
+const SUPABASE_URL = "ISI_PROJECT_URL";
+const SUPABASE_ANON_KEY = "ISI_ANON_PUBLIC_KEY";
+/* ========================================================================================== */
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const $ = (id) => document.getElementById(id);
+const rp = (n) => n == null ? "-" : "Rp " + Number(n).toLocaleString("id-ID");
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tgl = (d) => new Date(d).toLocaleString("id-ID", {day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+let rows = [];
+
+/* ---------- Auth ---------- */
+async function cekSesi(){
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return tampilLogin();
+  const { data: admin, error } = await sb.rpc("is_rab_admin");
+  if (error || !admin) {
+    await sb.auth.signOut();
+    tampilLogin("Akun ini bukan admin.");
+    return;
+  }
+  $("userEmail").textContent = data.session.user.email + " ";
+  $("viewLogin").classList.add("hidden");
+  $("viewDash").classList.remove("hidden");
+  $("userBox").classList.remove("hidden");
+  muatSemua();
+}
+function tampilLogin(msg){
+  $("viewDash").classList.add("hidden");
+  $("userBox").classList.add("hidden");
+  $("viewLogin").classList.remove("hidden");
+  $("loginErr").textContent = msg || "";
+}
+$("formLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("loginErr").textContent = "Memeriksa...";
+  const { error } = await sb.auth.signInWithPassword({ email: $("email").value.trim(), password: $("password").value });
+  if (error) { $("loginErr").textContent = "Email atau password salah."; return; }
+  $("password").value = "";
+  cekSesi();
+});
+$("btnLogout").addEventListener("click", async () => { await sb.auth.signOut(); tampilLogin(); });
+
+/* ---------- Statistik ---------- */
+function awalHari(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate() - offset); return d; }
+
+async function hitungKunjungan(sejak){
+  let q = sb.from("rab_kunjungan").select("id", { count: "exact", head: true });
+  if (sejak) q = q.gte("created_at", sejak.toISOString());
+  const { count } = await q;
+  return count || 0;
+}
+async function hitungArsip(status){
+  let q = sb.from("rab_arsip").select("id", { count: "exact", head: true });
+  if (status) q = q.eq("status", status);
+  const { count } = await q;
+  return count || 0;
+}
+
+async function muatStatistik(){
+  const [today, w7, all, ars, baru, real] = await Promise.all([
+    hitungKunjungan(awalHari(0)), hitungKunjungan(awalHari(6)), hitungKunjungan(null),
+    hitungArsip(null), hitungArsip("baru"), hitungArsip("real")
+  ]);
+  $("sToday").textContent = today.toLocaleString("id-ID");
+  $("s7").textContent = w7.toLocaleString("id-ID");
+  $("sAll").textContent = all.toLocaleString("id-ID");
+  $("sArsip").textContent = ars.toLocaleString("id-ID");
+  $("sBaru").textContent = baru.toLocaleString("id-ID");
+  $("sReal").textContent = real.toLocaleString("id-ID");
+}
+
+async function muatGrafik(){
+  const mulai = awalHari(13);
+  const { data } = await sb.from("rab_kunjungan").select("created_at,perangkat").gte("created_at", mulai.toISOString()).limit(10000);
+  const hari = [];
+  for (let i = 13; i >= 0; i--) { const d = awalHari(i); hari.push({ key: d.toDateString(), label: d.getDate() + "/" + (d.getMonth()+1), n: 0 }); }
+  let hp = 0, laptop = 0;
+  (data || []).forEach(r => {
+    const k = new Date(r.created_at).toDateString();
+    const h = hari.find(x => x.key === k); if (h) h.n++;
+    if (r.perangkat === "hp") hp++; else laptop++;
+  });
+  const max = Math.max(1, ...hari.map(h => h.n));
+  $("chart").innerHTML = hari.map(h => `<div class="bar"><div class="c">${h.n || ""}</div><div class="b" style="height:${(h.n/max)*100}%"></div></div>`).join("");
+  $("chartLabels").innerHTML = hari.map(h => `<span>${h.label}</span>`).join("");
+  $("chartInfo").textContent = `Perangkat 14 hari: HP ${hp}, Laptop ${laptop}`;
+}
+
+/* ---------- Arsip ---------- */
+function bacaFilter(){
+  const rt = $("fRt").value.replace(/\D/g,"");
+  return {
+    status: $("fStatus").value, dana: $("fDana").value, aksi: $("fAksi").value,
+    rt: rt ? "RT." + (rt.length < 2 ? "0" + rt : rt) : "",
+    tahun: $("fTahun").value.replace(/\D/g,""), cari: $("fCari").value.trim()
+  };
+}
+async function ambilArsip(f){
+  let q = sb.from("rab_arsip").select("*").order("created_at", { ascending: false }).limit(1000);
+  if (f.status) q = q.eq("status", f.status);
+  if (f.dana) q = q.eq("jenis_dana", f.dana);
+  if (f.aksi) q = q.eq("aksi", f.aksi);
+  if (f.rt) q = q.eq("rt", f.rt);
+  if (f.tahun) q = q.eq("tahun", parseInt(f.tahun, 10));
+  if (f.cari) q = q.ilike("nama_kegiatan", "%" + f.cari.replace(/[%_]/g, "") + "%");
+  const { data, error } = await q;
+  if (error) { alert("Gagal memuat arsip: " + error.message); return []; }
+  return data || [];
+}
+async function muatArsip(){
+  rows = await ambilArsip(bacaFilter());
+  $("countInfo").textContent = rows.length + " data" + (rows.length >= 1000 ? " (maksimal 1000, persempit filter)" : "");
+  $("tbody").innerHTML = rows.length ? rows.map(r => `
+    <tr data-id="${r.id}">
+      <td>${esc(tgl(r.created_at))}</td>
+      <td>${esc(r.nama_kegiatan || "-")}</td>
+      <td>${esc(r.jenis_dana || "-")}</td>
+      <td>${esc(r.rt || "-")}</td>
+      <td>${esc(r.tahun || "-")}</td>
+      <td>${r.mode === "material" ? "Material" : "Pagu"}</td>
+      <td>${r.aksi === "cetak" ? "Cetak" : "Salin"}</td>
+      <td class="num">${rp(r.nilai_input)}</td>
+      <td class="num">${rp(r.total)}</td>
+      <td class="num">${rp(r.material)}</td>
+      <td><span class="pill ${esc(r.status)}">${esc(r.status)}</span></td>
+      <td><div class="act">
+        <button class="btn small ok" data-act="real">Real</button>
+        <button class="btn small" data-act="abaikan">Abaikan</button>
+        <button class="btn small bad" data-act="hapus">Hapus</button>
+      </div></td>
+    </tr>`).join("") : `<tr><td colspan="12" class="muted" style="text-align:center;padding:20px">Belum ada data.</td></tr>`;
+}
+
+$("tbody").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const id = btn.closest("tr").dataset.id, act = btn.dataset.act;
+  btn.disabled = true;
+  let error;
+  if (act === "hapus") {
+    if (!confirm("Hapus data ini permanen?")) { btn.disabled = false; return; }
+    ({ error } = await sb.from("rab_arsip").delete().eq("id", id));
+  } else {
+    ({ error } = await sb.from("rab_arsip").update({ status: act }).eq("id", id));
+  }
+  if (error) { alert("Gagal: " + error.message); btn.disabled = false; return; }
+  await Promise.all([muatArsip(), muatStatistik()]);
+});
+
+/* ---------- CSV ---------- */
+function unduhCsv(data, nama){
+  const kolom = ["Waktu","Nama Kegiatan","Jenis Dana","RT","Tahun","Dasar Hitung","Aksi","Nilai Input","Upah Tukang","TPK","Pajak Material","Material","Total","% Tukang","% TPK","% Pajak","Status"];
+  const q = (v) => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
+  const baris = data.map(r => [
+    tgl(r.created_at), r.nama_kegiatan, r.jenis_dana, r.rt, r.tahun, r.mode === "material" ? "Material" : "Pagu",
+    r.aksi, r.nilai_input, r.tukang, r.tpk, r.pajak, r.material, r.total,
+    r.p_tukang * 100, r.p_tpk * 100, r.p_pajak * 100, r.status
+  ].map(q).join(";"));
+  const csv = "﻿" + kolom.map(q).join(";") + "\n" + baris.join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = nama; document.body.appendChild(a); a.click(); a.remove();
+}
+const stamp = () => new Date().toISOString().slice(0,10);
+$("btnCsv").addEventListener("click", () => unduhCsv(rows, `arsip-rab-${stamp()}.csv`));
+$("btnCsvReal").addEventListener("click", async () => {
+  const f = bacaFilter(); f.status = "real";
+  unduhCsv(await ambilArsip(f), `arsip-rab-real-${stamp()}.csv`);
+});
+
+/* ---------- Filter ---------- */
+$("btnFilter").addEventListener("click", muatArsip);
+$("btnReset").addEventListener("click", () => {
+  ["fStatus","fDana","fAksi"].forEach(id => $(id).value = "");
+  ["fRt","fTahun","fCari"].forEach(id => $(id).value = "");
+  muatArsip();
+});
+["fRt","fTahun","fCari"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") muatArsip(); }));
+
+function muatSemua(){ muatStatistik(); muatGrafik(); muatArsip(); }
+
+cekSesi();
+</script>
+</body>
+</html>
