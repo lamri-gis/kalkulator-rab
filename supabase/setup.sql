@@ -45,6 +45,7 @@ create table if not exists public.rab_arsip (
   lat            numeric(9,6) check (lat between -90 and 90),
   lng            numeric(9,6) check (lng between -180 and 180),
   akurasi        numeric(10,1) check (akurasi >= 0 and akurasi < 100000000),
+  percobaan      smallint check (percobaan in (1, 2)),
   dicetak        boolean not null default false,
   waktu_cetak    timestamptz,
   nama_pemohon   text check (char_length(nama_pemohon) between 3 and 100),
