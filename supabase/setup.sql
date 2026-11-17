@@ -32,6 +32,8 @@ create table if not exists public.rab_arsip (
   pajak_sewa     bigint check (pajak_sewa >= 0),
   total          bigint check (total >= 0),
   p_tukang       numeric(6,4) check (p_tukang between 0 and 1),
+  -- upah tenaga kerja maksimal 30%
+  constraint rab_arsip_p_tukang_maks check (p_tukang is null or p_tukang <= 0.30),
   p_tpk          numeric(6,4) check (p_tpk between 0 and 1),
   p_pajak        numeric(6,4) check (p_pajak between 0 and 1),
   p_pajak_sewa   numeric(6,4) check (p_pajak_sewa between 0 and 1),
