@@ -29,7 +29,10 @@
   label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
   input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
   input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+  .row2 > div{min-width:0}
+  select{text-overflow:ellipsis}
+  @media (max-width:600px){ .row2{grid-template-columns:1fr;gap:0} }
   .dim{display:grid;grid-template-columns:110px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
   .dim .dl{font-size:13px;font-weight:bold}
   .dim input{text-align:right}
