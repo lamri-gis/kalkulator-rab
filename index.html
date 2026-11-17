@@ -30,6 +30,12 @@
   input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
   input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .dim{display:grid;grid-template-columns:110px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
+  .dim .dl{font-size:13px;font-weight:bold}
+  .dim input{text-align:right}
+  select.unit{padding:12px 8px}
+  #volPreview{font-weight:bold;color:var(--navy)}
+  @media (max-width:520px){ .dim{grid-template-columns:90px 1fr 72px} }
   .prefix{position:relative}
   .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
   .prefix.rp input{padding-left:40px;font-weight:bold}
@@ -107,18 +113,50 @@
     <label for="nama">Nama Kegiatan</label>
     <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
 
+    <label>Ukuran Keluaran/Output (opsional)</label>
+    <div class="dim">
+      <span class="dl">Panjang</span>
+      <input id="dimP" type="text" inputmode="decimal" maxlength="12" placeholder="0">
+      <select id="uP" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
+    </div>
+    <div class="dim">
+      <span class="dl">Lebar</span>
+      <input id="dimL" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
+      <select id="uL" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
+    </div>
+    <div class="dim">
+      <span class="dl">Tinggi/Tebal</span>
+      <input id="dimT" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
+      <select id="uT" class="unit"><option value="mm">mm</option><option value="cm" selected>cm</option><option value="m">m</option><option value="km">km</option></select>
+    </div>
+    <div class="fixed" id="volPreview">Volume terhitung otomatis dari ukuran.</div>
+
     <div class="row2">
       <div>
-        <label for="volume">Volume (opsional)</label>
-        <input id="volume" type="text" inputmode="decimal" maxlength="12" placeholder="Contoh: 150">
+        <label for="bahanUtama">Bahan Konstruksi Utama</label>
+        <select id="bahanUtama">
+          <option value="">Pilih bahan</option>
+          <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
+          <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
+          <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
+          <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
+          <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
+          <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
+          <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
+          <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
+          <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
+          <option value="Lainnya">Lainnya (ketik sendiri)</option>
+        </select>
+        <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan konstruksi" style="margin-top:8px">
       </div>
       <div>
-        <label for="satuan">Satuan</label>
-        <input id="satuan" type="text" maxlength="20" list="daftarSatuan" placeholder="Pilih atau ketik">
-        <datalist id="daftarSatuan">
-          <option value="m"><option value="m²"><option value="m³"><option value="unit">
-          <option value="titik"><option value="buah"><option value="paket">
-        </datalist>
+        <label for="sifat">Sifat Konstruksi</label>
+        <select id="sifat">
+          <option value="">Pilih sifat</option>
+          <option value="Permanen">Permanen (&gt; 15 tahun)</option>
+          <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
+          <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
+        </select>
       </div>
     </div>
 
@@ -227,10 +265,34 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var rt = rtLabel();
     return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
   }
-  function keluaran(){
-    var v = parseNum($("volume").value), s = $("satuan").value.trim();
-    if (v === null || v <= 0) return "";
-    return v.toLocaleString("id-ID") + (s ? " " + s : "");
+  var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
+  function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
+  function dimensi(){
+    var label = ["P","L","T"], ids = [["dimP","uP"],["dimL","uL"],["dimT","uT"]], isi = [];
+    for (var i = 0; i < 3; i++) {
+      var v = parseNum($(ids[i][0]).value), u = $(ids[i][1]).value;
+      if (v !== null && v > 0) isi.push({ lbl:label[i], v:v, u:u, m:v * FAKTOR[u], idx:i });
+    }
+    if (!isi.length || isi[0].idx !== 0) return null;          /* panjang wajib diisi lebih dulu */
+    var vol = 1; isi.forEach(function(d){ vol *= d.m; });
+    var satuan = isi.length === 1 ? "m" : (isi.length === 2 ? "m²" : "m³");
+    var teks = isi.map(function(d){ return d.lbl + " " + angka(d.v, 3) + " " + d.u; }).join(" x ")
+             + (isi.length > 1 || isi[0].u !== "m" ? " = " + angka(vol, 3) + " " + satuan : "");
+    return {
+      teks: teks, volume: vol, satuan: satuan,
+      p: isi[0] ? isi[0].m : null,
+      l: (isi.filter(function(d){ return d.idx === 1; })[0] || {}).m || null,
+      t: (isi.filter(function(d){ return d.idx === 2; })[0] || {}).m || null
+    };
+  }
+  function bahanKonstruksi(){
+    var v = $("bahanUtama").value;
+    if (v === "Lainnya") return $("bahanLain").value.trim();
+    return v;
+  }
+  function sifatLabel(){
+    var v = $("sifat").value;
+    return { "Permanen":"Permanen (> 15 tahun)", "Semi Permanen":"Semi Permanen (5 - 15 tahun)", "Sementara/Darurat":"Sementara/Darurat (< 5 tahun)" }[v] || "";
   }
 
   /* ---------- Perhitungan ---------- */
@@ -240,6 +302,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var t = parsePct($("pTukang").value), k = parsePct($("pTpk").value);
     var p = parsePct($("pPajak").value), ps = parsePct($("pPajakSewa").value);
     $("lokasiPreview").textContent = lokasiLengkap();
+    var dm = dimensi();
+    $("volPreview").textContent = dm ? "Volume: " + angka(dm.volume, 3) + " " + dm.satuan : "Volume terhitung otomatis dari ukuran (isi panjang lebih dulu).";
     if (t + k >= 1) { tampil(null); return; }
     if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
     if (mode === "pagu" && !nilai) { tampil(null); return; }
@@ -277,8 +341,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("empty").classList.add("hidden"); $("result").classList.remove("hidden");
 
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
-    var out = keluaran();
-    if (out) info.push(["Keluaran/Output", out]);
+    var dm = dimensi();
+    if (dm) info.push(["Keluaran/Output", dm.teks]);
+    if (bahanKonstruksi()) info.push(["Bahan Konstruksi", bahanKonstruksi()]);
+    if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
     info.push(
       ["Jenis Dana", $("dana").value || "-"],
       ["Tahun Anggaran", $("tahun").value || "-"],
@@ -335,13 +401,19 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function arsip(aksi){
     if (!last || !last.cukup) return;
     var th = parseInt($("tahun").value, 10);
-    var vol = parseNum($("volume").value);
+    var dm = dimensi();
+    var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
     kirim("rab_arsip", {
       aksi: aksi,
       mode: mode,
       nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
-      volume: (vol !== null && vol > 0 && vol < 1e12) ? Math.round(vol * 100) / 100 : null,
-      satuan: $("satuan").value.trim().slice(0,20) || null,
+      panjang: dm ? r3(dm.p) : null,
+      lebar: dm ? r3(dm.l) : null,
+      tinggi: dm ? r3(dm.t) : null,
+      volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
+      satuan: dm ? dm.satuan : null,
+      bahan_utama: bahanKonstruksi().slice(0,60) || null,
+      sifat_konstruksi: $("sifat").value || null,
       jenis_dana: $("dana").value || null,
       rt: rtLabel() || null,
       tahun: (th >= 2000 && th <= 2100) ? th : null,
@@ -390,8 +462,19 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   });
   $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
   $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  $("volume").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
-  ["pTukang","pTpk","pPajak","pPajakSewa","nama","satuan"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  ["dimP","dimL","dimT"].forEach(function(id){
+    $(id).addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
+  });
+  ["uP","uL","uT","sifat"].forEach(function(id){ $(id).addEventListener("change", hitung); });
+  $("bahanUtama").addEventListener("change", function(e){
+    var opt = e.target.selectedOptions[0];
+    var lain = e.target.value === "Lainnya";
+    $("bahanLain").classList.toggle("hidden", !lain);
+    if (opt && opt.dataset.sifat) $("sifat").value = opt.dataset.sifat;
+    if (lain) $("bahanLain").focus();
+    hitung();
+  });
+  ["pTukang","pTpk","pPajak","pPajakSewa","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("dana").addEventListener("change", hitung);
 
   $("btnPrint").addEventListener("click", function(){
