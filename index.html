@@ -152,7 +152,7 @@
 
     <div class="row2">
       <div>
-        <label for="bahanUtama">Bahan Konstruksi Utama</label>
+        <label for="bahanUtama">Bahan Konstruksi Utama (wajib)</label>
         <select id="bahanUtama">
           <option value="">Pilih bahan</option>
           <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
@@ -169,7 +169,7 @@
         <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan konstruksi" style="margin-top:8px">
       </div>
       <div>
-        <label for="sifat">Sifat Konstruksi</label>
+        <label for="sifat">Sifat Konstruksi (wajib)</label>
         <select id="sifat">
           <option value="">Pilih sifat</option>
           <option value="Permanen">Permanen (&gt; 15 tahun)</option>
@@ -181,7 +181,7 @@
 
     <div class="row2">
       <div>
-        <label for="dana">Jenis Dana</label>
+        <label for="dana">Jenis Dana (wajib)</label>
         <select id="dana">
           <option value="">Pilih jenis dana</option>
           <option value="DD - Dana Desa">DD - Dana Desa</option>
@@ -440,10 +440,15 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
   /* alasan belum bisa Generate; kosong berarti siap */
   function alasanBelumSiap(){
+    /* urutan sesuai urutan kolom di formulir */
     var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
     if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
-    if (!rtLabel()) return "Isi lokasi RT.";
     if (!dimensi()) return "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
+    if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan konstruksi utama.";
+    if (!bahanKonstruksi()) return "Pilih bahan konstruksi utama.";
+    if (!$("sifat").value) return "Pilih sifat konstruksi.";
+    if (!$("dana").value) return "Pilih jenis dana.";
+    if (!rtLabel()) return "Isi lokasi RT.";
     if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
     if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
     return "";
