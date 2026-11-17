@@ -1,691 +1,189 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kalkulator RAB Desa | by Lamri, S.P.</title>
-<meta name="description" content="Kalkulator RAB kegiatan desa: hitung Total RAB dari material atau rincian dari pagu. Disusun oleh Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam.">
-<meta name="author" content="Lamri, S.P.">
-<style>
-  :root{
-    --navy:#0b3954; --blue:#1f4e78; --soft:#eef4fa; --line:#d6e0ea;
-    --text:#1d2733; --muted:#5f6b78; --ok:#1e7d3a; --okbg:#e6f4ea;
-    --bad:#b3261e; --badbg:#fdecea; --input:#fffbe6;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);line-height:1.45}
-  header{background:var(--navy);color:#fff;padding:22px 16px 18px;text-align:center}
-  header h1{margin:0;font-size:22px;letter-spacing:.3px}
-  header p{margin:6px 0 0;font-size:13px;opacity:.85}
-  .brand{display:inline-block;margin-top:10px;font-size:12px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px}
-  .brand a{color:#fff}
-  main{max-width:760px;margin:0 auto;padding:18px 14px 40px}
-  .tabs{display:flex;gap:8px;margin-bottom:14px}
-  .tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px;font-weight:bold;color:var(--blue);cursor:pointer}
-  .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
-  .card h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
-  .card .sub{margin:0 0 6px;font-size:13px;color:var(--muted)}
-  label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
-  input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
-  input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .dim{display:grid;grid-template-columns:110px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
-  .dim .dl{font-size:13px;font-weight:bold}
-  .dim input{text-align:right}
-  select.unit{padding:12px 8px}
-  #volPreview{font-weight:bold;color:var(--navy)}
-  @media (max-width:520px){ .dim{grid-template-columns:90px 1fr 72px} }
-  .prefix{position:relative}
-  .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
-  .prefix.rp input{padding-left:40px;font-weight:bold}
-  .prefix.rt input{padding-left:44px}
-  .fixed{margin-top:6px;font-size:12px;color:var(--muted)}
-  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-  .pct{position:relative}
-  .pct input{padding-right:28px;text-align:right}
-  .pct span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
-  details{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
-  summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:bold}
-  .note{font-size:12px;color:var(--muted);margin:8px 0 0}
-  input.lock{background:#eceff2;color:var(--muted);cursor:not-allowed}
-  input.lock:focus{outline:none;border-color:#c9d4df}
-  .warn{font-size:11px;color:var(--bad);margin-top:4px}
-  table{width:100%;border-collapse:collapse;font-size:15px}
-  td{padding:11px 6px;border-bottom:1px solid #edf1f5}
-  td.v{text-align:right;font-weight:bold;white-space:nowrap}
-  tr.total td{background:var(--soft);font-size:17px;color:var(--navy);border-bottom:none}
-  tr.main td{font-size:16px}
-  .info td{font-size:13px;padding:5px 6px;border:none;color:var(--muted)}
-  .info td:first-child{width:120px}
-  .info{margin-bottom:8px}
-  .status{margin-top:14px;padding:11px;border-radius:8px;text-align:center;font-weight:bold;font-size:14px}
-  .status.ok{background:var(--okbg);color:var(--ok)}
-  .status.bad{background:var(--badbg);color:var(--bad)}
-  .empty{color:var(--muted);text-align:center;padding:18px 6px;font-size:14px}
-  .actions{display:flex;gap:10px;margin-top:14px}
-  .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
-  .btn.primary{background:var(--blue);color:#fff}
-  .btn:disabled{opacity:.45;cursor:not-allowed}
-  .notice{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--badbg);color:var(--bad);font-size:13px;font-weight:bold;text-align:center}
-  .overlay{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
-  .overlay.hidden{display:none}
-  .modal{background:#fff;border-radius:14px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
-  .modal h3{margin:0 0 8px;color:var(--navy);font-size:18px}
-  .modal p{font-size:14px;color:var(--text);margin:0 0 12px}
-  .modal .small{font-size:12px;color:var(--muted);margin:8px 0 0}
-  .chk{display:flex;gap:8px;align-items:center;font-weight:bold;font-size:14px;margin:6px 0 4px}
-  .chk input{width:20px;height:20px;padding:0}
-  .mact{display:flex;gap:10px;margin-top:14px}
-  .bar{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
-  #barFill{height:100%;width:0;background:var(--blue);transition:width .2s linear}
-  .err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
-  .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
-  .hidden{display:none}
-  footer{text-align:center;font-size:12px;color:var(--muted);padding:0 16px 30px}
-  footer a{color:var(--blue)}
-  .print-only{display:none}
-  @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
-  @media print{
-    @page{size:A4;margin:18mm 16mm}
-    body{background:#fff}
-    header,.tabs,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
-    .verif{margin-top:22px;border:1.5px solid #000;border-radius:6px;padding:10px 14px;font-size:12px;page-break-inside:avoid}
-    .verif .vt{text-align:center;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
-    .verif table td{border:none;padding:3px 4px;font-size:12px}
-    .verif table td:first-child{width:130px}
-    .verif .ok{font-weight:bold}
-    main{padding:0;max-width:none}
-    .card{border:none;padding:0}
-    .print-only{display:block}
-    .kop{text-align:center;border-bottom:3px double #000;padding-bottom:8px;margin-bottom:16px}
-    .kop .l1{font-size:15px;font-weight:bold}
-    .kop .l2{font-size:17px;font-weight:bold}
-    .kop .l3{font-size:12px}
-    .judul{text-align:center;font-weight:bold;font-size:15px;margin-bottom:12px;text-decoration:underline}
-    .info td{color:#000;font-size:13px}
-    td{border-bottom:1px solid #999}
-    tr.total td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .status{border:1px solid #999}
-    .sign{margin-top:36px;font-size:10px;color:#555;text-align:center;border-top:1px solid #ccc;padding-top:6px}
-  }
-</style>
-</head>
-<body>
+-- =====================================================================
+-- Kalkulator RAB Desa by Lamri, S.P.
+-- Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur
+--
+-- Jalankan SEKALI di Supabase: SQL Editor > New query > tempel > Run
+-- Email admin sudah diisi di bagian 3: lamri96sp@gmail.com
+-- =====================================================================
 
-<header>
-  <h1>Kalkulator RAB Desa</h1>
-  <p>Hitung RAB kegiatan dengan cepat, material tetap aman</p>
-  <div class="brand">by <a href="https://lamri.vercel.app" target="_blank" rel="noopener">Lamri, S.P.</a> &middot; Kaur Perencanaan Desa Susuk Dalam</div>
-</header>
+-- 1. TABEL ARSIP RAB ---------------------------------------------------
+create table if not exists public.rab_arsip (
+  id             bigint generated always as identity primary key,
+  created_at     timestamptz not null default now(),
+  aksi           text not null check (aksi in ('generate','cetak','salin','pdf')),
+  mode           text not null check (mode in ('material','pagu')),
+  nama_kegiatan  text check (char_length(nama_kegiatan) <= 200),
+  panjang        numeric(14,3) check (panjang > 0 and panjang < 1000000000),
+  lebar          numeric(14,3) check (lebar > 0 and lebar < 1000000000),
+  tinggi         numeric(14,3) check (tinggi > 0 and tinggi < 1000000000),
+  volume         numeric(14,2) check (volume >= 0 and volume < 1000000000000),
+  satuan         text check (char_length(satuan) <= 20),
+  bahan_utama    text check (char_length(bahan_utama) <= 60),
+  sifat_konstruksi text check (sifat_konstruksi in ('Permanen','Semi Permanen','Sementara/Darurat')),
+  jenis_dana     text check (char_length(jenis_dana) <= 60),
+  rt             text check (char_length(rt) <= 10),
+  tahun          int  check (tahun between 2000 and 2100),
+  nilai_input    bigint not null check (nilai_input between 0 and 100000000000),
+  tukang         bigint check (tukang >= 0),
+  tpk            bigint check (tpk >= 0),
+  pajak          bigint check (pajak >= 0),
+  material       bigint check (material >= 0),
+  sewa           bigint check (sewa >= 0),
+  pajak_sewa     bigint check (pajak_sewa >= 0),
+  total          bigint check (total >= 0),
+  p_tukang       numeric(6,4) check (p_tukang between 0 and 1),
+  -- upah tenaga kerja maksimal 30%
+  constraint rab_arsip_p_tukang_maks check (p_tukang is null or p_tukang <= 0.30),
+  -- persentase ditetapkan: TPK 3%, pajak bahan 12,5%, pajak sewa 13%
+  constraint rab_arsip_p_tpk_tetap check (p_tpk is null or p_tpk = 0.03),
+  constraint rab_arsip_p_pajak_tetap check (p_pajak is null or p_pajak = 0.125),
+  constraint rab_arsip_p_pajak_sewa_tetap check (p_pajak_sewa is null or p_pajak_sewa = 0.13),
+  p_tpk          numeric(6,4) check (p_tpk between 0 and 1),
+  p_pajak        numeric(6,4) check (p_pajak between 0 and 1),
+  p_pajak_sewa   numeric(6,4) check (p_pajak_sewa between 0 and 1),
+  token          uuid unique,
+  lat            numeric(9,6) check (lat between -90 and 90),
+  lng            numeric(9,6) check (lng between -180 and 180),
+  akurasi        numeric(10,1) check (akurasi >= 0 and akurasi < 100000000),
+  dicetak        boolean not null default false,
+  waktu_cetak    timestamptz,
+  nama_pemohon   text check (char_length(nama_pemohon) between 3 and 100),
+  kode_verifikasi text unique,
+  status         text not null default 'baru' check (status in ('baru','real','abaikan')),
+  catatan        text check (char_length(catatan) <= 300)
+);
 
-<main>
-  <div class="tabs">
-    <button class="tab active" data-mode="material">Dari Material</button>
-    <button class="tab" data-mode="pagu">Dari Pagu</button>
-  </div>
+create index if not exists rab_arsip_created_idx on public.rab_arsip (created_at desc);
+create index if not exists rab_arsip_status_idx  on public.rab_arsip (status);
+create index if not exists rab_arsip_dicetak_idx on public.rab_arsip (dicetak);
 
-  <section class="card input-card">
-    <h2>Data Kegiatan</h2>
-    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
+-- 2. TABEL KUNJUNGAN ---------------------------------------------------
+create table if not exists public.rab_kunjungan (
+  id          bigint generated always as identity primary key,
+  created_at  timestamptz not null default now(),
+  path        text check (char_length(path) <= 100),
+  perangkat   text check (perangkat in ('hp','laptop')),
+  sumber      text check (char_length(sumber) <= 120)
+);
 
-    <label for="nama">Nama Kegiatan</label>
-    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
+create index if not exists rab_kunjungan_created_idx on public.rab_kunjungan (created_at desc);
 
-    <label>Ukuran Keluaran/Output (opsional)</label>
-    <div class="dim">
-      <span class="dl">Panjang</span>
-      <input id="dimP" type="text" inputmode="decimal" maxlength="12" placeholder="0">
-      <select id="uP" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Lebar</span>
-      <input id="dimL" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uL" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Tinggi/Tebal</span>
-      <input id="dimT" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uT" class="unit"><option value="mm">mm</option><option value="cm" selected>cm</option><option value="m">m</option><option value="km">km</option></select>
-    </div>
-    <div class="fixed" id="volPreview">Volume terhitung otomatis dari ukuran.</div>
+-- 3. DAFTAR ADMIN ------------------------------------------------------
+create table if not exists public.rab_admin (
+  email text primary key
+);
 
-    <div class="row2">
-      <div>
-        <label for="bahanUtama">Bahan Konstruksi Utama</label>
-        <select id="bahanUtama">
-          <option value="">Pilih bahan</option>
-          <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
-          <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
-          <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
-          <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
-          <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
-          <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
-          <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
-          <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
-          <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
-          <option value="Lainnya">Lainnya (ketik sendiri)</option>
-        </select>
-        <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan konstruksi" style="margin-top:8px">
-      </div>
-      <div>
-        <label for="sifat">Sifat Konstruksi</label>
-        <select id="sifat">
-          <option value="">Pilih sifat</option>
-          <option value="Permanen">Permanen (&gt; 15 tahun)</option>
-          <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
-          <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
-        </select>
-      </div>
-    </div>
+-- Email akun admin di Supabase Auth
+insert into public.rab_admin (email)
+values ('lamri96sp@gmail.com')
+on conflict do nothing;
 
-    <div class="row2">
-      <div>
-        <label for="dana">Jenis Dana</label>
-        <select id="dana">
-          <option value="">Pilih jenis dana</option>
-          <option value="DD - Dana Desa">DD - Dana Desa</option>
-          <option value="ADD - Alokasi Dana Desa">ADD - Alokasi Dana Desa</option>
-          <option value="BHPRD - Bagi Hasil Pajak dan Retribusi Daerah">BHPRD - Bagi Hasil Pajak dan Retribusi Daerah</option>
-          <option value="PADes - Pendapatan Asli Desa">PADes - Pendapatan Asli Desa</option>
-          <option value="Bankeususdes - Bantuan Keuangan Khusus Desa Kutim">Bankeususdes - Bantuan Keuangan Khusus Desa Kutim</option>
-          <option value="Bankeu Provinsi Kaltim">Bankeu Provinsi Kaltim</option>
-          <option value="SiLPA">SiLPA</option>
-          <option value="Lain-lain">Lain-lain</option>
-        </select>
-      </div>
-      <div>
-        <label for="tahun">Tahun Anggaran</label>
-        <input id="tahun" type="text" inputmode="numeric" maxlength="4">
-      </div>
-    </div>
+create or replace function public.is_rab_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.rab_admin
+    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+$$;
 
-    <label for="rt">Lokasi RT</label>
-    <div class="prefix rt"><span>RT.</span><input id="rt" type="text" inputmode="numeric" maxlength="3" placeholder="02"></div>
-    <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
-  </section>
+-- 4. KEAMANAN (RLS) ----------------------------------------------------
+alter table public.rab_arsip     enable row level security;
+alter table public.rab_kunjungan enable row level security;
+alter table public.rab_admin     enable row level security;
+-- rab_admin sengaja tanpa policy: tidak bisa dibaca siapa pun lewat API
 
-  <section class="card input-card">
-    <h2 id="inTitle">Input Bahan dan Sewa</h2>
-    <p class="sub" id="inSub">Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
+-- Umum: hanya boleh MENAMBAH baris GENERATE (wajib token + lokasi)
+drop policy if exists "umum tambah arsip" on public.rab_arsip;
+create policy "umum tambah arsip" on public.rab_arsip
+  for insert to anon, authenticated
+  with check (
+    status = 'baru' and catatan is null
+    and aksi = 'generate'
+    and token is not null and lat is not null and lng is not null and akurasi is not null
+    and dicetak = false and waktu_cetak is null
+    and nama_pemohon is null and kode_verifikasi is null
+  );
 
-    <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
-    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+drop policy if exists "umum tambah kunjungan" on public.rab_kunjungan;
+create policy "umum tambah kunjungan" on public.rab_kunjungan
+  for insert to anon, authenticated
+  with check (true);
 
-    <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
-    <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+-- Admin: baca, ubah status, hapus
+drop policy if exists "admin baca arsip" on public.rab_arsip;
+create policy "admin baca arsip" on public.rab_arsip
+  for select to authenticated using (public.is_rab_admin());
 
-    <details>
-      <summary>Pengaturan persentase</summary>
-      <div class="grid2">
-        <div><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
-        <div><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-        <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-        <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-      </div>
-      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK 3% sesuai kesepakatan DPMDes. TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
-    </details>
-  </section>
+drop policy if exists "admin ubah arsip" on public.rab_arsip;
+create policy "admin ubah arsip" on public.rab_arsip
+  for update to authenticated
+  using (public.is_rab_admin()) with check (public.is_rab_admin());
 
-  <section class="card">
-    <div class="print-only">
-      <div class="kop">
-        <div class="l1">PEMERINTAH KABUPATEN KUTAI TIMUR</div>
-        <div class="l1">KECAMATAN SANDARAN</div>
-        <div class="l2">DESA SUSUK DALAM</div>
-      </div>
-      <div class="judul">RENCANA ANGGARAN BIAYA (RAB) PENGADAAN SECARA SWAKELOLA</div>
-    </div>
-    <h2 class="screen-only">Hasil</h2>
-    <div id="empty" class="empty">Lengkapi data, lalu klik Generate RAB untuk melihat hasil.</div>
-    <div id="result" class="hidden">
-      <table class="info" id="info"></table>
-      <table id="tbl"></table>
-      <div id="status" class="status"></div>
-      <div class="print-only verif" id="verif"></div>
-    </div>
-    <div class="actions">
-      <button class="btn primary" id="btnGenerate" disabled>Generate RAB</button>
-      <button class="btn primary hidden" id="btnPrint">Cetak / PDF</button>
-    </div>
-    <div class="notice hidden" id="notice"></div>
-    <p class="privacy">Lokasi perangkat wajib aktif untuk membuat RAB. Data kegiatan, lokasi, dan nama pemohon tersimpan sebagai arsip perencanaan desa paling lama 2 tahun dan hanya dapat dilihat admin.</p>
-    <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
-  </section>
-</main>
+drop policy if exists "admin hapus arsip" on public.rab_arsip;
+create policy "admin hapus arsip" on public.rab_arsip
+  for delete to authenticated using (public.is_rab_admin());
 
-<footer>
-  Disusun oleh <b>Lamri, S.P.</b>, Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur<br>
-  <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
-</footer>
+drop policy if exists "admin baca kunjungan" on public.rab_kunjungan;
+create policy "admin baca kunjungan" on public.rab_kunjungan
+  for select to authenticated using (public.is_rab_admin());
 
-<div class="overlay hidden" id="ovConsent">
-  <div class="modal">
-    <h3>Persetujuan Lokasi</h3>
-    <p>Untuk membuat RAB, lokasi perangkat Anda akan diambil dan disimpan bersama data kegiatan sebagai arsip perencanaan Desa Susuk Dalam. Saat mencetak, nama pemohon juga disimpan. Data hanya dapat dilihat admin dan disimpan paling lama 2 tahun.</p>
-    <label class="chk"><input type="checkbox" id="chkSetuju"> Saya mengerti dan setuju</label>
-    <div class="mact">
-      <button class="btn" id="btnBatalSetuju">Batal</button>
-      <button class="btn primary" id="btnLanjut" disabled>Lanjut</button>
-    </div>
-  </div>
-</div>
+-- 4b. Fungsi Izin Cetak: tandai Cetak = Ya, simpan nama, buat kode verifikasi
+create or replace function public.rab_tandai_cetak(p_token uuid, p_nama text)
+returns text
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_id   bigint;
+  v_kode text;
+  v_nama text := btrim(coalesce(p_nama, ''));
+begin
+  if char_length(v_nama) < 3 or char_length(v_nama) > 100 then
+    raise exception 'Nama pemohon minimal 3 karakter';
+  end if;
 
-<div class="overlay hidden" id="ovLoading">
-  <div class="modal">
-    <h3>Menyusun RAB...</h3>
-    <p id="loadText">Mengambil akurasi lokasi, mohon tunggu 20 detik.</p>
-    <div class="bar"><div id="barFill"></div></div>
-    <p class="small" id="loadAcc">Menunggu sinyal lokasi...</p>
-    <div class="mact"><button class="btn" id="btnBatalLoad">Batal</button></div>
-  </div>
-</div>
+  select id, kode_verifikasi into v_id, v_kode
+  from public.rab_arsip
+  where token = p_token and created_at > now() - interval '1 day'
+  for update;
 
-<div class="overlay hidden" id="ovNama">
-  <div class="modal">
-    <h3>Izin Cetak</h3>
-    <p>Masukkan nama pemohon untuk mendapatkan izin cetak dan kode verifikasi.</p>
-    <input id="namaPemohon" type="text" maxlength="100" placeholder="Nama lengkap pemohon">
-    <div class="err" id="namaErr"></div>
-    <div class="mact">
-      <button class="btn" id="btnBatalNama">Batal</button>
-      <button class="btn primary" id="btnIzin">Cetak / PDF</button>
-    </div>
-  </div>
-</div>
+  if v_id is null then
+    raise exception 'Data generate tidak ditemukan atau sudah kedaluwarsa, silakan Generate ulang';
+  end if;
 
+  if v_kode is not null then
+    return v_kode;                       -- cetak ulang: kode tetap sama
+  end if;
 
-<script>
-/* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
-const SUPABASE_URL = "https://tutgjaxuvjbyxiibxhtz.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
-/* ========================================================================================== */
+  loop
+    v_kode := 'RAB-' || to_char(now() at time zone 'Asia/Makassar', 'YYMMDD') || '-'
+              || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 5));
+    exit when not exists (select 1 from public.rab_arsip where kode_verifikasi = v_kode);
+  end loop;
 
-(function(){
-  var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
-  var mode = "material", last = null;
-  var generated = false, berubah = false, gen = null;
-  var $ = function(id){ return document.getElementById(id); };
-  var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
-  var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
-  var parsePct = function(s){ var v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? 0 : v/100; };
-  var parseNum = function(s){ var v = parseFloat(String(s).replace(/\./g,"").replace(",", ".")); return isNaN(v) ? null : v; };
-  var pctLabel = function(x){ return (Math.round(x*1000)/10).toString().replace(".", ",") + "%"; };
-  var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
+  update public.rab_arsip
+     set dicetak = true, waktu_cetak = now(), nama_pemohon = v_nama,
+         kode_verifikasi = v_kode, aksi = 'cetak'
+   where id = v_id;
 
-  $("tahun").value = new Date().getFullYear();
+  return v_kode;
+end;
+$$;
 
-  function rtLabel(){
-    var d = $("rt").value.replace(/\D/g,"");
-    return d ? "RT." + (d.length < 2 ? "0" + d : d) : "";
-  }
-  function lokasiLengkap(){
-    var rt = rtLabel();
-    return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
-  }
-  var MAKS_UPAH = 0.30, TPK = 0.03, PAJAK_BAHAN = 0.125, PAJAK_SEWA = 0.13;
-  var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
-  function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
-  function dimensi(){
-    var label = ["P","L","T"], ids = [["dimP","uP"],["dimL","uL"],["dimT","uT"]], isi = [];
-    for (var i = 0; i < 3; i++) {
-      var v = parseNum($(ids[i][0]).value), u = $(ids[i][1]).value;
-      if (v !== null && v > 0) isi.push({ lbl:label[i], v:v, u:u, m:v * FAKTOR[u], idx:i });
-    }
-    if (!isi.length || isi[0].idx !== 0) return null;          /* panjang wajib diisi lebih dulu */
-    var vol = 1; isi.forEach(function(d){ vol *= d.m; });
-    var satuan = isi.length === 1 ? "m" : (isi.length === 2 ? "m²" : "m³");
-    var teks = isi.map(function(d){ return d.lbl + " " + angka(d.v, 3) + " " + d.u; }).join(" x ")
-             + (isi.length > 1 || isi[0].u !== "m" ? " = " + angka(vol, 3) + " " + satuan : "");
-    return {
-      teks: teks, volume: vol, satuan: satuan,
-      p: isi[0] ? isi[0].m : null,
-      l: (isi.filter(function(d){ return d.idx === 1; })[0] || {}).m || null,
-      t: (isi.filter(function(d){ return d.idx === 2; })[0] || {}).m || null
-    };
-  }
-  function bahanKonstruksi(){
-    var v = $("bahanUtama").value;
-    if (v === "Lainnya") return $("bahanLain").value.trim();
-    return v;
-  }
-  function sifatLabel(){
-    var v = $("sifat").value;
-    return { "Permanen":"Permanen (> 15 tahun)", "Semi Permanen":"Semi Permanen (5 - 15 tahun)", "Sementara/Darurat":"Sementara/Darurat (< 5 tahun)" }[v] || "";
-  }
+revoke all on function public.rab_tandai_cetak(uuid, text) from public;
+grant execute on function public.rab_tandai_cetak(uuid, text) to anon, authenticated;
 
-  /* ---------- Perhitungan ---------- */
-  function hitung(){
-    if (generated) { generated = false; gen = null; berubah = true; }
-    var nilai = parseMoney($("nilai").value);
-    var sewa = parseMoney($("sewa").value);
-    var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH);
-    var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;          /* ditetapkan, tidak dibaca dari kolom */
-    $("lokasiPreview").textContent = lokasiLengkap();
-    var dm = dimensi();
-    $("volPreview").textContent = dm ? "Volume: " + angka(dm.volume, 3) + " " + dm.satuan : "Volume terhitung otomatis dari ukuran (isi panjang lebih dulu).";
-    if (t + k >= 1) { tampil(null); return; }
-    if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
-    if (mode === "pagu" && !nilai) { tampil(null); return; }
+-- 5. HAK AKSES TABEL ---------------------------------------------------
+revoke all on public.rab_arsip, public.rab_kunjungan, public.rab_admin from anon, authenticated;
+grant insert on public.rab_arsip, public.rab_kunjungan to anon, authenticated;
+grant select, update, delete on public.rab_arsip to authenticated;
+grant select on public.rab_kunjungan to authenticated;
+grant execute on function public.is_rab_admin() to anon, authenticated;
 
-    var pajakSewa = Math.round(sewa * ps);
-    var total, tukang, tpk;
-    if (mode === "material") {
-      var dasar = nilai * (1 + p) + sewa + pajakSewa;
-      total = Math.ceil((dasar / (1 - t - k)) - 1e-7);
-      tukang = Math.floor(total * t + 1e-7);
-      tpk = Math.floor(total * k + 1e-7);
-    } else {
-      total = nilai;
-      tukang = Math.round(total * t);
-      tpk = Math.round(total * k);
-    }
-    var sisa = total - tukang - tpk - sewa - pajakSewa;
-    var cukup = sisa >= 0;
-    var material = cukup ? Math.floor(sisa / (1 + p) + 1e-7) : 0;
-    var pajak = cukup ? sisa - material : 0;
-    var aman = mode === "material"
-      ? (cukup && material >= nilai)
-      : (cukup && (tukang + tpk + sewa + pajakSewa + material + pajak) === total);
-
-    tampil({ nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk,
-             pajak:pajak, material:material, aman:aman, cukup:cukup, t:t, k:k, p:p, ps:ps });
-  }
-
-  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-
-  function tampil(r){
-    last = r;
-    if (!r) { render(); return; }
-
-    var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
-    var dm = dimensi();
-    if (dm) info.push(["Keluaran/Output", dm.teks]);
-    if (bahanKonstruksi()) info.push(["Bahan Konstruksi", bahanKonstruksi()]);
-    if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
-    info.push(
-      ["Jenis Dana", $("dana").value || "-"],
-      ["Tahun Anggaran", $("tahun").value || "-"],
-      ["Lokasi", lokasiLengkap()],
-      ["Pelaksanaan", "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? "Nilai Bahan dan Sewa" : "Pagu Anggaran"]
-    );
-    $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
-
-    var rows = [
-      [mode === "material" ? "Biaya Bahan/Material" : "Biaya Bahan/Material Tersedia", r.material, "main"],
-      ["Pajak Bahan (" + pctLabel(r.p) + ")", r.pajak, ""]
-    ];
-    if (r.sewa > 0) {
-      rows.push(["Biaya Sewa Peralatan", r.sewa, "main"]);
-      rows.push(["Pajak Sewa (" + pctLabel(r.ps) + ")", r.pajakSewa, ""]);
-    }
-    rows.push(
-      ["Biaya Upah Tenaga Kerja (" + pctLabel(r.t) + ")", r.tukang, ""],
-      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
-      [mode === "material" ? "TOTAL BIAYA (RAB)" : "PAGU ANGGARAN", r.total, "total"]
-    );
-    $("tbl").innerHTML = rows.map(function(x){
-      return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
-    }).join("");
-
-    var st = $("status");
-    st.className = "status " + (r.aman ? "ok" : "bad");
-    if (!r.cukup) st.textContent = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa";
-    else if (mode === "material") st.textContent = r.aman ? (r.sewa > 0 ? "AMAN, bahan dan sewa utuh" : "AMAN, bahan utuh") : "Periksa kembali, bahan kurang";
-    else st.textContent = r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu";
-    render();
-  }
-
-  /* ---------- Tampilan: hasil hanya muncul setelah Generate ---------- */
-  function render(){
-    var dm = dimensi();
-    var siap = !!(last && last.cukup && dm);
-    $("btnGenerate").disabled = !siap;
-    $("btnGenerate").classList.toggle("hidden", generated);
-    $("btnPrint").classList.toggle("hidden", !generated);
-    $("result").classList.toggle("hidden", !generated);
-    $("empty").classList.toggle("hidden", generated);
-    if (!generated) {
-      var pesan;
-      if (!dm) pesan = "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
-      else if (!last) pesan = mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
-      else if (!last.cukup) pesan = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
-      else pesan = "Data lengkap. Klik Generate RAB untuk menyusun hasil.";
-      $("empty").textContent = (berubah ? "Data berubah. " : "") + pesan;
-    }
-  }
-  function notice(msg){
-    var n = $("notice");
-    if (!msg) { n.classList.add("hidden"); return; }
-    n.textContent = msg; n.classList.remove("hidden");
-  }
-
-  /* ---------- Arsip & kunjungan ke Supabase ---------- */
-  function headersDb(){
-    var h = { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" };
-    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
-    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) h["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
-    return h;
-  }
-  function kirim(tabel, data){
-    if (!dbReady) return;
-    var h = headersDb(); h["Prefer"] = "return=minimal";
-    try {
-      fetch(SUPABASE_URL + "/rest/v1/" + tabel, { method:"POST", keepalive:true, headers:h, body:JSON.stringify(data) }).catch(function(){});
-    } catch(e) {}
-  }
-
-  function buatToken(){
-    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
-    var b = new Uint8Array(16); crypto.getRandomValues(b);
-    b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
-    var h = Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("");
-    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
-  }
-
-  function dataArsip(){
-    var th = parseInt($("tahun").value, 10);
-    var dm = dimensi();
-    var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
-    return {
-      mode: mode,
-      nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
-      panjang: dm ? r3(dm.p) : null,
-      lebar: dm ? r3(dm.l) : null,
-      tinggi: dm ? r3(dm.t) : null,
-      volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
-      satuan: dm ? dm.satuan : null,
-      bahan_utama: bahanKonstruksi().slice(0,60) || null,
-      sifat_konstruksi: $("sifat").value || null,
-      jenis_dana: $("dana").value || null,
-      rt: rtLabel() || null,
-      tahun: (th >= 2000 && th <= 2100) ? th : null,
-      nilai_input: last.nilai,
-      tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
-      material: last.material, sewa: last.sewa, pajak_sewa: last.pajakSewa, total: last.total,
-      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p, p_pajak_sewa: last.ps
-    };
-  }
-
-  async function simpanGenerate(token, lok){
-    if (!dbReady) return true;
-    var d = dataArsip();
-    d.aksi = "generate"; d.token = token;
-    d.lat = Math.round(lok.lat * 1e6) / 1e6;
-    d.lng = Math.round(lok.lng * 1e6) / 1e6;
-    d.akurasi = Math.min(Math.round(lok.acc * 10) / 10, 99999999);
-    var h = headersDb(); h["Prefer"] = "return=minimal";
-    try {
-      var res = await fetch(SUPABASE_URL + "/rest/v1/rab_arsip", { method:"POST", headers:h, body:JSON.stringify(d) });
-      return res.ok;
-    } catch(e) { return false; }
-  }
-
-  async function mintaIzinCetak(token, nama){
-    if (!dbReady) return { kode: "RAB-DEMO" };
-    try {
-      var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_tandai_cetak", {
-        method:"POST", headers:headersDb(), body:JSON.stringify({ p_token: token, p_nama: nama })
-      });
-      var j = await res.json().catch(function(){ return null; });
-      if (!res.ok) return { error: (j && j.message) || "Izin cetak gagal, coba lagi." };
-      return { kode: j };
-    } catch(e) { return { error: "Tidak ada koneksi internet, coba lagi." }; }
-  }
-
-  (function catatKunjungan(){
-    try { if (sessionStorage.getItem("rab_v")) return; sessionStorage.setItem("rab_v","1"); } catch(e) {}
-    var sumber = "langsung";
-    try { if (document.referrer) sumber = new URL(document.referrer).hostname.slice(0,120); } catch(e) {}
-    kirim("rab_kunjungan", {
-      path: location.pathname.slice(0,100),
-      perangkat: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "hp" : "laptop",
-      sumber: sumber
-    });
-  })();
-
-  /* ---------- Mode & event ---------- */
-  function setMode(m){
-    mode = m;
-    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === m); });
-    if (m === "material") {
-      $("inTitle").textContent = "Input Bahan dan Sewa";
-      $("inSub").textContent = "Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.";
-      $("nilaiLabel").textContent = "Total Biaya Bahan/Material (tanpa pajak)";
-    } else {
-      $("inTitle").textContent = "Input Pagu";
-      $("inSub").textContent = "Masukkan pagu anggaran dan total biaya sewa peralatan (jika ada). Sewa diamankan lebih dulu, sisanya menjadi bahan/material.";
-      $("nilaiLabel").textContent = "Pagu Anggaran";
-    }
-    $("nilai").value = "";
-    hitung();
-  }
-  document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
-
-  ["nilai","sewa"].forEach(function(id){
-    $(id).addEventListener("input", function(e){
-      var n = parseMoney(e.target.value);
-      e.target.value = n ? n.toLocaleString("id-ID") : "";
-      hitung();
-    });
-  });
-  $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  ["dimP","dimL","dimT"].forEach(function(id){
-    $(id).addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
-  });
-  ["uP","uL","uT","sifat"].forEach(function(id){ $(id).addEventListener("change", hitung); });
-  $("bahanUtama").addEventListener("change", function(e){
-    var opt = e.target.selectedOptions[0];
-    var lain = e.target.value === "Lainnya";
-    $("bahanLain").classList.toggle("hidden", !lain);
-    if (opt && opt.dataset.sifat) $("sifat").value = opt.dataset.sifat;
-    if (lain) $("bahanLain").focus();
-    hitung();
-  });
-  $("pTukang").addEventListener("input", function(e){
-    var lebih = parsePct(e.target.value) > MAKS_UPAH;
-    if (lebih) e.target.value = "30";
-    $("upahNote").classList.toggle("hidden", !lebih);
-    if (lebih) setTimeout(function(){ $("upahNote").classList.add("hidden"); }, 3000);
-  });
-  ["pTukang","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
-  $("dana").addEventListener("change", hitung);
-
-  /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
-  var DURASI = 20000, watchId = null, timer = null, terbaik = null;
-
-  function show(id, on){ $(id).classList.toggle("hidden", !on); }
-  function fmtAkurasi(m){ return m >= 1000 ? "± " + angka(m / 1000, 1) + " km" : "± " + Math.round(m) + " m"; }
-
-  $("btnGenerate").addEventListener("click", function(){
-    if ($("btnGenerate").disabled) return;
-    notice("");
-    $("chkSetuju").checked = false; $("btnLanjut").disabled = true;
-    show("ovConsent", true);
-  });
-  $("chkSetuju").addEventListener("change", function(e){ $("btnLanjut").disabled = !e.target.checked; });
-  $("btnBatalSetuju").addEventListener("click", function(){ show("ovConsent", false); });
-  $("btnLanjut").addEventListener("click", function(){ show("ovConsent", false); mulaiLokasi(); });
-  $("btnBatalLoad").addEventListener("click", function(){ batalLokasi("Generate dibatalkan."); });
-
-  function hentikan(){
-    if (timer) { clearInterval(timer); timer = null; }
-    if (watchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(watchId); watchId = null; }
-  }
-  function batalLokasi(msg){ hentikan(); show("ovLoading", false); notice(msg); }
-
-  function mulaiLokasi(){
-    if (!navigator.geolocation) { notice("Perangkat atau browser ini tidak mendukung lokasi, RAB tidak dapat dibuat."); return; }
-    terbaik = null;
-    $("barFill").style.width = "0%";
-    $("loadText").textContent = "Mengambil akurasi lokasi, mohon tunggu 20 detik.";
-    $("loadAcc").textContent = "Menunggu sinyal lokasi...";
-    show("ovLoading", true);
-    var mulai = Date.now();
-    watchId = navigator.geolocation.watchPosition(function(pos){
-      var c = pos.coords;
-      if (!terbaik || c.accuracy < terbaik.acc) terbaik = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
-      $("loadAcc").textContent = "Akurasi terbaik: " + fmtAkurasi(terbaik.acc);
-    }, function(err){
-      if (err.code === 1) batalLokasi("Izin lokasi ditolak. Aktifkan lokasi perangkat dan izinkan browser untuk membuat RAB.");
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: DURASI });
-    timer = setInterval(function(){
-      var jalan = Date.now() - mulai;
-      $("barFill").style.width = Math.min(100, jalan / DURASI * 100) + "%";
-      $("loadText").textContent = "Menyusun RAB... " + Math.max(0, Math.ceil((DURASI - jalan) / 1000)) + " detik";
-      if (jalan >= DURASI) selesaiLokasi();
-    }, 200);
-  }
-
-  async function selesaiLokasi(){
-    hentikan();
-    if (!terbaik) { batalLokasi("Lokasi tidak didapat. Pastikan GPS/lokasi aktif, lalu coba lagi."); return; }
-    $("loadText").textContent = "Menyimpan RAB...";
-    var token = buatToken();
-    var ok = await simpanGenerate(token, terbaik);
-    if (!ok) { batalLokasi("Gagal menyimpan data. Periksa koneksi internet, lalu Generate ulang."); return; }
-    show("ovLoading", false);
-    gen = { token: token, acc: terbaik.acc };
-    generated = true; berubah = false;
-    render();
-    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  /* ---------- Izin Cetak: nama pemohon wajib, kode dari server ---------- */
-  $("btnPrint").addEventListener("click", function(){
-    if (!generated || !gen) return;
-    $("namaErr").textContent = "";
-    show("ovNama", true);
-    setTimeout(function(){ $("namaPemohon").focus(); }, 50);
-  });
-  $("btnBatalNama").addEventListener("click", function(){ show("ovNama", false); });
-  $("namaPemohon").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnIzin").click(); });
-
-  $("btnIzin").addEventListener("click", async function(){
-    var nama = $("namaPemohon").value.replace(/\s+/g, " ").trim();
-    if (nama.length < 3) { $("namaErr").textContent = "Nama pemohon wajib diisi (minimal 3 huruf)."; return; }
-    var btn = $("btnIzin"); btn.disabled = true; btn.textContent = "Memverifikasi...";
-    var hasil = await mintaIzinCetak(gen.token, nama);
-    btn.disabled = false; btn.textContent = "Cetak / PDF";
-    if (hasil.error) { $("namaErr").textContent = hasil.error; return; }
-    var waktu = new Date().toLocaleString("id-ID", { timeZone:"Asia/Makassar", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" }) + " WITA";
-    var baris = [
-      ["Status", "<span class=\"ok\">DIIZINKAN</span>"],
-      ["Nama Pemohon", esc(nama)],
-      ["Waktu Cetak", esc(waktu)],
-      ["Lokasi", "Terverifikasi (akurasi " + esc(fmtAkurasi(gen.acc)) + ")"],
-      ["Kode Verifikasi", "<b>" + esc(hasil.kode) + "</b>"]
-    ];
-    $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
-      baris.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + x[1] + "</td></tr>"; }).join("") + "</table>";
-    show("ovNama", false);
-    setTimeout(function(){ window.print(); }, 200);
-  });
-
-  render();
-})();
-</script>
-</body>
-</html>
+-- Selesai. Cek di Table Editor: rab_arsip, rab_kunjungan, rab_admin
