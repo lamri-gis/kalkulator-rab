@@ -697,8 +697,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     show("ovNama", false);
     /* nama file PDF otomatis = judul halaman saat dicetak */
     var judulAsli = document.title;
-    var namaFile = ("RAB " + $("nama").value.trim() + " " + rtLabel() + " " + hasil.kode)
-      .replace(/[\\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 150);
+    /* tanpa titik: Android menganggap teks setelah titik terakhir sebagai ekstensi */
+    var bersih = function(t){ return t.replace(/[\\\/:*?"<>|.]+/g, " ").replace(/\s+/g, " ").trim(); };
+    var namaFile = (hasil.kode + " (" + bersih($("nama").value).slice(0, 120) + ")");
     document.title = namaFile;
     var kembalikan = function(){ document.title = judulAsli; window.removeEventListener("afterprint", kembalikan); };
     window.addEventListener("afterprint", kembalikan);
