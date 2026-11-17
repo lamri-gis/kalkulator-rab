@@ -274,9 +274,8 @@
 <div class="overlay hidden" id="ovLoading">
   <div class="modal">
     <h3>Menyusun RAB...</h3>
-    <p id="loadText">Mengambil akurasi lokasi, mohon tunggu 20 detik.</p>
+    <p id="loadText">Mohon tunggu 20 detik.</p>
     <div class="bar"><div id="barFill"></div></div>
-    <p class="small" id="loadAcc">Menunggu sinyal lokasi...</p>
     <div class="mact"><button class="btn" id="btnBatalLoad">Batal</button></div>
   </div>
 </div>
@@ -504,13 +503,14 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     };
   }
 
-  async function simpanGenerate(token, lok){
+  async function simpanGenerate(token, lok, percobaan){
     if (!dbReady) return true;
     var d = dataArsip();
     d.aksi = "generate"; d.token = token;
     d.lat = Math.round(lok.lat * 1e6) / 1e6;
     d.lng = Math.round(lok.lng * 1e6) / 1e6;
     d.akurasi = Math.min(Math.round(lok.acc * 10) / 10, 99999999);
+    d.percobaan = percobaan;
     var h = headersDb(); h["Prefer"] = "return=minimal";
     try {
       var res = await fetch(SUPABASE_URL + "/rest/v1/rab_arsip", { method:"POST", headers:h, body:JSON.stringify(d) });
@@ -590,7 +590,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   $("dana").addEventListener("change", hitung);
 
   /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
-  var DURASI = 20000, watchId = null, timer = null, terbaik = null;
+  var DURASI = 20000, BATAS_AKURASI = 15, watchId = null, timer = null, terbaik = null, gagalAkurasi = 0;
 
   function show(id, on){ $(id).classList.toggle("hidden", !on); }
   function fmtAkurasi(m){ return m >= 1000 ? "± " + angka(m / 1000, 1) + " km" : "± " + Math.round(m) + " m"; }
@@ -616,14 +616,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!navigator.geolocation) { notice("Perangkat atau browser ini tidak mendukung lokasi, RAB tidak dapat dibuat."); return; }
     terbaik = null;
     $("barFill").style.width = "0%";
-    $("loadText").textContent = "Mengambil akurasi lokasi, mohon tunggu 20 detik.";
-    $("loadAcc").textContent = "Menunggu sinyal lokasi...";
+    $("loadText").textContent = "Mohon tunggu 20 detik.";
     show("ovLoading", true);
     var mulai = Date.now();
     watchId = navigator.geolocation.watchPosition(function(pos){
       var c = pos.coords;
       if (!terbaik || c.accuracy < terbaik.acc) terbaik = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
-      $("loadAcc").textContent = "Akurasi terbaik: " + fmtAkurasi(terbaik.acc);
     }, function(err){
       if (err.code === 1) batalLokasi("Izin lokasi ditolak. Aktifkan lokasi perangkat dan izinkan browser untuk membuat RAB.");
     }, { enableHighAccuracy: true, maximumAge: 0, timeout: DURASI });
@@ -637,12 +635,20 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   async function selesaiLokasi(){
     hentikan();
-    if (!terbaik) { batalLokasi("Lokasi tidak didapat. Pastikan GPS/lokasi aktif, lalu coba lagi."); return; }
+    if (!terbaik) { batalLokasi("Lokasi tidak didapat. Pastikan lokasi aktif, lalu coba lagi."); return; }
+    /* percobaan pertama wajib <= 15 m; percobaan kedua diterima berapa pun akurasinya */
+    if (terbaik.acc > BATAS_AKURASI && gagalAkurasi < 1) {
+      gagalAkurasi++;
+      batalLokasi("Lokasi belum terkunci dengan tepat. Silakan Generate ulang.");
+      return;
+    }
+    var percobaan = gagalAkurasi >= 1 ? 2 : 1;
     $("loadText").textContent = "Menyimpan RAB...";
     var token = buatToken();
-    var ok = await simpanGenerate(token, terbaik);
+    var ok = await simpanGenerate(token, terbaik, percobaan);
     if (!ok) { batalLokasi("Gagal menyimpan data. Periksa koneksi internet, lalu Generate ulang."); return; }
     show("ovLoading", false);
+    gagalAkurasi = 0;
     gen = { token: token, acc: terbaik.acc };
     generated = true; berubah = false;
     render();
@@ -671,7 +677,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       ["Status", "<span class=\"ok\">DIIZINKAN</span>"],
       ["Nama Pemohon", esc(nama)],
       ["Waktu Cetak", esc(waktu)],
-      ["Lokasi", "Terverifikasi (akurasi " + esc(fmtAkurasi(gen.acc)) + ")"],
+      ["Lokasi", "Terverifikasi"],
       ["Kode Verifikasi", "<b>" + esc(hasil.kode) + "</b>"]
     ];
     $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
