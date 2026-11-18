@@ -236,8 +236,10 @@
     <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
     <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
 
-    <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
-    <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+    <div id="grupSewa">
+      <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
+      <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+    </div>
 
     <details>
       <summary>Pengaturan persentase</summary>
@@ -420,7 +422,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     notice("");
     if (generated) { generated = false; gen = null; berubah = true; }
     var nilai = parseMoney($("nilai").value);
-    var sewa = parseMoney($("sewa").value);
+    var sewa = mode === "material" ? parseMoney($("sewa").value) : 0;   /* mode Pagu: semua biaya sudah dalam pagu */
     var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH);
     var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;          /* ditetapkan, tidak dibaca dari kolom */
     $("lokasiPreview").textContent = lokasiLengkap();
@@ -630,10 +632,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       $("nilaiLabel").textContent = "Total Biaya Bahan/Material (tanpa pajak)";
     } else {
       $("inTitle").textContent = "Input Pagu";
-      $("inSub").textContent = "Masukkan pagu anggaran dan total biaya sewa peralatan (jika ada). Sewa diamankan lebih dulu, sisanya menjadi bahan/material.";
+      $("inSub").textContent = "Masukkan total pagu anggaran. Rincian bahan/material, upah tenaga kerja, dan TPK keluar otomatis.";
       $("nilaiLabel").textContent = "Pagu Anggaran";
     }
     $("nilai").value = "";
+    $("sewa").value = "";
+    $("grupSewa").classList.toggle("hidden", m !== "material");
     hitung();
   }
   document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
