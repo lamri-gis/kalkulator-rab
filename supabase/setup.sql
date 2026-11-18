@@ -46,6 +46,8 @@ create table if not exists public.rab_arsip (
   lng            numeric(9,6) check (lng between -180 and 180),
   akurasi        numeric(10,1) check (akurasi >= 0 and akurasi < 100000000),
   percobaan      smallint check (percobaan in (1, 2)),
+  rating         smallint check (rating between 1 and 5),
+  saran          text check (char_length(saran) <= 300),
   dicetak        boolean not null default false,
   waktu_cetak    timestamptz,
   nama_pemohon   text check (char_length(nama_pemohon) between 3 and 100),
@@ -134,28 +136,43 @@ create policy "admin baca kunjungan" on public.rab_kunjungan
   for select to authenticated using (public.is_rab_admin());
 
 -- 4b. Fungsi Izin Cetak: tandai Cetak = Ya, simpan nama, buat kode verifikasi
-create or replace function public.rab_tandai_cetak(p_token uuid, p_nama text)
+create or replace function public.rab_tandai_cetak(
+  p_token  uuid,
+  p_nama   text,
+  p_rating smallint default null,
+  p_saran  text default null
+)
 returns text
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_id   bigint;
-  v_kode text;
-  v_nama text := btrim(coalesce(p_nama, ''));
+  v_id     bigint;
+  v_kode   text;
+  v_rating smallint;
+  v_nama   text := btrim(coalesce(p_nama, ''));
+  v_saran  text := nullif(left(btrim(coalesce(p_saran, '')), 300), '');
 begin
   if char_length(v_nama) < 3 or char_length(v_nama) > 100 then
     raise exception 'Nama pemohon minimal 3 karakter';
   end if;
+  if p_rating is not null and (p_rating < 1 or p_rating > 5) then
+    raise exception 'Rating harus 1 sampai 5';
+  end if;
 
-  select id, kode_verifikasi into v_id, v_kode
+  select id, kode_verifikasi, rating into v_id, v_kode, v_rating
   from public.rab_arsip
   where token = p_token and created_at > now() - interval '1 day'
   for update;
 
   if v_id is null then
     raise exception 'Data generate tidak ditemukan atau sudah kedaluwarsa, silakan Generate ulang';
+  end if;
+
+  -- rating & saran hanya diisi sekali per baris
+  if p_rating is not null and v_rating is null then
+    update public.rab_arsip set rating = p_rating, saran = v_saran where id = v_id;
   end if;
 
   if v_kode is not null then
@@ -177,8 +194,9 @@ begin
 end;
 $$;
 
-revoke all on function public.rab_tandai_cetak(uuid, text) from public;
-grant execute on function public.rab_tandai_cetak(uuid, text) to anon, authenticated;
+revoke all on function public.rab_tandai_cetak(uuid, text, smallint, text) from public;
+grant execute on function public.rab_tandai_cetak(uuid, text, smallint, text) to anon, authenticated;
+
 
 -- 5. HAK AKSES TABEL ---------------------------------------------------
 revoke all on public.rab_arsip, public.rab_kunjungan, public.rab_admin from anon, authenticated;
