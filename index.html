@@ -291,7 +291,7 @@
 <div class="overlay hidden" id="ovConsent">
   <div class="modal">
     <h3>Persetujuan Lokasi</h3>
-    <p>Untuk membuat RAB, lokasi perangkat Anda akan diambil dan disimpan bersama data kegiatan sebagai arsip perencanaan Desa Susuk Dalam. Saat mencetak, nama pemohon juga disimpan. Data hanya dapat dilihat admin dan disimpan paling lama 2 tahun.</p>
+    <p>Untuk membuat RAB, lokasi perangkat dan jenis perangkat (HP/browser) Anda akan diambil dan disimpan bersama data kegiatan sebagai arsip perencanaan Desa Susuk Dalam. Saat mencetak, nama pemohon juga disimpan. Data hanya dapat dilihat admin dan disimpan paling lama 2 tahun.</p>
     <label class="chk"><input type="checkbox" id="chkSetuju"> Saya mengerti dan setuju</label>
     <div class="mact">
       <button class="btn" id="btnBatalSetuju">Batal</button>
@@ -584,6 +584,49 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     };
   }
 
+  /* ---------- Deteksi perangkat: jenis, sistem operasi, browser, model HP ---------- */
+  async function infoPerangkat(){
+    var ua = navigator.userAgent, r = { perangkat: "Laptop", os: "Lainnya", browser: "Lainnya", model: null };
+    var m;
+    if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)) ||
+        (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) r.perangkat = "Tablet";
+    else if (/Mobi|iPhone|iPod|Android/i.test(ua)) r.perangkat = "HP";
+
+    if ((m = ua.match(/Android\s([\d.]+)/))) r.os = "Android " + m[1].split(".")[0];
+    else if ((m = ua.match(/(?:iPhone|iPad|iPod).*?OS\s(\d+)/))) r.os = (/iPad/.test(ua) ? "iPadOS " : "iOS ") + m[1];
+    else if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) r.os = "iPadOS";
+    else if (/Windows/.test(ua)) r.os = "Windows";
+    else if (/Mac OS X/.test(ua)) r.os = "macOS";
+    else if (/CrOS/.test(ua)) r.os = "ChromeOS";
+    else if (/Linux/.test(ua)) r.os = "Linux";
+
+    if ((m = ua.match(/EdgA?\/(\d+)/))) r.browser = "Edge " + m[1];
+    else if ((m = ua.match(/OPR\/(\d+)/))) r.browser = "Opera " + m[1];
+    else if ((m = ua.match(/SamsungBrowser\/(\d+)/))) r.browser = "Samsung Internet " + m[1];
+    else if ((m = ua.match(/CriOS\/(\d+)/))) r.browser = "Chrome " + m[1];
+    else if ((m = ua.match(/(?:FxiOS|Firefox)\/(\d+)/))) r.browser = "Firefox " + m[1];
+    else if ((m = ua.match(/Chrome\/(\d+)/))) r.browser = "Chrome " + m[1];
+    else if ((m = ua.match(/Version\/(\d+).*Safari/))) r.browser = "Safari " + m[1];
+
+    /* Chrome/Edge: model HP & versi OS yang lebih akurat */
+    var uad = navigator.userAgentData;
+    if (uad && uad.getHighEntropyValues) {
+      try {
+        var h = await uad.getHighEntropyValues(["model", "platformVersion"]);
+        if (h.model) r.model = String(h.model).slice(0, 60);
+        var mayor = parseInt(h.platformVersion, 10);
+        if (h.platform === "Windows" && mayor > 0) r.os = mayor >= 13 ? "Windows 11" : "Windows 10";
+        if (h.platform === "Android" && mayor > 0) r.os = "Android " + mayor;
+      } catch(e) {}
+    }
+    /* browser lain (mis. Samsung Internet) masih mencantumkan model di identitas browser */
+    if (!r.model && (m = ua.match(/Android\s[\d.]+;\s([^;)]+?)(?:\sBuild\/[^;)]*)?[;)]/)) && m[1].trim() !== "K") r.model = m[1].trim().slice(0, 60);
+    r.os = r.os.slice(0, 40); r.browser = r.browser.slice(0, 40);
+    return r;
+  }
+  var perangkatSaya = null;
+  infoPerangkat().then(function(r){ perangkatSaya = r; });
+
   async function simpanGenerate(token, lok, percobaan){
     if (!dbReady) return true;
     var d = dataArsip();
@@ -592,6 +635,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     d.lng = Math.round(lok.lng * 1e6) / 1e6;
     d.akurasi = Math.min(Math.round(lok.acc * 10) / 10, 99999999);
     d.percobaan = percobaan;
+    var pr = perangkatSaya || await infoPerangkat();
+    d.perangkat = pr.perangkat; d.os = pr.os; d.browser = pr.browser; d.model_hp = pr.model;
     var h = headersDb(); h["Prefer"] = "return=minimal";
     try {
       var res = await fetch(SUPABASE_URL + "/rest/v1/rab_arsip", { method:"POST", headers:h, body:JSON.stringify(d) });
