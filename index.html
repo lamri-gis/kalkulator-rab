@@ -141,7 +141,6 @@
 <header>
   <h1>Kalkulator RAB Desa</h1>
   <p>Hitung RAB kegiatan dengan cepat, material tetap aman</p>
-  <div class="brand">by <a href="https://lamri.vercel.app" target="_blank" rel="noopener">Lamri, S.P.</a> &middot; Kaur Perencanaan Desa Susuk Dalam</div>
 </header>
 
 <main>
@@ -284,8 +283,7 @@
 </main>
 
 <footer>
-  Disusun oleh <b>Lamri, S.P.</b>, Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur<br>
-  <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
+  &copy; <span id="thn">2026</span> <a href="https://lamri.vercel.app" target="_blank" rel="noopener">Lamri, S.P.</a>
 </footer>
 
 <div class="overlay hidden" id="ovConsent">
@@ -376,6 +374,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
 
   $("tahun").value = new Date().getFullYear();
+  $("thn").textContent = new Date().getFullYear();
 
   function rtLabel(){
     var d = $("rt").value.replace(/\D/g,"");
