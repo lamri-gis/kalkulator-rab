@@ -59,6 +59,13 @@
   .act{display:flex;gap:4px;flex-wrap:wrap}
   .muted{color:var(--muted)}
   .hidden{display:none}
+  .ovl{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .ovl.hidden{display:none}
+  .mdl{background:#fff;border-radius:14px;padding:20px;max-width:440px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .mdl h3{margin:0 0 8px;color:var(--bad);font-size:18px}
+  .mdl p{font-size:14px;margin:0 0 10px}
+  .mact{display:flex;gap:10px;margin-top:14px}
+  .mact .btn{flex:1}
   footer{text-align:center;font-size:12px;color:var(--muted);padding:10px 16px 30px}
 </style>
 </head>
@@ -129,6 +136,7 @@
       <button class="btn" id="btnCsv">Export CSV (hasil filter)</button>
       <button class="btn ok" id="btnCsvReal">Export CSV (Real saja)</button>
       <button class="btn bad" id="btnRetensi">Hapus data lebih dari 2 tahun</button>
+      <button class="btn bad" id="btnHapusNonReal">Hapus yang tidak Real</button>
       <span class="muted" id="countInfo" style="align-self:center"></span>
     </div>
     <div class="tablewrap" style="margin-top:12px">
@@ -143,6 +151,20 @@
     </div>
   </section>
 </main>
+
+<div class="ovl hidden" id="ovHapus">
+  <div class="mdl">
+    <h3>Hapus yang tidak Real</h3>
+    <p id="hapusInfo">Menghitung data...</p>
+    <label for="ketikHapus">Ketik <b>HAPUS</b> untuk konfirmasi</label>
+    <input id="ketikHapus" type="text" autocomplete="off" placeholder="HAPUS">
+    <div class="err" id="hapusErr"></div>
+    <div class="mact">
+      <button class="btn" id="btnBatalHapus">Batal</button>
+      <button class="btn bad" id="btnYakinHapus" disabled>Hapus Permanen</button>
+    </div>
+  </div>
+</div>
 
 <footer>Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur</footer>
 
@@ -370,6 +392,34 @@ $("btnRetensi").addEventListener("click", async () => {
   const { error } = await sb.from("rab_arsip").delete().lt("created_at", batas.toISOString());
   if (error) { alert("Gagal: " + error.message); return; }
   alert("Data lebih dari 2 tahun sudah dihapus.");
+  muatSemua();
+});
+
+/* ---------- Hapus massal: semua yang tidak Real (baru + abaikan) ---------- */
+let jumlahNonReal = 0;
+$("btnHapusNonReal").addEventListener("click", async () => {
+  $("ketikHapus").value = ""; $("hapusErr").textContent = ""; $("btnYakinHapus").disabled = true;
+  $("hapusInfo").textContent = "Menghitung data...";
+  $("ovHapus").classList.remove("hidden");
+  const [baru, abaikan] = await Promise.all([hitungArsip("baru"), hitungArsip("abaikan")]);
+  jumlahNonReal = baru + abaikan;
+  $("hapusInfo").innerHTML = jumlahNonReal
+    ? "Akan menghapus permanen <b>" + jumlahNonReal.toLocaleString("id-ID") + " data</b> yang tidak Real (" +
+      baru.toLocaleString("id-ID") + " berstatus <i>baru</i>, " + abaikan.toLocaleString("id-ID") +
+      " berstatus <i>abaikan</i>). Data yang sudah dihapus tidak bisa dikembalikan. Data berstatus <b>Real</b> tetap aman."
+    : "Tidak ada data yang tidak Real. Semua data sudah berstatus Real.";
+});
+$("ketikHapus").addEventListener("input", (e) => {
+  $("btnYakinHapus").disabled = !(e.target.value.trim() === "HAPUS" && jumlahNonReal > 0);
+});
+$("btnBatalHapus").addEventListener("click", () => $("ovHapus").classList.add("hidden"));
+$("btnYakinHapus").addEventListener("click", async () => {
+  const btn = $("btnYakinHapus"); btn.disabled = true; btn.textContent = "Menghapus...";
+  const { error } = await sb.from("rab_arsip").delete().in("status", ["baru", "abaikan"]);
+  btn.textContent = "Hapus Permanen";
+  if (error) { $("hapusErr").textContent = "Gagal: " + error.message; btn.disabled = false; return; }
+  $("ovHapus").classList.add("hidden");
+  alert(jumlahNonReal.toLocaleString("id-ID") + " data yang tidak Real sudah dihapus.");
   muatSemua();
 });
 
