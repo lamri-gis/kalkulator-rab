@@ -821,6 +821,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!generated || !gen) { show("ovNama", false); return; }
     var nama = $("namaPemohon").value.replace(/\s+/g, " ").trim();
     if (nama.length < 3) { $("namaErr").textContent = "Nama pemohon wajib diisi (minimal 3 huruf)."; return; }
+    if (/lamri/i.test(nama)) { $("namaErr").textContent = "Nama ini tidak dapat digunakan. Gunakan nama pemohon yang sebenarnya."; return; }
     namaCetak = nama;
     if (ratingTersimpan()) { prosesIzin(null, null, "namaErr"); return; }
     show("ovNama", false);
