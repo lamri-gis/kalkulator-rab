@@ -396,7 +396,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     }
     var sisa = total - tukang - tpk - sewa - pajakSewa;
     var cukup = sisa >= 0;
-    var material = cukup ? Math.floor(sisa / (1 + p) + 1e-7) : 0;
+    var material = 0;
+    if (cukup) {
+      material = Math.floor(sisa / (1 + p) + 1e-7);
+      /* mode Material: bahan dikunci persis sesuai input, sisa pembulatan masuk ke pajak bahan */
+      if (mode === "material" && material >= nilai) material = nilai;
+    }
     var pajak = cukup ? sisa - material : 0;
     var aman = mode === "material"
       ? (cukup && material >= nilai)
