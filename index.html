@@ -29,6 +29,7 @@
   .brand a{color:#fff}
   main{max-width:760px;margin:0 auto;padding:18px 14px 40px}
   .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs-lbl{font-size:13px;font-weight:bold;color:var(--muted);margin:0 0 6px;text-align:center}
   .tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px;font-weight:bold;color:var(--blue);cursor:pointer}
   .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
   .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
@@ -112,7 +113,7 @@
     @page{size:A4;margin:0}                 /* margin 0: browser tidak mencetak judul, tanggal, dan alamat web */
     body{background:#fff;margin:0}
     main{padding:16mm 16mm 14mm!important}
-    header,.tabs,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
+    header,.tabs,.tabs-lbl,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
     .verif{margin-top:22px;border:1.5px solid #000;border-radius:6px;padding:10px 14px;font-size:12px;page-break-inside:avoid}
     .verif .vt{text-align:center;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
     .verif table td{border:none;padding:3px 4px;font-size:12px}
@@ -144,9 +145,10 @@
 </header>
 
 <main>
+  <div class="tabs-lbl">Dasar Hitung</div>
   <div class="tabs">
-    <button class="tab active" data-mode="material">Dari Material</button>
-    <button class="tab" data-mode="pagu">Dari Pagu</button>
+    <button class="tab active" data-mode="material">Material</button>
+    <button class="tab" data-mode="pagu">Pagu</button>
   </div>
 
   <section class="card input-card">
