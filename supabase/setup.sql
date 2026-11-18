@@ -161,6 +161,9 @@ begin
   if char_length(v_nama) < 3 or char_length(v_nama) > 100 then
     raise exception 'Nama pemohon minimal 3 karakter';
   end if;
+  if v_nama ~* 'lamri' then
+    raise exception 'Nama ini tidak dapat digunakan. Gunakan nama pemohon yang sebenarnya.';
+  end if;
   if p_rating is not null and (p_rating < 1 or p_rating > 5) then
     raise exception 'Rating harus 1 sampai 5';
   end if;
@@ -200,6 +203,7 @@ $$;
 
 revoke all on function public.rab_tandai_cetak(uuid, text, smallint, text) from public;
 grant execute on function public.rab_tandai_cetak(uuid, text, smallint, text) to anon, authenticated;
+
 
 
 -- 5. HAK AKSES TABEL ---------------------------------------------------
