@@ -6,6 +6,14 @@
 <title>Kalkulator RAB Desa | by Lamri, S.P.</title>
 <meta name="description" content="Kalkulator RAB kegiatan desa: hitung Total RAB dari material atau rincian dari pagu. Disusun oleh Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam.">
 <meta name="author" content="Lamri, S.P.">
+<meta name="theme-color" content="#0b3954">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ACC-RAB">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root{
     --navy:#0b3954; --blue:#1f4e78; --soft:#eef4fa; --line:#d6e0ea;
@@ -86,6 +94,13 @@
   .mact{display:flex;gap:10px;margin-top:14px}
   .bar{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
   #barFill{height:100%;width:0;background:var(--blue);transition:width .2s linear}
+  .stars{display:flex;justify-content:center;gap:6px;margin:4px 0}
+  .stars button{background:none;border:none;font-size:40px;line-height:1;color:#d0d7de;cursor:pointer;padding:2px 4px}
+  .stars button.on{color:#f5b301}
+  .star-lbl{text-align:center;font-size:13px;color:var(--muted);min-height:18px}
+  textarea{width:100%;padding:10px 12px;font-size:15px;border:1px solid #c9d4df;border-radius:8px;font-family:inherit;resize:vertical}
+  .app-ic{width:64px;height:64px;border-radius:14px;display:block;margin:0 auto 10px}
+  #ovPasang h3{text-align:center}
   .err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
   .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
   .hidden{display:none}
@@ -291,6 +306,40 @@
     <p id="loadText">Mohon tunggu 20 detik.</p>
     <div class="bar"><div id="barFill"></div></div>
     <div class="mact"><button class="btn" id="btnBatalLoad">Batal</button></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovRating">
+  <div class="modal">
+    <h3>Beri Penilaian</h3>
+    <p>Seberapa membantu Kalkulator RAB ini? Pilih bintang untuk melanjutkan cetak.</p>
+    <div class="stars" id="stars">
+      <button type="button" data-v="1" aria-label="1 bintang">★</button>
+      <button type="button" data-v="2" aria-label="2 bintang">★</button>
+      <button type="button" data-v="3" aria-label="3 bintang">★</button>
+      <button type="button" data-v="4" aria-label="4 bintang">★</button>
+      <button type="button" data-v="5" aria-label="5 bintang">★</button>
+    </div>
+    <div class="star-lbl" id="starLbl">Belum dipilih</div>
+    <label for="saran" style="margin-top:12px">Saran atau masukan (boleh dikosongkan)</label>
+    <textarea id="saran" maxlength="300" rows="3" placeholder="Tulis saran Anda..."></textarea>
+    <div class="err" id="ratingErr"></div>
+    <div class="mact">
+      <button class="btn" id="btnBatalRating">Batal</button>
+      <button class="btn primary" id="btnKirimRating" disabled>Kirim &amp; Cetak</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovPasang">
+  <div class="modal">
+    <img src="/icon-192.png" alt="" class="app-ic">
+    <h3>Pasang Aplikasi ACC-RAB</h3>
+    <p id="pasangText">Terima kasih atas penilaiannya! Pasang ACC-RAB di HP supaya lebih cepat dibuka langsung dari layar utama, tanpa mengetik alamat web.</p>
+    <div class="mact">
+      <button class="btn" id="btnNantiPasang">Nanti</button>
+      <button class="btn primary" id="btnPasang">Pasang</button>
+    </div>
   </div>
 </div>
 
@@ -549,11 +598,11 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     } catch(e) { return false; }
   }
 
-  async function mintaIzinCetak(token, nama){
+  async function mintaIzinCetak(token, nama, rating, saran){
     if (!dbReady) return { kode: "RAB-DEMO" };
     try {
       var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_tandai_cetak", {
-        method:"POST", headers:headersDb(), body:JSON.stringify({ p_token: token, p_nama: nama })
+        method:"POST", headers:headersDb(), body:JSON.stringify({ p_token: token, p_nama: nama, p_rating: rating || null, p_saran: saran || null })
       });
       var j = await res.json().catch(function(){ return null; });
       if (!res.ok) return { error: (j && j.message) || "Izin cetak gagal, coba lagi." };
@@ -697,34 +746,121 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   $("btnBatalNama").addEventListener("click", function(){ show("ovNama", false); });
   $("namaPemohon").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnIzin").click(); });
 
-  $("btnIzin").addEventListener("click", async function(){
+  /* ---------- Penyimpanan tanda di browser (aman bila diblokir) ---------- */
+  function simpanLokal(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
+  function bacaLokal(k){ try { return localStorage.getItem(k); } catch(e) { return null; } }
+  function ratingTersimpan(){ var v = parseInt(bacaLokal("accrab_rating"), 10); return v >= 1 && v <= 5 ? v : 0; }
+
+  /* ---------- PWA: deteksi terpasang & tawaran pasang ---------- */
+  var tawaranPasang = null;
+  var isHP = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function terpasang(){
+    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+      || window.navigator.standalone === true || bacaLokal("accrab_pwa") === "1";
+  }
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); tawaranPasang = e; });
+  window.addEventListener("appinstalled", function(){ simpanLokal("accrab_pwa", "1"); tawaranPasang = null; });
+  function perluSaranPasang(){
+    if (!isHP || terpasang() || ratingTersimpan() < 4) return false;
+    return isIOS || !!tawaranPasang;          /* Android: hanya jika browser menawarkan pemasangan */
+  }
+
+  /* ---------- Alur cetak: nama -> rating (sekali) -> saran pasang -> cetak ---------- */
+  var namaCetak = "", bintang = 0;
+
+  $("btnIzin").addEventListener("click", function(){
+    if (!generated || !gen) { show("ovNama", false); return; }
     var nama = $("namaPemohon").value.replace(/\s+/g, " ").trim();
     if (nama.length < 3) { $("namaErr").textContent = "Nama pemohon wajib diisi (minimal 3 huruf)."; return; }
-    var btn = $("btnIzin"); btn.disabled = true; btn.textContent = "Memverifikasi...";
-    var hasil = await mintaIzinCetak(gen.token, nama);
-    btn.disabled = false; btn.textContent = "Cetak / PDF";
-    if (hasil.error) { $("namaErr").textContent = hasil.error; return; }
+    namaCetak = nama;
+    if (ratingTersimpan()) { prosesIzin(null, null, "namaErr"); return; }
+    show("ovNama", false);
+    bintang = 0; tandaiBintang(0); $("saran").value = ""; $("ratingErr").textContent = "";
+    show("ovRating", true);
+  });
+
+  var LABEL_BINTANG = ["Belum dipilih", "Sangat kurang", "Kurang", "Cukup", "Baik", "Sangat baik"];
+  function tandaiBintang(v){
+    document.querySelectorAll("#stars button").forEach(function(b){ b.classList.toggle("on", parseInt(b.dataset.v, 10) <= v); });
+    $("starLbl").textContent = LABEL_BINTANG[v];
+    $("btnKirimRating").disabled = v < 1;
+  }
+  document.querySelectorAll("#stars button").forEach(function(b){
+    b.addEventListener("click", function(){ bintang = parseInt(b.dataset.v, 10); tandaiBintang(bintang); });
+  });
+  $("btnBatalRating").addEventListener("click", function(){ show("ovRating", false); });
+  $("btnKirimRating").addEventListener("click", function(){
+    if (bintang < 1) return;
+    prosesIzin(bintang, $("saran").value.trim().slice(0, 300), "ratingErr");
+  });
+
+  async function prosesIzin(rating, saran, errId){
+    if (!generated || !gen) { show("ovNama", false); show("ovRating", false); return; }
+    var btn = rating ? $("btnKirimRating") : $("btnIzin");
+    var teks = btn.textContent;
+    btn.disabled = true; btn.textContent = "Memverifikasi...";
+    var hasil = await mintaIzinCetak(gen.token, namaCetak, rating, saran);
+    btn.disabled = false; btn.textContent = teks;
+    if (hasil.error) { $(errId).textContent = hasil.error; return; }
+    if (rating) simpanLokal("accrab_rating", String(rating));
+    isiVerifikasi(namaCetak, hasil.kode);
+    show("ovNama", false); show("ovRating", false);
+    if (perluSaranPasang()) {
+      $("pasangText").textContent = isIOS
+        ? "Terima kasih atas penilaiannya! Pasang ACC-RAB di iPhone: ketuk tombol Bagikan di Safari, lalu pilih \"Tambah ke Layar Utama\"."
+        : "Terima kasih atas penilaiannya! Pasang ACC-RAB di HP supaya lebih cepat dibuka langsung dari layar utama, tanpa mengetik alamat web.";
+      $("btnPasang").textContent = isIOS ? "Mengerti" : "Pasang";
+      show("ovPasang", true);
+    } else {
+      cetak(hasil.kode);
+    }
+    kodeTerakhir = hasil.kode;
+  }
+  var kodeTerakhir = "";
+
+  $("btnNantiPasang").addEventListener("click", function(){ show("ovPasang", false); cetak(kodeTerakhir); });
+  $("btnPasang").addEventListener("click", async function(){
+    if (!isIOS && tawaranPasang) {
+      tawaranPasang.prompt();
+      try {
+        var pilihan = await tawaranPasang.userChoice;
+        if (pilihan && pilihan.outcome === "accepted") simpanLokal("accrab_pwa", "1");
+      } catch(e) {}
+      tawaranPasang = null;
+    }
+    show("ovPasang", false);
+    cetak(kodeTerakhir);
+  });
+
+  function isiVerifikasi(nama, kode){
     var waktu = new Date().toLocaleString("id-ID", { timeZone:"Asia/Makassar", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" }) + " WITA";
     var baris = [
       ["Status", "<span class=\"ok\">DIIZINKAN</span>"],
       ["Nama Pemohon", esc(nama)],
       ["Waktu Cetak", esc(waktu)],
       ["Lokasi", "Terverifikasi"],
-      ["Kode Verifikasi", "<b>" + esc(hasil.kode) + "</b>"]
+      ["Kode Verifikasi", "<b>" + esc(kode) + "</b>"]
     ];
     $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
       baris.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + x[1] + "</td></tr>"; }).join("") + "</table>";
-    show("ovNama", false);
+  }
+
+  function cetak(kode){
     /* nama file PDF otomatis = judul halaman saat dicetak */
     var judulAsli = document.title;
     /* tanpa titik: Android menganggap teks setelah titik terakhir sebagai ekstensi */
     var bersih = function(t){ return t.replace(/[\\\/:*?"<>|.]+/g, " ").replace(/\s+/g, " ").trim(); };
-    var namaFile = (hasil.kode + " (" + bersih($("nama").value).slice(0, 120) + ")");
-    document.title = namaFile;
+    document.title = kode + " (" + bersih($("nama").value).slice(0, 120) + ")";
     var kembalikan = function(){ document.title = judulAsli; window.removeEventListener("afterprint", kembalikan); };
     window.addEventListener("afterprint", kembalikan);
-    setTimeout(function(){ window.print(); }, 200);
-  });
+    setTimeout(function(){ window.print(); }, 250);
+  }
+
+  /* ---------- Service worker (PWA) ---------- */
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+  }
 
   render();
 })();
