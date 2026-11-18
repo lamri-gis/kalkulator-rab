@@ -150,6 +150,30 @@
   </div>
 
   <section class="card input-card">
+    <h2 id="inTitle">Input Bahan dan Sewa</h2>
+    <p class="sub" id="inSub">Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
+
+    <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
+    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+
+    <div id="grupSewa">
+      <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
+      <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+    </div>
+
+    <details>
+      <summary>Pengaturan persentase</summary>
+      <div class="grid2">
+        <div><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
+        <div><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+      </div>
+      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK ditetapkan 3% dari total biaya. TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
+    </details>
+  </section>
+
+  <section class="card input-card">
     <h2>Data Kegiatan</h2>
     <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
 
@@ -229,30 +253,6 @@
     <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
   </section>
 
-  <section class="card input-card">
-    <h2 id="inTitle">Input Bahan dan Sewa</h2>
-    <p class="sub" id="inSub">Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
-
-    <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
-    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
-
-    <div id="grupSewa">
-      <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
-      <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
-    </div>
-
-    <details>
-      <summary>Pengaturan persentase</summary>
-      <div class="grid2">
-        <div><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
-        <div><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-        <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-        <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
-      </div>
-      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK 3% sesuai kesepakatan DPMDes. TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
-    </details>
-  </section>
-
   <section class="card">
     <div class="print-only">
       <div class="kop">
@@ -286,7 +286,7 @@
 
 <footer>
   &copy; <span id="thn">2026</span><br>
-  <a href="https://lamri.vercel.app" target="_blank" rel="noopener">lamri.vercel.app</a>
+  <a href="https://lamri.vercel.app" target="_blank" rel="noopener" id="linkLamri">lamri.vercel.app</a>
 </footer>
 
 <div class="overlay hidden" id="ovConsent">
@@ -340,6 +340,18 @@
     <div class="mact">
       <button class="btn" id="btnNantiPasang">Nanti</button>
       <button class="btn primary" id="btnPasang">Pasang</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ovPasangLink">
+  <div class="modal">
+    <img src="/icon-192.png" alt="" class="app-ic">
+    <h3 style="text-align:center">Pasang Aplikasi ACC-RAB</h3>
+    <p id="pasangLinkText">Pasang aplikasi ACC-RAB terlebih dahulu untuk melanjutkan ke lamri.vercel.app.</p>
+    <div class="mact">
+      <button class="btn" id="btnTutupPasangLink">Tutup</button>
+      <button class="btn primary" id="btnPasangLink">Pasang</button>
     </div>
   </div>
 </div>
@@ -520,6 +532,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   /* alasan belum bisa Generate; kosong berarti siap */
   function alasanBelumSiap(){
     /* urutan sesuai urutan kolom di formulir */
+    if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
+    if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
     var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
     if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
     if (!dimensi()) return "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
@@ -528,8 +542,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!$("sifat").value) return "Pilih sifat konstruksi.";
     if (!$("dana").value) return "Pilih jenis dana.";
     if (!rtLabel()) return "Isi lokasi RT.";
-    if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
-    if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
     return "";
   }
   function notice(msg){
@@ -906,6 +918,35 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     window.addEventListener("afterprint", kembalikan);
     setTimeout(function(){ window.print(); }, 250);
   }
+
+  /* ---------- Link footer: di HP wajib pasang ACC-RAB dulu ---------- */
+  var URL_LAMRI = "https://lamri.vercel.app";
+  function bukaLamri(){ window.open(URL_LAMRI, "_blank", "noopener"); }
+  $("linkLamri").addEventListener("click", function(e){
+    if (!isHP || terpasang()) return;                 /* laptop/PC atau sudah terpasang: langsung */
+    if (isIOS) {
+      e.preventDefault();
+      $("pasangLinkText").textContent = "Pasang aplikasi ACC-RAB terlebih dahulu: ketuk tombol Bagikan di Safari, lalu pilih \"Tambah ke Layar Utama\". Setelah itu buka ACC-RAB dari layar utama.";
+      $("btnPasangLink").classList.add("hidden");
+      show("ovPasangLink", true);
+      return;
+    }
+    if (!tawaranPasang) return;                       /* browser tidak menawarkan pemasangan: langsung */
+    e.preventDefault();
+    $("pasangLinkText").textContent = "Pasang aplikasi ACC-RAB terlebih dahulu untuk melanjutkan ke lamri.vercel.app.";
+    $("btnPasangLink").classList.remove("hidden");
+    show("ovPasangLink", true);
+  });
+  $("btnTutupPasangLink").addEventListener("click", function(){ show("ovPasangLink", false); });
+  $("btnPasangLink").addEventListener("click", async function(){
+    if (!tawaranPasang) { show("ovPasangLink", false); bukaLamri(); return; }
+    tawaranPasang.prompt();
+    var ok = false;
+    try { var pilihan = await tawaranPasang.userChoice; ok = pilihan && pilihan.outcome === "accepted"; } catch(e) {}
+    tawaranPasang = null;
+    show("ovPasangLink", false);
+    if (ok) { simpanLokal("accrab_pwa", "1"); bukaLamri(); }
+  });
 
   /* ---------- Service worker (PWA) ---------- */
   if ("serviceWorker" in navigator && location.protocol === "https:") {
