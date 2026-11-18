@@ -360,7 +360,7 @@ function unduhCsv(data, nama){
     r.nama_pemohon, r.kode_verifikasi, r.lat, r.lng, r.akurasi, r.perangkat, r.os, r.browser, r.model_hp, r.percobaan, r.rating, r.saran,
     r.lat != null ? "https://www.google.com/maps?q=" + r.lat + "," + r.lng : "",
     r.nama_kegiatan, r.panjang, r.lebar, r.tinggi, r.volume, r.satuan, r.bahan_utama, r.sifat_konstruksi, r.jenis_dana, r.rt, r.tahun,
-    r.mode === "material" ? "Bahan dan Sewa" : "Pagu", "Swakelola oleh TPK",
+    r.mode === "material" ? (r.sewa > 0 ? "Bahan dan Sewa" : "Bahan") : "Pagu", "Swakelola oleh TPK",
     r.nilai_input, r.material, r.pajak, r.sewa || 0, r.pajak_sewa || 0, r.tukang, r.tpk, r.total,
     r.p_tukang * 100, r.p_tpk * 100, r.p_pajak * 100, r.p_pajak_sewa != null ? r.p_pajak_sewa * 100 : "", r.status
   ].map(q).join(";"));
