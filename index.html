@@ -477,7 +477,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       ["Tahun Anggaran", $("tahun").value || "-"],
       ["Lokasi", lokasiLengkap()],
       ["Pelaksanaan", "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? "Nilai Bahan dan Sewa" : "Pagu Anggaran"]
+      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : "Pagu Anggaran"]
     );
     $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
 
