@@ -429,10 +429,25 @@ $("btnYakinHapus").addEventListener("click", async () => {
 /* ---------- Penggeser horizontal di atas tabel (sinkron dengan tabel) ---------- */
 (function(){
   const atas = $("scrollAtas"), isi = $("scrollAtasIsi"), wrap = $("tableWrap");
-  let kunci = false;
-  const ukur = () => { isi.style.width = wrap.scrollWidth + "px"; };
-  atas.addEventListener("scroll", () => { if (kunci) return; kunci = true; wrap.scrollLeft = atas.scrollLeft; kunci = false; });
-  wrap.addEventListener("scroll", () => { if (kunci) return; kunci = true; atas.scrollLeft = wrap.scrollLeft; kunci = false; });
+  let sumber = null, lepas = null;
+  /* jarak geser keduanya disamakan persis (tabel punya scrollbar vertikal yang memakan lebar) */
+  const ukur = () => { isi.style.width = (wrap.scrollWidth - wrap.clientWidth + atas.clientWidth) + "px"; };
+  /* hanya elemen yang sedang dipegang/digulir yang menggerakkan yang lain */
+  const pegang = (el) => () => { sumber = el; clearTimeout(lepas); lepas = setTimeout(() => { sumber = null; }, 400); };
+  ["pointerdown", "wheel", "touchstart", "keydown"].forEach(ev => {
+    atas.addEventListener(ev, pegang(atas), { passive: true });
+    wrap.addEventListener(ev, pegang(wrap), { passive: true });
+  });
+  atas.addEventListener("scroll", () => {
+    if (sumber !== atas) return;
+    pegang(atas)();
+    if (wrap.scrollLeft !== atas.scrollLeft) wrap.scrollLeft = atas.scrollLeft;
+  });
+  wrap.addEventListener("scroll", () => {
+    if (sumber !== wrap) return;
+    pegang(wrap)();
+    if (atas.scrollLeft !== wrap.scrollLeft) atas.scrollLeft = wrap.scrollLeft;
+  });
   window.addEventListener("resize", ukur);
   new MutationObserver(ukur).observe($("tbody"), { childList: true });
   ukur();
