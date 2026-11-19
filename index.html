@@ -84,6 +84,10 @@
   .pbj-t{font-size:13px;font-weight:bold;color:var(--blue);margin-bottom:6px}
   .pbj-r{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
   .pbj-r.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px}
+  .pbj-r.sub span{padding-left:12px}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:10px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:14px;font-weight:bold;color:var(--blue);cursor:pointer;font-family:inherit}
+  .seg button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
   .notice{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--badbg);color:var(--bad);font-size:13px;font-weight:bold;text-align:center}
   .overlay{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
   .overlay.hidden{display:none}
@@ -134,6 +138,10 @@
     td{border-bottom:1px solid #999}
     tr.total td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .status{border:1px solid #999}
+    .pbj{border:1px solid #999;background:#fff;border-radius:0;margin-top:12px;page-break-inside:avoid}
+    .pbj-t{color:#000}
+    .pbj-r{font-size:13px}
+    .pbj-r.tot{border-top:1px solid #999}
     .sign{margin-top:36px;font-size:10px;color:#555;text-align:center;border-top:1px solid #ccc;padding-top:6px}
   }
 </style>
@@ -159,6 +167,14 @@
     <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
     <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
 
+    <div id="grupTpk" class="hidden">
+      <label>TPK</label>
+      <div class="seg" id="segTpk">
+        <button type="button" data-tpk="tanpa" class="active">Tanpa TPK</button>
+        <button type="button" data-tpk="pakai">Pakai TPK 3%</button>
+      </div>
+    </div>
+
     <div id="grupSewa">
       <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
       <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
@@ -168,11 +184,11 @@
       <summary>Pengaturan persentase</summary>
       <div class="grid2">
         <div><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
-        <div><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div id="kolomTpk"><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
         <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
         <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
       </div>
-      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK ditetapkan 3% dari total biaya. TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
+      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK ditetapkan 3% dari total biaya (Mode Pagu dapat memilih tanpa TPK). TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
     </details>
   </section>
 
@@ -263,7 +279,7 @@
         <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <table id="tbl"></table>
-      <div class="pbj screen-only" id="pbj"></div>
+      <div class="pbj" id="pbj"></div>
       <div id="status" class="status"></div>
       <div class="print-only verif" id="verif"></div>
     </div>
@@ -370,7 +386,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
 (function(){
   var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
-  var mode = "material", last = null;
+  var mode = "material", last = null, pakaiTpk = false;   /* Mode Pagu: bawaan tanpa TPK */
   var generated = false, berubah = false, gen = null;
   var $ = function(id){ return document.getElementById(id); };
   var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
@@ -544,7 +560,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var nilai = parseMoney($("nilai").value);
     var sewa = mode === "material" ? parseMoney($("sewa").value) : 0;   /* mode Pagu: semua biaya sudah dalam pagu */
     var t = Math.min(parsePct($("pTukang").value), MAKS_UPAH);
-    var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;          /* ditetapkan, tidak dibaca dari kolom */
+    var k = (mode === "pagu" && !pakaiTpk) ? 0 : TPK;     /* ditetapkan; Mode Pagu boleh tanpa TPK */
+    var p = PAJAK_BAHAN, ps = PAJAK_SEWA;
     $("lokasiPreview").textContent = lokasiLengkap();
     var dm = dimensi();
     var namaHasil = dm && !dm.error ? (tipeAktif() === "tg" ? "Tinggi" : { "m³":"Volume", "m²":"Luas", "m":"Panjang" }[dm.satuan]) : "";
@@ -568,19 +585,26 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     }
     var sisa = total - tukang - tpk - sewa - pajakSewa;
     var cukup = sisa >= 0;
-    var material = 0;
-    if (cukup) {
+    var material = 0, pajak = 0, dpp = 0, ppn = 0, pph = 0;
+    if (cukup && mode === "pagu") {
+      /* sesuai Siskeudes: DPP = bahan / 1,11; PPN 11% dan PPh 22 1,5% dari DPP; sisanya dibayar ke penyedia */
+      dpp = sisa / 1.11;
+      ppn = Math.round(dpp * 0.11 + 1e-7);
+      pph = Math.round(dpp * 0.015 + 1e-7);
+      material = sisa - ppn - pph;
+      pajak = ppn + pph;
+    } else if (cukup) {
       material = Math.floor(sisa / (1 + p) + 1e-7);
       /* mode Material: bahan dikunci persis sesuai input, sisa pembulatan masuk ke pajak bahan */
-      if (mode === "material" && material >= nilai) material = nilai;
+      if (material >= nilai) material = nilai;
+      pajak = sisa - material;
     }
-    var pajak = cukup ? sisa - material : 0;
     var aman = mode === "material"
       ? (cukup && material >= nilai)
       : (cukup && (tukang + tpk + sewa + pajakSewa + material + pajak) === total);
 
     tampil({ nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk,
-             pajak:pajak, material:material, aman:aman, cukup:cukup, t:t, k:k, p:p, ps:ps });
+             pajak:pajak, material:material, aman:aman, cukup:cukup, bahan:sisa, dpp:dpp, ppn:ppn, pph:pph, t:t, k:k, p:p, ps:ps });
   }
 
   function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
@@ -600,7 +624,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       ["Tahun Anggaran", $("tahun").value || "-"],
       ["Lokasi", lokasiLengkap()],
       ["Pelaksanaan", "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : "Pagu Anggaran"]
+      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.k > 0 ? "Pagu Anggaran" : "Pagu Anggaran (tanpa TPK)")]
     );
     $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
 
@@ -608,21 +632,31 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)", r.material + r.pajak, "main"]
     ];
     if (r.sewa > 0) rows.push(["Biaya Sewa Peralatan (termasuk pajak)", r.sewa + r.pajakSewa, "main"]);
+    rows.push(["Biaya Upah Tenaga Kerja", r.tukang, ""]);
+    if (r.k > 0) rows.push(["TPK (" + pctLabel(r.k) + ")", r.tpk, ""]);
     rows.push(
-      ["Biaya Upah Tenaga Kerja", r.tukang, ""],
-      ["TPK (" + pctLabel(r.k) + ")", r.tpk, ""],
       [mode === "material" ? "TOTAL BIAYA (RAB)" : "PAGU ANGGARAN", r.total, "total"]
     );
     $("tbl").innerHTML = rows.map(function(x){
       return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
     }).join("");
 
-    /* PBJ Murni (tanpa pajak): hanya tampil di layar, tidak ikut dicetak */
-    var pbj = [["Bahan/Material", r.material]];
-    if (r.sewa > 0) pbj.push(["Sewa Peralatan", r.sewa]);
-    if (r.sewa > 0) pbj.push(["Jumlah PBJ Murni", r.material + r.sewa]);
-    $("pbj").innerHTML = '<div class="pbj-t">PBJ Murni (tanpa pajak)</div>' +
-      pbj.map(function(x, i){ return '<div class="pbj-r' + (i === 2 ? ' tot' : '') + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
+    var kotak = $("pbj");
+    if (mode === "pagu") {
+      /* Rincian pajak bahan sesuai Siskeudes: tampil di layar dan ikut dicetak */
+      kotak.classList.remove("screen-only");
+      var rinci = [["DPP", r.dpp, "sub"], ["PPN 11%", r.ppn, "sub"], ["PPh 22 1,5%", r.pph, "sub"], ["Dibayar ke Penyedia", r.material, "tot"]];
+      kotak.innerHTML = '<div class="pbj-t">Rincian Pajak Bahan</div>' +
+        rinci.map(function(x){ return '<div class="pbj-r ' + x[2] + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
+    } else {
+      /* PBJ Murni (tanpa pajak): hanya tampil di layar, tidak ikut dicetak */
+      kotak.classList.add("screen-only");
+      var pbj = [["Bahan/Material", r.material]];
+      if (r.sewa > 0) pbj.push(["Sewa Peralatan", r.sewa]);
+      if (r.sewa > 0) pbj.push(["Jumlah PBJ Murni", r.material + r.sewa]);
+      kotak.innerHTML = '<div class="pbj-t">PBJ Murni (tanpa pajak)</div>' +
+        pbj.map(function(x, i){ return '<div class="pbj-r' + (i === 2 ? ' tot' : '') + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
+    }
 
     var st = $("status");
     st.className = "status " + (r.aman ? "ok" : "bad");
@@ -812,9 +846,18 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("nilai").value = "";
     $("sewa").value = "";
     $("grupSewa").classList.toggle("hidden", m !== "material");
+    $("grupTpk").classList.toggle("hidden", m !== "pagu");
+    aturKolomTpk();
     hitung();
   }
   document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
+  function aturKolomTpk(){
+    document.querySelectorAll("#segTpk button").forEach(function(b){ b.classList.toggle("active", (b.dataset.tpk === "pakai") === pakaiTpk); });
+    $("kolomTpk").classList.toggle("hidden", mode === "pagu" && !pakaiTpk);
+  }
+  document.querySelectorAll("#segTpk button").forEach(function(b){
+    b.addEventListener("click", function(){ pakaiTpk = b.dataset.tpk === "pakai"; aturKolomTpk(); hitung(); });
+  });
 
   ["nilai","sewa"].forEach(function(id){
     $(id).addEventListener("input", function(e){
