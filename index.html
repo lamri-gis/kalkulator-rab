@@ -706,14 +706,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
 
     var rows = [
-      [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : (r.bahanSaja ? "Biaya Barang (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)"), r.material + r.pajak, "main"]
+      [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : (r.bahanSaja ? "Biaya Barang (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)"), r.material + r.pajak, r.bahanSaja ? "total" : "main"]
     ];
     if (r.sewa > 0) rows.push(["Biaya Sewa Peralatan (termasuk pajak)", r.sewa + r.pajakSewa, "main"]);
     if (!r.bahanSaja) rows.push(["Biaya Upah Tenaga Kerja", r.tukang, ""]);
     if (r.k > 0) rows.push(["TPK (" + pctLabel(r.k) + ")", r.tpk, ""]);
-    rows.push(
-      [mode === "material" ? "TOTAL BIAYA (RAB)" : "PAGU ANGGARAN", r.total, "total"]
-    );
+    /* Tanpa TPK: Biaya Barang = Pagu, baris PAGU ANGGARAN tidak perlu (dobel) */
+    if (!r.bahanSaja) rows.push([mode === "material" ? "TOTAL BIAYA (RAB)" : "PAGU ANGGARAN", r.total, "total"]);
     $("tbl").innerHTML = rows.map(function(x){
       return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
     }).join("");
