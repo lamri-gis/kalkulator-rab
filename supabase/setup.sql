@@ -36,8 +36,8 @@ create table if not exists public.rab_arsip (
   p_tukang       numeric(6,4) check (p_tukang between 0 and 1),
   -- upah tenaga kerja maksimal 30%
   constraint rab_arsip_p_tukang_maks check (p_tukang is null or p_tukang <= 0.30),
-  -- persentase ditetapkan: TPK 3%, pajak bahan 12,5%, pajak sewa 13%
-  constraint rab_arsip_p_tpk_tetap check (p_tpk is null or p_tpk = 0.03),
+  -- persentase ditetapkan: TPK 3% (Mode Pagu boleh 0%), pajak bahan 12,5%, pajak sewa 13%
+  constraint rab_arsip_p_tpk_tetap check (p_tpk is null or p_tpk = 0.03 or (mode = 'pagu' and p_tpk = 0)),
   constraint rab_arsip_p_pajak_tetap check (p_pajak is null or p_pajak = 0.125),
   constraint rab_arsip_p_pajak_sewa_tetap check (p_pajak_sewa is null or p_pajak_sewa = 0.13),
   p_tpk          numeric(6,4) check (p_tpk between 0 and 1),
