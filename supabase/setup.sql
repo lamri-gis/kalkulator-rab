@@ -19,6 +19,8 @@ create table if not exists public.rab_arsip (
   volume         numeric(14,2) check (volume >= 0 and volume < 1000000000000),
   satuan         text check (char_length(satuan) <= 20),
   bahan_utama    text check (char_length(bahan_utama) <= 60),
+  jenis_bangunan text check (char_length(jenis_bangunan) <= 60),
+  ukuran         text check (char_length(ukuran) <= 300),
   sifat_konstruksi text check (sifat_konstruksi in ('Permanen','Semi Permanen','Sementara/Darurat')),
   jenis_dana     text check (char_length(jenis_dana) <= 60),
   rt             text check (char_length(rt) <= 10),
