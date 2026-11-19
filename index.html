@@ -42,12 +42,13 @@
   .row2 > div{min-width:0}
   select{text-overflow:ellipsis}
   @media (max-width:600px){ .row2{grid-template-columns:1fr;gap:0} }
-  .dim{display:grid;grid-template-columns:110px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
-  .dim .dl{font-size:13px;font-weight:bold}
+  .dim{display:grid;grid-template-columns:150px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
+  .dim .dl{font-size:13px;font-weight:bold;line-height:1.2}
+  .dim .dl small{display:block;font-weight:normal;color:var(--muted);font-size:11px}
   .dim input{text-align:right}
   select.unit{padding:12px 8px}
   #volPreview{font-weight:bold;color:var(--navy)}
-  @media (max-width:520px){ .dim{grid-template-columns:90px 1fr 72px} }
+  @media (max-width:520px){ .dim{grid-template-columns:108px 1fr 72px} .dim .dl{font-size:12px} }
   .prefix{position:relative}
   .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
   .prefix.rp input{padding-left:40px;font-weight:bold}
@@ -182,52 +183,41 @@
     <label for="nama">Nama Kegiatan (wajib, minimal 2 kata)</label>
     <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
 
-    <label>Ukuran Keluaran/Output (wajib, minimal Panjang)</label>
-    <div class="dim">
-      <span class="dl">Panjang</span>
-      <input id="dimP" type="text" inputmode="decimal" maxlength="12" placeholder="0">
-      <select id="uP" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Lebar</span>
-      <input id="dimL" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uL" class="unit"><option value="mm">mm</option><option value="cm">cm</option><option value="m" selected>m</option><option value="km">km</option></select>
-    </div>
-    <div class="dim">
-      <span class="dl">Tinggi/Tebal</span>
-      <input id="dimT" type="text" inputmode="decimal" maxlength="12" placeholder="opsional">
-      <select id="uT" class="unit"><option value="mm">mm</option><option value="cm" selected>cm</option><option value="m">m</option><option value="km">km</option></select>
-    </div>
-    <div class="fixed" id="volPreview">Volume terhitung otomatis dari ukuran.</div>
+    <label for="bahanUtama">Bahan Dominan (wajib)</label>
+    <select id="bahanUtama">
+      <option value="">Pilih bahan dominan</option>
+      <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
+      <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
+      <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
+      <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
+      <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
+      <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
+      <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
+      <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
+      <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
+      <option value="Lainnya">Lainnya (ketik sendiri)</option>
+    </select>
+    <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan dominan" style="margin-top:8px">
 
-    <div class="row2">
-      <div>
-        <label for="bahanUtama">Bahan Konstruksi Utama (wajib)</label>
-        <select id="bahanUtama">
-          <option value="">Pilih bahan</option>
-          <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
-          <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
-          <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
-          <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
-          <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
-          <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
-          <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
-          <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
-          <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
-          <option value="Lainnya">Lainnya (ketik sendiri)</option>
-        </select>
-        <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan konstruksi" style="margin-top:8px">
-      </div>
-      <div>
-        <label for="sifat">Sifat Konstruksi (wajib)</label>
-        <select id="sifat">
-          <option value="">Pilih sifat</option>
-          <option value="Permanen">Permanen (&gt; 15 tahun)</option>
-          <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
-          <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
-        </select>
-      </div>
+    <div id="grupJenis" class="hidden">
+      <label for="jenis">Jenis Bangunan/Pekerjaan (wajib)</label>
+      <select id="jenis"></select>
+      <input id="jenisLain" class="hidden" type="text" maxlength="60" placeholder="Ketik jenis bangunan/pekerjaan" style="margin-top:8px">
     </div>
+
+    <div id="grupUkuran" class="hidden">
+      <label id="ukuranLbl">Ukuran (wajib)</label>
+      <div id="dimBox"></div>
+      <div class="fixed" id="volPreview"></div>
+    </div>
+
+    <label for="sifat">Sifat Konstruksi (wajib)</label>
+    <select id="sifat">
+      <option value="">Pilih sifat</option>
+      <option value="Permanen">Permanen (&gt; 15 tahun)</option>
+      <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
+      <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
+    </select>
 
     <div class="row2">
       <div>
@@ -404,22 +394,137 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   var MAKS_UPAH = 0.30, TPK = 0.03, PAJAK_BAHAN = 0.125, PAJAK_SEWA = 0.13;
   var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
   function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
+
+  /* ---------- Bahan Dominan -> Jenis Bangunan -> Ukuran ---------- */
+  /* n = nama kolom, s = singkatan di hasil cetak, u = satuan bawaan, nol = boleh 0 */
+  var F = {
+    p:  { n:"Panjang", s:"P", u:"m" },
+    l:  { n:"Lebar", s:"L", u:"m" },
+    t:  { n:"Tebal", s:"T", u:"cm" },
+    tg: { n:"Tinggi", s:"Tinggi", u:"m" },
+    d:  { n:"Dalam", s:"Dalam", u:"m" },
+    lb: { n:"Lebar dalam", s:"lebar", u:"cm" },
+    la: { n:"Lebar atas dalam", s:"lebar atas", u:"cm" },
+    ld: { n:"Lebar dasar dalam", s:"lebar dasar", u:"cm", nol:true, hint:"0 = V runcing" },
+    hd: { n:"Tinggi dalam", s:"tinggi", u:"cm" },
+    td: { n:"Tebal dinding/bibir", s:"tebal dinding", u:"cm" },
+    tb: { n:"Tebal dasar", s:"tebal dasar", u:"cm" }
+  };
+  var TIPE = {
+    lantai: { lbl:"Ukuran Lantai", f:["p","l"] },
+    pl:     { f:["p","l"] },
+    plt:    { f:["p","l","t"] },
+    ptg:    { f:["p","tg"] },
+    ptgt:   { f:["p","tg","t"] },
+    pltg:   { f:["p","l","tg"], u:{ l:"cm", tg:"cm" } },
+    pld:    { f:["p","l","d"] },
+    p:      { f:["p"] },
+    tg:     { f:["tg"] },
+    drU:    { f:["p","lb","hd","td","tb"], koma:true },
+    drV:    { f:["p","la","ld","hd","td","tb"], koma:true },
+    bebas:  { f:["p","l","t"], opsional:["l","t"], n:{ t:"Tinggi/Tebal" } }
+  };
+  var DR_U = ["Drainase U","drU"], DR_V = ["Drainase V","drV"];
+  var JENIS = {
+    "Beton Bertulang": [["Jalan Cor","plt"], DR_U, DR_V, ["Gorong-gorong/Box Culvert","p"], ["Jembatan","pl"], ["Talud/Turap","ptgt"], ["Gedung/Bangunan","lantai"], ["Sumur/Bak Air","pld"]],
+    "Rabat Beton (beton tanpa tulangan)": [["Jalan Rabat/JUT","plt"], ["Lantai/Halaman","plt"], DR_U, DR_V],
+    "Pasangan Batu (batu kali/gunung)": [["Talud/Penahan Tanah","ptgt"], DR_V, DR_U, ["Pondasi","pltg"]],
+    "Pasangan Bata": [["Gedung/Bangunan","lantai"], ["MCK","lantai"], ["Pagar","ptg"], DR_U, ["Sumur/Bak Air","pld"]],
+    "Paving Block": [["Jalan Paving","pl"], ["Halaman/Lapangan","pl"]],
+    "Kayu Ulin": [["Rumah/Gedung","lantai"], ["Jembatan","pl"], ["Jalan Titian","pl"], ["Dermaga/Tambatan","pl"], ["Turap Ulin","ptg"], ["Pagar","ptg"]],
+    "Kayu Putih": [["Rumah/Gedung","lantai"], ["Pagar","ptg"]],
+    "Baja/Besi": [["Jembatan","pl"], ["Rangka Atap","pl"], ["Pagar","ptg"], ["Tiang/Menara","tg"]],
+    "Sirtu/Timbunan Tanah": [["Jalan Sirtu","plt"], ["Penimbunan Lahan","plt"]]
+  };
+  function semuaJenis(){                       /* bahan Lainnya: semua jenis tanpa dobel */
+    var ada = {}, out = [];
+    Object.keys(JENIS).forEach(function(b){ JENIS[b].forEach(function(j){ if (!ada[j[0]]) { ada[j[0]] = 1; out.push(j); } }); });
+    return out;
+  }
+  var simpanDim = {}, tipeTampil = null;
+  function namaKolom(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) || F[k].n; }
+  function singkat(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) ? "T" : F[k].s; }
+  function tipeAktif(){
+    var sel = $("jenis");
+    if (!sel.value || !sel.selectedOptions[0]) return null;
+    return sel.selectedOptions[0].dataset.tipe || null;
+  }
+  function jenisLabel(){
+    var v = $("jenis").value;
+    if (v === "Lainnya") return $("jenisLain").value.trim();
+    return v;
+  }
+  function isiJenis(){
+    var b = $("bahanUtama").value, sel = $("jenis"), lama = sel.value;
+    if (!b) { sel.innerHTML = ""; show("grupJenis", false); renderUkuran(); return; }
+    var daftar = b === "Lainnya" ? semuaJenis() : (JENIS[b] || []);
+    sel.innerHTML = '<option value="">Pilih jenis bangunan/pekerjaan</option>' +
+      daftar.map(function(j){ return '<option value="' + esc(j[0]) + '" data-tipe="' + j[1] + '">' + esc(j[0]) + '</option>'; }).join("") +
+      '<option value="Lainnya" data-tipe="bebas">Lainnya (ketik sendiri)</option>';
+    var masih = Array.prototype.some.call(sel.options, function(o){ return o.value === lama && lama; });
+    sel.value = masih ? lama : "";
+    show("grupJenis", true);
+    show("jenisLain", sel.value === "Lainnya");
+    renderUkuran();
+  }
+  function renderUkuran(){
+    var tp = tipeAktif();
+    show("grupUkuran", !!tp);
+    if (!tp) { tipeTampil = null; $("dimBox").innerHTML = ""; return; }
+    var T = TIPE[tp];
+    $("ukuranLbl").textContent = (T.lbl || "Ukuran") + (T.opsional ? " (wajib, minimal Panjang)" : " (wajib, semua diisi)");
+    if (tipeTampil === tp) return;
+    tipeTampil = tp;
+    var opsiUnit = function(pilih){
+      return ["mm","cm","m","km"].map(function(u){ return '<option value="' + u + '"' + (u === pilih ? " selected" : "") + ">" + u + "</option>"; }).join("");
+    };
+    $("dimBox").innerHTML = T.f.map(function(k){
+      var sm = simpanDim[k], unit = sm ? sm.u : ((T.u && T.u[k]) || F[k].u);
+      var opt = T.opsional && T.opsional.indexOf(k) >= 0;
+      return '<div class="dim"><span class="dl">' + namaKolom(tp, k) + (F[k].hint ? "<small>" + F[k].hint + "</small>" : "") + "</span>" +
+        '<input id="dim_' + k + '" data-k="' + k + '" type="text" inputmode="decimal" maxlength="12" placeholder="' + (opt ? "opsional" : "0") + '" value="' + (sm ? esc(sm.v) : "") + '">' +
+        '<select id="u_' + k + '" data-k="' + k + '" class="unit">' + opsiUnit(unit) + "</select></div>";
+    }).join("");
+  }
+  function catatDim(k){ simpanDim[k] = { v: $("dim_" + k).value, u: $("u_" + k).value }; }
+
+  /* hasil: null = belum lengkap; { error } = ukuran tidak masuk akal */
   function dimensi(){
-    var label = ["P","L","T"], ids = [["dimP","uP"],["dimL","uL"],["dimT","uT"]], isi = [];
-    for (var i = 0; i < 3; i++) {
-      var v = parseNum($(ids[i][0]).value), u = $(ids[i][1]).value;
-      if (v !== null && v > 0) isi.push({ lbl:label[i], v:v, u:u, m:v * FAKTOR[u], idx:i });
+    var tp = tipeAktif(); if (!tp) return null;
+    var T = TIPE[tp], isi = {}, lengkap = true;
+    T.f.forEach(function(k){
+      var el = $("dim_" + k), ue = $("u_" + k);
+      if (!el || !ue) { lengkap = false; return; }
+      var v = parseNum(el.value), u = ue.value;
+      var opt = T.opsional && T.opsional.indexOf(k) >= 0;
+      if (v === null || v < 0 || (v === 0 && !F[k].nol)) { if (!opt) lengkap = false; return; }
+      if (opt && T.opsional && k === "t" && !isi.l) return;      /* bebas: tebal hanya dihitung bila lebar diisi */
+      isi[k] = { v:v, u:u, m:v * FAKTOR[u] };
+    });
+    if (!lengkap) return null;
+    var g = function(k){ return isi[k] ? isi[k].m : 0; };
+    var vol, satuan;
+    if (tp === "drU") {
+      vol = (2 * g("td") * g("hd") + (g("lb") + 2 * g("td")) * g("tb")) * g("p");
+      satuan = "m³";
+    } else if (tp === "drV") {
+      if (g("ld") > g("la")) return { error: "Lebar dasar dalam tidak boleh lebih besar dari lebar atas dalam." };
+      var miring = Math.sqrt(g("hd") * g("hd") + Math.pow((g("la") - g("ld")) / 2, 2));
+      vol = (2 * g("td") * miring + (g("ld") + 2 * g("td")) * g("tb")) * g("p");
+      satuan = "m³";
+    } else {
+      var ks = Object.keys(isi);
+      vol = 1; ks.forEach(function(k){ vol *= isi[k].m; });
+      satuan = ks.length === 1 ? "m" : (ks.length === 2 ? "m²" : "m³");
     }
-    if (!isi.length || isi[0].idx !== 0) return null;          /* panjang wajib diisi lebih dulu */
-    var vol = 1; isi.forEach(function(d){ vol *= d.m; });
-    var satuan = isi.length === 1 ? "m" : (isi.length === 2 ? "m²" : "m³");
-    var teks = isi.map(function(d){ return d.lbl + " " + angka(d.v, 3) + " " + d.u; }).join(" x ")
-             + (isi.length > 1 || isi[0].u !== "m" ? " = " + angka(vol, 3) + " " + satuan : "");
+    var kunci = T.f.filter(function(k){ return isi[k]; });
+    var bagian = kunci.map(function(k){ return singkat(tp, k) + " " + angka(isi[k].v, 3) + " " + isi[k].u; });
+    var teks = T.koma ? bagian.join(", ") : bagian.join(" x ");
+    if (kunci.length > 1 || isi[kunci[0]].u !== "m") teks += " = " + angka(vol, 3) + " " + satuan;
+    var pertama = function(arr){ for (var i = 0; i < arr.length; i++) if (isi[arr[i]] && isi[arr[i]].m > 0) return isi[arr[i]].m; return null; };
     return {
-      teks: teks, volume: vol, satuan: satuan,
-      p: isi[0] ? isi[0].m : null,
-      l: (isi.filter(function(d){ return d.idx === 1; })[0] || {}).m || null,
-      t: (isi.filter(function(d){ return d.idx === 2; })[0] || {}).m || null
+      teks: teks, volume: vol, satuan: satuan, label: T.lbl || "Ukuran",
+      p: pertama(["p"]), l: pertama(["l","lb","la"]), t: pertama(["t","tg","d","hd"])
     };
   }
   function bahanKonstruksi(){
@@ -442,7 +547,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;          /* ditetapkan, tidak dibaca dari kolom */
     $("lokasiPreview").textContent = lokasiLengkap();
     var dm = dimensi();
-    $("volPreview").textContent = dm ? "Volume: " + angka(dm.volume, 3) + " " + dm.satuan : "Volume terhitung otomatis dari ukuran (isi panjang lebih dulu).";
+    var namaHasil = dm && !dm.error ? (tipeAktif() === "tg" ? "Tinggi" : { "m³":"Volume", "m²":"Luas", "m":"Panjang" }[dm.satuan]) : "";
+    $("volPreview").textContent = !dm ? "Isi ukuran, hasil terhitung otomatis."
+      : (dm.error ? dm.error : namaHasil + ": " + angka(dm.volume, 3) + " " + dm.satuan);
     if (t + k >= 1) { tampil(null); return; }
     if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
     if (mode === "pagu" && !nilai) { tampil(null); return; }
@@ -484,8 +591,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
     var dm = dimensi();
-    if (dm) info.push(["Keluaran/Output", dm.teks]);
-    if (bahanKonstruksi()) info.push(["Bahan Konstruksi", bahanKonstruksi()]);
+    if (bahanKonstruksi()) info.push(["Bahan Dominan", bahanKonstruksi()]);
+    if (jenisLabel()) info.push(["Jenis Bangunan", jenisLabel()]);
+    if (dm && !dm.error) info.push([dm.label, dm.teks]);
     if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
     info.push(
       ["Jenis Dana", $("dana").value || "-"],
@@ -538,9 +646,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
     var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
     if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
-    if (!dimensi()) return "Isi ukuran keluaran terlebih dahulu (minimal Panjang).";
-    if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan konstruksi utama.";
-    if (!bahanKonstruksi()) return "Pilih bahan konstruksi utama.";
+    if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan dominan.";
+    if (!bahanKonstruksi()) return "Pilih bahan dominan.";
+    if ($("jenis").value === "Lainnya" && !$("jenisLain").value.trim()) return "Ketik jenis bangunan/pekerjaan.";
+    if (!jenisLabel()) return "Pilih jenis bangunan/pekerjaan.";
+    var dm = dimensi();
+    if (!dm) return "Lengkapi " + (TIPE[tipeAktif()].lbl || "ukuran").toLowerCase() + " terlebih dahulu.";
+    if (dm.error) return dm.error;
     if (!$("sifat").value) return "Pilih sifat konstruksi.";
     if (!$("dana").value) return "Pilih jenis dana.";
     if (!rtLabel()) return "Isi lokasi RT.";
@@ -577,7 +689,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   function dataArsip(){
     var th = parseInt($("tahun").value, 10);
-    var dm = dimensi();
+    var dm = dimensi(); if (dm && dm.error) dm = null;
     var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
     return {
       mode: mode,
@@ -588,6 +700,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
       satuan: dm ? dm.satuan : null,
       bahan_utama: bahanKonstruksi().slice(0,60) || null,
+      jenis_bangunan: jenisLabel().slice(0,60) || null,
+      ukuran: dm ? dm.teks.slice(0,300) : null,
       sifat_konstruksi: $("sifat").value || null,
       jenis_dana: $("dana").value || null,
       rt: rtLabel() || null,
@@ -711,15 +825,29 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   });
   $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
   $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
-  ["dimP","dimL","dimT"].forEach(function(id){
-    $(id).addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
+  $("dimBox").addEventListener("input", function(e){
+    var k = e.target.dataset.k; if (!k || e.target.tagName !== "INPUT") return;
+    e.target.value = e.target.value.replace(/[^\d,]/g,"");
+    catatDim(k); hitung();
   });
-  ["uP","uL","uT","sifat"].forEach(function(id){ $(id).addEventListener("change", hitung); });
+  $("dimBox").addEventListener("change", function(e){
+    var k = e.target.dataset.k; if (!k || e.target.tagName !== "SELECT") return;
+    catatDim(k); hitung();
+  });
+  $("sifat").addEventListener("change", hitung);
+  $("jenis").addEventListener("change", function(e){
+    var lain = e.target.value === "Lainnya";
+    show("jenisLain", lain);
+    renderUkuran();
+    if (lain) $("jenisLain").focus();
+    hitung();
+  });
   $("bahanUtama").addEventListener("change", function(e){
     var opt = e.target.selectedOptions[0];
     var lain = e.target.value === "Lainnya";
     $("bahanLain").classList.toggle("hidden", !lain);
     if (opt && opt.dataset.sifat) $("sifat").value = opt.dataset.sifat;
+    isiJenis();
     if (lain) $("bahanLain").focus();
     hitung();
   });
@@ -729,7 +857,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("upahNote").classList.toggle("hidden", !lebih);
     if (lebih) setTimeout(function(){ $("upahNote").classList.add("hidden"); }, 3000);
   });
-  ["pTukang","nama","bahanLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  ["pTukang","nama","bahanLain","jenisLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("dana").addEventListener("change", hitung);
 
   /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
