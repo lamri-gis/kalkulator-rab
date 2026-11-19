@@ -167,6 +167,8 @@
     <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
     <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
 
+    <div id="slotDanaPagu"></div>
+
     <div id="grupTpk" class="hidden">
       <label>TPK</label>
       <div class="seg" id="segTpk">
@@ -235,7 +237,8 @@
       <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
     </select>
 
-    <div class="row2">
+    <div id="slotDanaMaterial"></div>
+    <div class="row2" id="rowDana">
       <div>
         <label for="dana">Jenis Dana (wajib)</label>
         <select id="dana">
@@ -679,6 +682,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     /* urutan sesuai urutan kolom di formulir */
     if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
     if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
+    if (mode === "pagu" && !$("dana").value) return "Pilih jenis dana.";   /* Mode Pagu: jenis dana di bawah pagu */
     var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
     if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
     if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan dominan.";
@@ -848,6 +852,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("sewa").value = "";
     $("grupSewa").classList.toggle("hidden", m !== "material");
     $("grupTpk").classList.toggle("hidden", m !== "pagu");
+    /* Jenis Dana & Tahun: Mode Pagu di bawah kolom pagu, Mode Material tetap di Data Kegiatan */
+    var slot = $(m === "pagu" ? "slotDanaPagu" : "slotDanaMaterial");
+    slot.parentNode.insertBefore($("rowDana"), slot.nextSibling);
     aturKolomTpk();
     hitung();
   }
