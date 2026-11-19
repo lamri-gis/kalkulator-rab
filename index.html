@@ -195,12 +195,13 @@
   </section>
 
   <section class="card input-card">
-    <h2>Data Kegiatan</h2>
-    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
+    <h2 id="dkTitle">Data Kegiatan</h2>
+    <p class="sub" id="dkSub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
 
     <label for="nama">Nama Kegiatan (wajib, minimal 2 kata)</label>
     <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
 
+    <div id="grupKonstruksi">
     <label for="bahanUtama">Bahan Dominan (wajib)</label>
     <select id="bahanUtama">
       <option value="">Pilih bahan dominan</option>
@@ -236,6 +237,35 @@
       <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
       <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
     </select>
+    </div>
+
+    <div id="grupPengadaan" class="hidden">
+      <label for="jenisBelanja">Jenis Belanja (wajib)</label>
+      <select id="jenisBelanja">
+        <option value="">Pilih jenis belanja</option>
+        <option value="Belanja Barang/Jasa">Belanja Barang/Jasa (habis pakai, manfaat kurang dari 12 bulan)</option>
+        <option value="Belanja Modal">Belanja Modal (aset, manfaat lebih dari 12 bulan)</option>
+      </select>
+
+      <div id="grupKelompok" class="hidden">
+        <label for="kelompok">Kelompok Barang (wajib)</label>
+        <select id="kelompok"></select>
+        <input id="kelompokLain" class="hidden" type="text" maxlength="80" placeholder="Ketik kelompok barang" style="margin-top:8px">
+      </div>
+
+      <label for="namaBarang">Nama/Spesifikasi Barang (wajib)</label>
+      <input id="namaBarang" type="text" maxlength="150" placeholder="Contoh: Laptop Core i5 RAM 8 GB">
+
+      <label for="jumlahBarang">Jumlah (wajib)</label>
+      <div class="dim" style="grid-template-columns:1fr 110px">
+        <input id="jumlahBarang" type="text" inputmode="decimal" maxlength="12" placeholder="0">
+        <select id="satuanBarang" class="unit">
+          <option>unit</option><option>buah</option><option>set</option><option>paket</option><option>rim</option>
+          <option>kg</option><option>liter</option><option>ekor</option><option>batang</option><option>lembar</option>
+        </select>
+      </div>
+      <div class="fixed" id="sifatBarangPreview">Sifat barang terisi otomatis dari jenis belanja.</div>
+    </div>
 
     <div id="slotDanaMaterial"></div>
     <div class="row2" id="rowDana">
@@ -551,6 +581,41 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (v === "Lainnya") return $("bahanLain").value.trim();
     return v;
   }
+  /* ---------- Pengadaan (Mode Pagu tanpa TPK) ---------- */
+  var KELOMPOK = {
+    "Belanja Barang/Jasa": ["ATK dan Bahan Habis Pakai", "Perlengkapan dan Peralatan Kecil", "Alat Listrik/Elektronik Kecil", "Bahan Bakar",
+      "Pakaian Dinas/Seragam", "Makanan dan Minuman", "Barang Diserahkan ke Masyarakat (bibit, sembako, APD, alat tangkap)", "Barang Perlengkapan Lainnya"],
+    "Belanja Modal": ["Peralatan dan Mesin (komputer, printer, genset, mesin pertanian)", "Kendaraan", "Meubelair/Perabot", "Alat Berat",
+      "Buku/Perpustakaan", "Hewan/Tanaman", "Aset Tetap Lainnya"]
+  };
+  function pengadaan(){ return mode === "pagu" && !pakaiTpk; }
+  function isiKelompok(){
+    var jb = $("jenisBelanja").value, sel = $("kelompok"), lama = sel.value;
+    show("grupKelompok", !!jb);
+    if (!jb) { sel.innerHTML = ""; show("kelompokLain", false); return; }
+    sel.innerHTML = '<option value="">Pilih kelompok barang</option>' +
+      KELOMPOK[jb].map(function(k){ return '<option value="' + esc(k) + '">' + esc(k) + "</option>"; }).join("") +
+      '<option value="Lainnya">Lainnya (ketik sendiri)</option>';
+    var masih = Array.prototype.some.call(sel.options, function(o){ return lama && o.value === lama; });
+    sel.value = masih ? lama : "";
+    show("kelompokLain", sel.value === "Lainnya");
+  }
+  function kelompokLabel(){
+    var v = $("kelompok").value;
+    if (v === "Lainnya") return $("kelompokLain").value.trim();
+    return v;
+  }
+  function sifatBarang(){
+    var jb = $("jenisBelanja").value;
+    return jb === "Belanja Modal" ? "Aset Tetap" : (jb ? "Habis Pakai" : "");
+  }
+  function sifatBarangLabel(){
+    var s = sifatBarang();
+    return s === "Aset Tetap" ? "Aset Tetap (dicatat di inventaris desa)" : s;
+  }
+  function jumlahBarang(){ var v = parseNum($("jumlahBarang").value); return v !== null && v > 0 ? v : null; }
+  function jumlahTeks(){ var v = jumlahBarang(); return v ? angka(v, 3) + " " + $("satuanBarang").value : ""; }
+
   function sifatLabel(){
     var v = $("sifat").value;
     return { "Permanen":"Permanen (> 15 tahun)", "Semi Permanen":"Semi Permanen (5 - 15 tahun)", "Sementara/Darurat":"Sementara/Darurat (< 5 tahun)" }[v] || "";
@@ -618,22 +683,30 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!r) { render(); return; }
 
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
-    var dm = dimensi();
-    if (bahanKonstruksi()) info.push(["Bahan Dominan", bahanKonstruksi()]);
-    if (jenisLabel()) info.push(["Jenis Bangunan", jenisLabel()]);
-    if (dm && !dm.error) info.push([dm.label, dm.teks]);
-    if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
+    if (r.bahanSaja) {
+      if ($("jenisBelanja").value) info.push(["Jenis Belanja", $("jenisBelanja").value]);
+      if (kelompokLabel()) info.push(["Kelompok Barang", kelompokLabel()]);
+      if ($("namaBarang").value.trim()) info.push(["Barang", $("namaBarang").value.trim()]);
+      if (jumlahTeks()) info.push(["Jumlah", jumlahTeks()]);
+      if (sifatBarangLabel()) info.push(["Sifat Barang", sifatBarangLabel()]);
+    } else {
+      var dm = dimensi();
+      if (bahanKonstruksi()) info.push(["Bahan Dominan", bahanKonstruksi()]);
+      if (jenisLabel()) info.push(["Jenis Bangunan", jenisLabel()]);
+      if (dm && !dm.error) info.push([dm.label, dm.teks]);
+      if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
+    }
     info.push(
       ["Jenis Dana", $("dana").value || "-"],
       ["Tahun Anggaran", $("tahun").value || "-"],
       ["Lokasi", lokasiLengkap()],
-      ["Pelaksanaan", "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.bahanSaja ? "Pagu Anggaran (bahan saja)" : "Pagu Anggaran")]
+      ["Pelaksanaan", r.bahanSaja ? "Pengadaan melalui Penyedia" : "Swakelola oleh TPK"],
+      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.bahanSaja ? "Pagu Anggaran (tanpa TPK)" : "Pagu Anggaran")]
     );
     $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
 
     var rows = [
-      [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)", r.material + r.pajak, "main"]
+      [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : (r.bahanSaja ? "Biaya Barang (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)"), r.material + r.pajak, "main"]
     ];
     if (r.sewa > 0) rows.push(["Biaya Sewa Peralatan (termasuk pajak)", r.sewa + r.pajakSewa, "main"]);
     if (!r.bahanSaja) rows.push(["Biaya Upah Tenaga Kerja", r.tukang, ""]);
@@ -650,7 +723,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       /* Rincian pajak bahan sesuai Siskeudes: tampil di layar dan ikut dicetak */
       kotak.classList.remove("screen-only");
       var rinci = [["DPP", r.dpp, "sub"], ["PPN 11%", r.ppn, "sub"], ["PPh 22 1,5%", r.pph, "sub"], ["Dibayar ke Penyedia", r.material, "tot"]];
-      kotak.innerHTML = '<div class="pbj-t">Rincian Pajak Bahan</div>' +
+      kotak.innerHTML = '<div class="pbj-t">' + (r.bahanSaja ? "Rincian Pajak Barang" : "Rincian Pajak Bahan") + "</div>" +
         rinci.map(function(x){ return '<div class="pbj-r ' + x[2] + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
     } else {
       /* PBJ Murni (tanpa pajak): hanya tampil di layar, tidak ikut dicetak */
@@ -685,6 +758,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (mode === "pagu" && !$("dana").value) return "Pilih jenis dana.";   /* Mode Pagu: jenis dana di bawah pagu */
     var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
     if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
+    if (pengadaan()) {
+      if (!$("jenisBelanja").value) return "Pilih jenis belanja.";
+      if ($("kelompok").value === "Lainnya" && !$("kelompokLain").value.trim()) return "Ketik kelompok barang.";
+      if (!kelompokLabel()) return "Pilih kelompok barang.";
+      if ($("namaBarang").value.trim().length < 3) return "Isi nama/spesifikasi barang.";
+      if (!jumlahBarang()) return "Isi jumlah barang.";
+      if (!$("dana").value) return "Pilih jenis dana.";
+      if (!rtLabel()) return "Isi lokasi RT.";
+      return "";
+    }
     if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan dominan.";
     if (!bahanKonstruksi()) return "Pilih bahan dominan.";
     if ($("jenis").value === "Lainnya" && !$("jenisLain").value.trim()) return "Ketik jenis bangunan/pekerjaan.";
@@ -728,7 +811,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   function dataArsip(){
     var th = parseInt($("tahun").value, 10);
-    var dm = dimensi(); if (dm && dm.error) dm = null;
+    var pg = pengadaan();
+    var dm = pg ? null : dimensi(); if (dm && dm.error) dm = null;
     var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
     return {
       mode: mode,
@@ -738,10 +822,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       tinggi: dm ? r3(dm.t) : null,
       volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
       satuan: dm ? dm.satuan : null,
-      bahan_utama: bahanKonstruksi().slice(0,60) || null,
-      jenis_bangunan: jenisLabel().slice(0,60) || null,
+      bahan_utama: pg ? null : (bahanKonstruksi().slice(0,60) || null),
+      jenis_bangunan: pg ? null : (jenisLabel().slice(0,60) || null),
       ukuran: dm ? dm.teks.slice(0,300) : null,
-      sifat_konstruksi: $("sifat").value || null,
+      sifat_konstruksi: pg ? null : ($("sifat").value || null),
+      jenis_belanja: pg ? ($("jenisBelanja").value || null) : null,
+      kelompok_barang: pg ? (kelompokLabel().slice(0,80) || null) : null,
+      nama_barang: pg ? ($("namaBarang").value.trim().slice(0,150) || null) : null,
+      jumlah: pg && jumlahBarang() && jumlahBarang() < 1e9 ? Math.round(jumlahBarang() * 1000) / 1000 : null,
+      satuan_barang: pg && jumlahBarang() ? $("satuanBarang").value : null,
+      sifat_barang: pg ? (sifatBarang() || null) : null,
       jenis_dana: $("dana").value || null,
       rt: rtLabel() || null,
       tahun: (th >= 2000 && th <= 2100) ? th : null,
@@ -863,6 +953,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     document.querySelectorAll("#segTpk button").forEach(function(b){ b.classList.toggle("active", (b.dataset.tpk === "pakai") === pakaiTpk); });
     $("kolomTpk").classList.toggle("hidden", mode === "pagu" && !pakaiTpk);
     $("kolomUpah").classList.toggle("hidden", mode === "pagu" && !pakaiTpk);
+    var pg = pengadaan();
+    show("grupKonstruksi", !pg);
+    show("grupPengadaan", pg);
+    $("dkTitle").textContent = pg ? "Data Pengadaan" : "Data Kegiatan";
+    $("dkSub").textContent = "Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. " +
+      (pg ? "Pengadaan barang melalui penyedia, tanpa TPK." : "Pelaksanaan swakelola oleh TPK.");
   }
   document.querySelectorAll("#segTpk button").forEach(function(b){
     b.addEventListener("click", function(){ pakaiTpk = b.dataset.tpk === "pakai"; aturKolomTpk(); hitung(); });
@@ -887,6 +983,20 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     catatDim(k); hitung();
   });
   $("sifat").addEventListener("change", hitung);
+  $("jenisBelanja").addEventListener("change", function(){
+    isiKelompok();
+    $("sifatBarangPreview").textContent = sifatBarang() ? "Sifat barang: " + sifatBarangLabel() : "Sifat barang terisi otomatis dari jenis belanja.";
+    hitung();
+  });
+  $("kelompok").addEventListener("change", function(e){
+    var lain = e.target.value === "Lainnya";
+    show("kelompokLain", lain);
+    if (lain) $("kelompokLain").focus();
+    hitung();
+  });
+  $("jumlahBarang").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/[^\d,]/g,""); hitung(); });
+  $("satuanBarang").addEventListener("change", hitung);
+  ["namaBarang","kelompokLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
   $("jenis").addEventListener("change", function(e){
     var lain = e.target.value === "Lainnya";
     show("jenisLain", lain);
