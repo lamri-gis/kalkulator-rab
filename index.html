@@ -1,218 +1,1135 @@
--- =====================================================================
--- Kalkulator RAB Desa by Lamri, S.P.
--- Kaur Perencanaan Desa Susuk Dalam, Kec. Sandaran, Kab. Kutai Timur
---
--- Jalankan SEKALI di Supabase: SQL Editor > New query > tempel > Run
--- Email admin sudah diisi di bagian 3: lamri96sp@gmail.com
--- =====================================================================
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator RAB Desa | by Lamri, S.P.</title>
+<meta name="description" content="Kalkulator RAB kegiatan desa: hitung Total RAB dari material atau rincian dari pagu. Disusun oleh Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam.">
+<meta name="author" content="Lamri, S.P.">
+<meta name="theme-color" content="#0b3954">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ACC-RAB">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+  :root{
+    --navy:#0b3954; --blue:#1f4e78; --soft:#eef4fa; --line:#d6e0ea;
+    --text:#1d2733; --muted:#5f6b78; --ok:#1e7d3a; --okbg:#e6f4ea;
+    --bad:#b3261e; --badbg:#fdecea; --input:#fffbe6;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fa;color:var(--text);line-height:1.45}
+  header{background:var(--navy);color:#fff;padding:22px 16px 18px;text-align:center}
+  header h1{margin:0;font-size:22px;letter-spacing:.3px}
+  header p{margin:6px 0 0;font-size:13px;opacity:.85}
+  .brand{display:inline-block;margin-top:10px;font-size:12px;background:rgba(255,255,255,.12);padding:5px 12px;border-radius:20px}
+  .brand a{color:#fff}
+  main{max-width:760px;margin:0 auto;padding:18px 14px 40px}
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tabs-lbl{font-size:13px;font-weight:bold;color:var(--muted);margin:0 0 6px;text-align:center}
+  .tab{flex:1;padding:12px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:15px;font-weight:bold;color:var(--blue);cursor:pointer}
+  .tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+  .card h2{margin:0 0 4px;font-size:17px;color:var(--navy)}
+  .card .sub{margin:0 0 6px;font-size:13px;color:var(--muted)}
+  label{display:block;font-size:13px;font-weight:bold;margin:12px 0 5px}
+  input,select{width:100%;padding:12px;font-size:16px;border:1px solid #c9d4df;border-radius:8px;background:var(--input);font-family:inherit;color:var(--text)}
+  input:focus,select:focus{outline:2px solid var(--blue);border-color:var(--blue)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+  .row2 > div{min-width:0}
+  select{text-overflow:ellipsis}
+  @media (max-width:600px){ .row2{grid-template-columns:1fr;gap:0} }
+  .dim{display:grid;grid-template-columns:150px 1fr 84px;gap:8px;align-items:center;margin-bottom:8px}
+  .dim .dl{font-size:13px;font-weight:bold;line-height:1.2}
+  .dim .dl small{display:block;font-weight:normal;color:var(--muted);font-size:11px}
+  .dim input{text-align:right}
+  select.unit{padding:12px 8px}
+  #volPreview{font-weight:bold;color:var(--navy)}
+  @media (max-width:520px){ .dim{grid-template-columns:108px 1fr 72px} .dim .dl{font-size:12px} }
+  .prefix{position:relative}
+  .prefix span{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:16px}
+  .prefix.rp input{padding-left:40px;font-weight:bold}
+  .prefix.rt input{padding-left:44px}
+  .fixed{margin-top:6px;font-size:12px;color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  .pct{position:relative}
+  .pct input{padding-right:28px;text-align:right}
+  .pct span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  details{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+  summary{cursor:pointer;font-size:13px;color:var(--blue);font-weight:bold}
+  .note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  input.lock{background:#eceff2;color:var(--muted);cursor:not-allowed}
+  input.lock:focus{outline:none;border-color:#c9d4df}
+  .warn{font-size:11px;color:var(--bad);margin-top:4px}
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  td{padding:11px 6px;border-bottom:1px solid #edf1f5}
+  td.v{text-align:right;font-weight:bold;white-space:nowrap}
+  tr.total td{background:var(--soft);font-size:17px;color:var(--navy);border-bottom:none}
+  tr.main td{font-size:16px}
+  .info td{font-size:13px;padding:5px 6px;border:none;color:var(--muted)}
+  .info td:first-child{width:120px}
+  .info{margin-bottom:8px}
+  .status{margin-top:14px;padding:11px;border-radius:8px;text-align:center;font-weight:bold;font-size:14px}
+  .status.ok{background:var(--okbg);color:var(--ok)}
+  .status.bad{background:var(--badbg);color:var(--bad)}
+  .empty{color:var(--muted);text-align:center;padding:18px 6px;font-size:14px}
+  .actions{display:flex;gap:10px;margin-top:14px}
+  .btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);font-weight:bold;font-size:14px;cursor:pointer}
+  .btn.primary{background:var(--blue);color:#fff}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .pbj{margin-top:14px;border:1px dashed var(--blue);border-radius:8px;padding:10px 12px;background:#f7fbff}
+  .pbj-t{font-size:13px;font-weight:bold;color:var(--blue);margin-bottom:6px}
+  .pbj-r{display:flex;justify-content:space-between;gap:10px;font-size:14px;padding:3px 0}
+  .pbj-r.tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px}
+  .pbj-r.sub span{padding-left:12px}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:10px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:14px;font-weight:bold;color:var(--blue);cursor:pointer;font-family:inherit}
+  .seg button.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .notice{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--badbg);color:var(--bad);font-size:13px;font-weight:bold;text-align:center}
+  .overlay{position:fixed;inset:0;background:rgba(11,57,84,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .overlay.hidden{display:none}
+  .modal{background:#fff;border-radius:14px;padding:20px;max-width:420px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.25)}
+  .modal h3{margin:0 0 8px;color:var(--navy);font-size:18px}
+  .modal p{font-size:14px;color:var(--text);margin:0 0 12px}
+  .modal .small{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .chk{display:flex;gap:8px;align-items:center;font-weight:bold;font-size:14px;margin:6px 0 4px}
+  .chk input{width:20px;height:20px;padding:0}
+  .mact{display:flex;gap:10px;margin-top:14px}
+  .bar{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}
+  #barFill{height:100%;width:0;background:var(--blue);transition:width .2s linear}
+  .stars{display:flex;justify-content:center;gap:6px;margin:4px 0}
+  .stars button{background:none;border:none;font-size:40px;line-height:1;color:#d0d7de;cursor:pointer;padding:2px 4px}
+  .stars button.on{color:#f5b301}
+  .star-lbl{text-align:center;font-size:13px;color:var(--muted);min-height:18px}
+  textarea{width:100%;padding:10px 12px;font-size:15px;border:1px solid #c9d4df;border-radius:8px;font-family:inherit;resize:vertical}
+  .app-ic{width:64px;height:64px;border-radius:14px;display:block;margin:0 auto 10px}
+  #ovPasang h3{text-align:center}
+  .err{color:var(--bad);font-size:12px;min-height:16px;margin-top:6px}
+  .privacy{font-size:11px;color:var(--muted);text-align:center;margin-top:10px}
+  .hidden{display:none}
+  footer{text-align:center;font-size:12px;color:var(--muted);padding:0 16px 30px}
+  footer a{color:var(--blue)}
+  .print-only{display:none}
+  @media (max-width:520px){ .grid2{gap:6px} .pct input{font-size:15px;padding:10px 24px 10px 8px} }
+  @media print{
+    @page{size:A4;margin:0}                 /* margin 0: browser tidak mencetak judul, tanggal, dan alamat web */
+    body{background:#fff;margin:0}
+    main{padding:16mm 16mm 14mm!important}
+    header,.tabs,.tabs-lbl,.input-card,.actions,.privacy,.notice,footer,.overlay,.screen-only{display:none!important}
+    .verif{margin-top:22px;border:1.5px solid #000;border-radius:6px;padding:10px 14px;font-size:12px;page-break-inside:avoid}
+    .verif .vt{text-align:center;font-weight:bold;letter-spacing:1px;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px}
+    .verif table td{border:none;padding:3px 4px;font-size:12px}
+    .verif table td:first-child{width:130px}
+    .verif .ok{font-weight:bold}
+    main{max-width:none}
+    .card{border:none;padding:0}
+    .print-only{display:block}
+    .kop{display:grid;grid-template-columns:2.1cm 1fr 2.1cm;align-items:center;border-bottom:4px double #000;padding-bottom:6px;margin-bottom:16px;font-family:Arial,Helvetica,sans-serif}
+    .kop-logo{width:1.82cm;height:2.2cm;object-fit:contain;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .kop-teks{text-align:center;line-height:1.25}
+    .kop .l1{font-size:12pt;font-weight:normal}
+    .kop .l2{font-size:16pt;font-weight:bold}
+    .kop .l3{font-size:10pt}
+    .judul{text-align:center;font-weight:bold;font-size:15px;margin-bottom:12px;text-decoration:underline}
+    .info td{color:#000;font-size:13px}
+    td{border-bottom:1px solid #999}
+    tr.total td{background:#eee!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    .status{border:1px solid #999}
+    .pbj{border:1px solid #999;background:#fff;border-radius:0;margin-top:12px;page-break-inside:avoid}
+    .pbj-t{color:#000}
+    .pbj-r{font-size:13px}
+    .pbj-r.tot{border-top:1px solid #999}
+    .sign{margin-top:36px;font-size:10px;color:#555;text-align:center;border-top:1px solid #ccc;padding-top:6px}
+  }
+</style>
+</head>
+<body>
 
--- 1. TABEL ARSIP RAB ---------------------------------------------------
-create table if not exists public.rab_arsip (
-  id             bigint generated always as identity primary key,
-  created_at     timestamptz not null default now(),
-  aksi           text not null check (aksi in ('generate','cetak','salin','pdf')),
-  mode           text not null check (mode in ('material','pagu')),
-  nama_kegiatan  text check (char_length(nama_kegiatan) <= 200),
-  panjang        numeric(14,3) check (panjang > 0 and panjang < 1000000000),
-  lebar          numeric(14,3) check (lebar > 0 and lebar < 1000000000),
-  tinggi         numeric(14,3) check (tinggi > 0 and tinggi < 1000000000),
-  volume         numeric(14,2) check (volume >= 0 and volume < 1000000000000),
-  satuan         text check (char_length(satuan) <= 20),
-  bahan_utama    text check (char_length(bahan_utama) <= 60),
-  jenis_bangunan text check (char_length(jenis_bangunan) <= 60),
-  ukuran         text check (char_length(ukuran) <= 300),
-  sifat_konstruksi text check (sifat_konstruksi in ('Permanen','Semi Permanen','Sementara/Darurat')),
-  jenis_dana     text check (char_length(jenis_dana) <= 60),
-  rt             text check (char_length(rt) <= 10),
-  tahun          int  check (tahun between 2000 and 2100),
-  nilai_input    bigint not null check (nilai_input between 0 and 100000000000),
-  tukang         bigint check (tukang >= 0),
-  tpk            bigint check (tpk >= 0),
-  pajak          bigint check (pajak >= 0),
-  material       bigint check (material >= 0),
-  sewa           bigint check (sewa >= 0),
-  pajak_sewa     bigint check (pajak_sewa >= 0),
-  total          bigint check (total >= 0),
-  p_tukang       numeric(6,4) check (p_tukang between 0 and 1),
-  -- upah tenaga kerja maksimal 30%
-  constraint rab_arsip_p_tukang_maks check (p_tukang is null or p_tukang <= 0.30),
-  -- persentase ditetapkan: TPK 3% (Mode Pagu boleh 0%), pajak bahan 12,5%, pajak sewa 13%
-  constraint rab_arsip_p_tpk_tetap check (p_tpk is null or p_tpk = 0.03 or (mode = 'pagu' and p_tpk = 0)),
-  constraint rab_arsip_p_pajak_tetap check (p_pajak is null or p_pajak = 0.125),
-  constraint rab_arsip_p_pajak_sewa_tetap check (p_pajak_sewa is null or p_pajak_sewa = 0.13),
-  p_tpk          numeric(6,4) check (p_tpk between 0 and 1),
-  p_pajak        numeric(6,4) check (p_pajak between 0 and 1),
-  p_pajak_sewa   numeric(6,4) check (p_pajak_sewa between 0 and 1),
-  token          uuid unique,
-  lat            numeric(9,6) check (lat between -90 and 90),
-  lng            numeric(9,6) check (lng between -180 and 180),
-  akurasi        numeric(10,1) check (akurasi >= 0 and akurasi < 100000000),
-  percobaan      smallint check (percobaan in (1, 2)),
-  perangkat      text check (perangkat in ('HP','Tablet','Laptop')),
-  os             text check (char_length(os) <= 40),
-  browser        text check (char_length(browser) <= 40),
-  model_hp       text check (char_length(model_hp) <= 60),
-  rating         smallint check (rating between 1 and 5),
-  saran          text check (char_length(saran) <= 300),
-  dicetak        boolean not null default false,
-  waktu_cetak    timestamptz,
-  nama_pemohon   text check (char_length(nama_pemohon) between 3 and 100),
-  kode_verifikasi text unique,
-  status         text not null default 'baru' check (status in ('baru','real','abaikan')),
-  catatan        text check (char_length(catatan) <= 300)
-);
+<header>
+  <h1>Kalkulator RAB Desa</h1>
+  <p>Hitung RAB kegiatan dengan cepat, material tetap aman</p>
+</header>
 
-create index if not exists rab_arsip_created_idx on public.rab_arsip (created_at desc);
-create index if not exists rab_arsip_status_idx  on public.rab_arsip (status);
-create index if not exists rab_arsip_dicetak_idx on public.rab_arsip (dicetak);
+<main>
+  <div class="tabs-lbl">Dasar Hitung</div>
+  <div class="tabs">
+    <button class="tab active" data-mode="material">Material</button>
+    <button class="tab" data-mode="pagu">Pagu</button>
+  </div>
 
--- 2. TABEL KUNJUNGAN ---------------------------------------------------
-create table if not exists public.rab_kunjungan (
-  id          bigint generated always as identity primary key,
-  created_at  timestamptz not null default now(),
-  path        text check (char_length(path) <= 100),
-  perangkat   text check (perangkat in ('hp','laptop')),
-  sumber      text check (char_length(sumber) <= 120)
-);
+  <section class="card input-card">
+    <h2 id="inTitle">Input Bahan dan Sewa</h2>
+    <p class="sub" id="inSub">Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.</p>
 
-create index if not exists rab_kunjungan_created_idx on public.rab_kunjungan (created_at desc);
+    <label for="nilai" id="nilaiLabel">Total Biaya Bahan/Material (tanpa pajak)</label>
+    <div class="prefix rp"><span>Rp</span><input id="nilai" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
 
--- 3. DAFTAR ADMIN ------------------------------------------------------
-create table if not exists public.rab_admin (
-  email text primary key
-);
+    <div id="grupTpk" class="hidden">
+      <label>TPK</label>
+      <div class="seg" id="segTpk">
+        <button type="button" data-tpk="tanpa" class="active">Tanpa TPK</button>
+        <button type="button" data-tpk="pakai">Pakai TPK 3%</button>
+      </div>
+    </div>
 
--- Email akun admin di Supabase Auth
-insert into public.rab_admin (email)
-values ('lamri96sp@gmail.com')
-on conflict do nothing;
+    <div id="grupSewa">
+      <label for="sewa">Total Biaya Sewa Peralatan (tanpa pajak, opsional)</label>
+      <div class="prefix rp"><span>Rp</span><input id="sewa" type="text" inputmode="numeric" placeholder="0" autocomplete="off"></div>
+    </div>
 
-create or replace function public.is_rab_admin()
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.rab_admin
-    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
-  );
-$$;
+    <details>
+      <summary>Pengaturan persentase</summary>
+      <div class="grid2">
+        <div id="kolomUpah"><label for="pTukang">Upah Tenaga Kerja (maks. 30%)</label><div class="pct"><input id="pTukang" type="text" inputmode="decimal" value="30"><span>%</span></div><div class="warn hidden" id="upahNote">Upah tenaga kerja maksimal 30%</div></div>
+        <div id="kolomTpk"><label for="pTpk">TPK (ditetapkan)</label><div class="pct"><input id="pTpk" type="text" value="3" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajak">Pajak Bahan (ditetapkan)</label><div class="pct"><input id="pPajak" type="text" value="12,5" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+        <div><label for="pPajakSewa">Pajak Sewa (ditetapkan)</label><div class="pct"><input id="pPajakSewa" type="text" value="13" readonly tabindex="-1" class="lock"><span>%</span></div></div>
+      </div>
+      <p class="note">Upah tenaga kerja (maksimal 30%) dan TPK dihitung dari total. Pajak bahan (PPN 11% + PPh 22 1,5%) hanya untuk bahan, pajak sewa (PPN 11% + PPh 23 2%) hanya untuk sewa. TPK ditetapkan 3% dari total biaya (Mode Pagu dapat memilih tanpa TPK, berarti tanpa upah dan seluruh pagu untuk bahan). TPK dan pajak ditetapkan dan tidak dapat diubah; upah tenaga kerja dapat diturunkan, tetapi tidak lebih dari 30%.</p>
+    </details>
+  </section>
 
--- 4. KEAMANAN (RLS) ----------------------------------------------------
-alter table public.rab_arsip     enable row level security;
-alter table public.rab_kunjungan enable row level security;
-alter table public.rab_admin     enable row level security;
--- rab_admin sengaja tanpa policy: tidak bisa dibaca siapa pun lewat API
+  <section class="card input-card">
+    <h2>Data Kegiatan</h2>
+    <p class="sub">Lokasi: Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur. Pelaksanaan swakelola oleh TPK.</p>
 
--- Umum: hanya boleh MENAMBAH baris GENERATE (wajib token + lokasi)
-drop policy if exists "umum tambah arsip" on public.rab_arsip;
-create policy "umum tambah arsip" on public.rab_arsip
-  for insert to anon, authenticated
-  with check (
-    status = 'baru' and catatan is null
-    and aksi = 'generate'
-    and token is not null and lat is not null and lng is not null and akurasi is not null
-    and dicetak = false and waktu_cetak is null
-    and nama_pemohon is null and kode_verifikasi is null
-  );
+    <label for="nama">Nama Kegiatan (wajib, minimal 2 kata)</label>
+    <input id="nama" type="text" maxlength="200" placeholder="Contoh: Semenisasi Jalan Lingkungan">
 
-drop policy if exists "umum tambah kunjungan" on public.rab_kunjungan;
-create policy "umum tambah kunjungan" on public.rab_kunjungan
-  for insert to anon, authenticated
-  with check (true);
+    <label for="bahanUtama">Bahan Dominan (wajib)</label>
+    <select id="bahanUtama">
+      <option value="">Pilih bahan dominan</option>
+      <option value="Beton Bertulang" data-sifat="Permanen">Beton Bertulang</option>
+      <option value="Rabat Beton (beton tanpa tulangan)" data-sifat="Permanen">Rabat Beton (beton tanpa tulangan)</option>
+      <option value="Pasangan Batu (batu kali/gunung)" data-sifat="Permanen">Pasangan Batu (batu kali/gunung)</option>
+      <option value="Pasangan Bata" data-sifat="Permanen">Pasangan Bata</option>
+      <option value="Paving Block" data-sifat="Permanen">Paving Block</option>
+      <option value="Kayu Ulin" data-sifat="Permanen">Kayu Ulin</option>
+      <option value="Kayu Putih" data-sifat="Semi Permanen">Kayu Putih</option>
+      <option value="Baja/Besi" data-sifat="Permanen">Baja/Besi</option>
+      <option value="Sirtu/Timbunan Tanah" data-sifat="Semi Permanen">Sirtu/Timbunan Tanah</option>
+      <option value="Lainnya">Lainnya (ketik sendiri)</option>
+    </select>
+    <input id="bahanLain" class="hidden" type="text" maxlength="60" placeholder="Ketik bahan dominan" style="margin-top:8px">
 
--- Admin: baca, ubah status, hapus
-drop policy if exists "admin baca arsip" on public.rab_arsip;
-create policy "admin baca arsip" on public.rab_arsip
-  for select to authenticated using (public.is_rab_admin());
+    <div id="grupJenis" class="hidden">
+      <label for="jenis">Jenis Bangunan/Pekerjaan (wajib)</label>
+      <select id="jenis"></select>
+      <input id="jenisLain" class="hidden" type="text" maxlength="60" placeholder="Ketik jenis bangunan/pekerjaan" style="margin-top:8px">
+    </div>
 
-drop policy if exists "admin ubah arsip" on public.rab_arsip;
-create policy "admin ubah arsip" on public.rab_arsip
-  for update to authenticated
-  using (public.is_rab_admin()) with check (public.is_rab_admin());
+    <div id="grupUkuran" class="hidden">
+      <label id="ukuranLbl">Ukuran (wajib)</label>
+      <div id="dimBox"></div>
+      <div class="fixed" id="volPreview"></div>
+    </div>
 
-drop policy if exists "admin hapus arsip" on public.rab_arsip;
-create policy "admin hapus arsip" on public.rab_arsip
-  for delete to authenticated using (public.is_rab_admin());
+    <label for="sifat">Sifat Konstruksi (wajib)</label>
+    <select id="sifat">
+      <option value="">Pilih sifat</option>
+      <option value="Permanen">Permanen (&gt; 15 tahun)</option>
+      <option value="Semi Permanen">Semi Permanen (5 - 15 tahun)</option>
+      <option value="Sementara/Darurat">Sementara/Darurat (&lt; 5 tahun)</option>
+    </select>
 
-drop policy if exists "admin baca kunjungan" on public.rab_kunjungan;
-create policy "admin baca kunjungan" on public.rab_kunjungan
-  for select to authenticated using (public.is_rab_admin());
+    <div class="row2">
+      <div>
+        <label for="dana">Jenis Dana (wajib)</label>
+        <select id="dana">
+          <option value="">Pilih jenis dana</option>
+          <option value="DD - Dana Desa">DD - Dana Desa</option>
+          <option value="ADD - Alokasi Dana Desa">ADD - Alokasi Dana Desa</option>
+          <option value="BHPRD - Bagi Hasil Pajak dan Retribusi Daerah">BHPRD - Bagi Hasil Pajak dan Retribusi Daerah</option>
+          <option value="PADes - Pendapatan Asli Desa">PADes - Pendapatan Asli Desa</option>
+          <option value="Bankeususdes - Bantuan Keuangan Khusus Desa Kutim">Bankeususdes - Bantuan Keuangan Khusus Desa Kutim</option>
+          <option value="Bankeu Provinsi Kaltim">Bankeu Provinsi Kaltim</option>
+          <option value="SiLPA">SiLPA</option>
+          <option value="Lain-lain">Lain-lain</option>
+        </select>
+      </div>
+      <div>
+        <label for="tahun">Tahun Anggaran</label>
+        <input id="tahun" type="text" inputmode="numeric" maxlength="4">
+      </div>
+    </div>
 
--- 4b. Fungsi Izin Cetak: tandai Cetak = Ya, simpan nama, buat kode verifikasi
-create or replace function public.rab_tandai_cetak(
-  p_token  uuid,
-  p_nama   text,
-  p_rating smallint default null,
-  p_saran  text default null
-)
-returns text
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_id     bigint;
-  v_kode   text;
-  v_rating smallint;
-  v_nama   text := btrim(coalesce(p_nama, ''));
-  v_saran  text := nullif(left(btrim(coalesce(p_saran, '')), 300), '');
-begin
-  if char_length(v_nama) < 3 or char_length(v_nama) > 100 then
-    raise exception 'Nama pemohon minimal 3 karakter';
-  end if;
-  if v_nama ~* 'lamri' then
-    raise exception 'Nama ini tidak dapat digunakan. Gunakan nama pemohon yang sebenarnya.';
-  end if;
-  if p_rating is not null and (p_rating < 1 or p_rating > 5) then
-    raise exception 'Rating harus 1 sampai 5';
-  end if;
+    <label for="rt">Lokasi RT (wajib)</label>
+    <div class="prefix rt"><span>RT.</span><input id="rt" type="text" inputmode="numeric" maxlength="3" placeholder="02"></div>
+    <div class="fixed" id="lokasiPreview">Desa Susuk Dalam, Kecamatan Sandaran, Kabupaten Kutai Timur</div>
+  </section>
 
-  select id, kode_verifikasi, rating into v_id, v_kode, v_rating
-  from public.rab_arsip
-  where token = p_token and created_at > now() - interval '1 day'
-  for update;
+  <section class="card">
+    <div class="print-only">
+      <div class="kop">
+        <img class="kop-logo" src="logo-kutim.png" alt="" onerror="this.style.visibility='hidden'">
+        <div class="kop-teks">
+          <div class="l1">PEMERINTAH KABUPATEN KUTAI TIMUR</div>
+          <div class="l1">KECAMATAN SANDARAN</div>
+          <div class="l2">DESA SUSUK DALAM</div>
+          <div class="l3">Jl. Poros Susuk Dalam RT 02, Sandaran, Kutai Timur, Kalimantan Timur 75384</div>
+          <div class="l3">Telepon 085754814757, Pos-el susukdalamsandaran@gmail.com</div>
+        </div>
+      </div>
+      <div class="judul">RENCANA ANGGARAN BIAYA (RAB)</div>
+    </div>
+    <h2 class="screen-only">Hasil</h2>
+        <div id="result" class="hidden">
+      <table class="info" id="info"></table>
+      <table id="tbl"></table>
+      <div class="pbj" id="pbj"></div>
+      <div id="status" class="status"></div>
+      <div class="print-only verif" id="verif"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnGenerate">Generate RAB</button>
+      <button class="btn primary hidden" id="btnPrint">Cetak / PDF</button>
+    </div>
+    <div class="notice hidden" id="notice"></div>
+    <div class="print-only sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>
+  </section>
+</main>
 
-  if v_id is null then
-    raise exception 'Data generate tidak ditemukan atau sudah kedaluwarsa, silakan Generate ulang';
-  end if;
+<footer>
+  &copy; <span id="thn">2026</span><br>
+  <a href="https://lamri.vercel.app" target="_blank" rel="noopener" id="linkLamri">lamri.vercel.app</a>
+</footer>
 
-  -- rating & saran hanya diisi sekali per baris
-  if p_rating is not null and v_rating is null then
-    update public.rab_arsip set rating = p_rating, saran = v_saran where id = v_id;
-  end if;
+<div class="overlay hidden" id="ovConsent">
+  <div class="modal">
+    <h3>Persetujuan Lokasi</h3>
+    <p>Untuk membuat RAB, lokasi perangkat dan jenis perangkat (HP/browser) Anda akan diambil dan disimpan bersama data kegiatan sebagai arsip perencanaan Desa Susuk Dalam. Saat mencetak, nama pemohon juga disimpan. Data hanya dapat dilihat admin dan disimpan paling lama 2 tahun.</p>
+    <label class="chk"><input type="checkbox" id="chkSetuju"> Saya mengerti dan setuju</label>
+    <div class="mact">
+      <button class="btn" id="btnBatalSetuju">Batal</button>
+      <button class="btn primary" id="btnLanjut" disabled>Lanjut</button>
+    </div>
+  </div>
+</div>
 
-  if v_kode is not null then
-    return v_kode;                       -- cetak ulang: kode tetap sama
-  end if;
+<div class="overlay hidden" id="ovLoading">
+  <div class="modal">
+    <h3>Menyusun RAB...</h3>
+    <p id="loadText">Mohon tunggu 20 detik.</p>
+    <div class="bar"><div id="barFill"></div></div>
+    <div class="mact"><button class="btn" id="btnBatalLoad">Batal</button></div>
+  </div>
+</div>
 
-  loop
-    v_kode := 'RAB-' || to_char(now() at time zone 'Asia/Makassar', 'YYMMDD') || '-'
-              || upper(substr(md5(random()::text || clock_timestamp()::text), 1, 5));
-    exit when not exists (select 1 from public.rab_arsip where kode_verifikasi = v_kode);
-  end loop;
+<div class="overlay hidden" id="ovRating">
+  <div class="modal">
+    <h3>Beri Penilaian</h3>
+    <p>Seberapa membantu Kalkulator RAB ini? Pilih bintang untuk melanjutkan cetak.</p>
+    <div class="stars" id="stars">
+      <button type="button" data-v="1" aria-label="1 bintang">★</button>
+      <button type="button" data-v="2" aria-label="2 bintang">★</button>
+      <button type="button" data-v="3" aria-label="3 bintang">★</button>
+      <button type="button" data-v="4" aria-label="4 bintang">★</button>
+      <button type="button" data-v="5" aria-label="5 bintang">★</button>
+    </div>
+    <div class="star-lbl" id="starLbl">Belum dipilih</div>
+    <label for="saran" style="margin-top:12px">Saran atau masukan (boleh dikosongkan)</label>
+    <textarea id="saran" maxlength="300" rows="3" placeholder="Tulis saran Anda..."></textarea>
+    <div class="err" id="ratingErr"></div>
+    <div class="mact">
+      <button class="btn" id="btnBatalRating">Batal</button>
+      <button class="btn primary" id="btnKirimRating" disabled>Kirim &amp; Cetak</button>
+    </div>
+  </div>
+</div>
 
-  update public.rab_arsip
-     set dicetak = true, waktu_cetak = now(), nama_pemohon = v_nama,
-         kode_verifikasi = v_kode, aksi = 'cetak'
-   where id = v_id;
+<div class="overlay hidden" id="ovPasang">
+  <div class="modal">
+    <img src="/icon-192.png" alt="" class="app-ic">
+    <h3>Pasang Aplikasi ACC-RAB</h3>
+    <p id="pasangText">Terima kasih atas penilaiannya! Pasang ACC-RAB di HP supaya lebih cepat dibuka langsung dari layar utama, tanpa mengetik alamat web.</p>
+    <div class="mact">
+      <button class="btn" id="btnNantiPasang">Nanti</button>
+      <button class="btn primary" id="btnPasang">Pasang</button>
+    </div>
+  </div>
+</div>
 
-  return v_kode;
-end;
-$$;
+<div class="overlay hidden" id="ovPasangLink">
+  <div class="modal">
+    <img src="/icon-192.png" alt="" class="app-ic">
+    <h3 style="text-align:center">Pasang Aplikasi ACC-RAB</h3>
+    <p id="pasangLinkText">Pasang aplikasi ACC-RAB terlebih dahulu untuk melanjutkan ke lamri.vercel.app.</p>
+    <div class="mact">
+      <button class="btn" id="btnTutupPasangLink">Tutup</button>
+      <button class="btn primary" id="btnPasangLink">Pasang</button>
+    </div>
+  </div>
+</div>
 
-revoke all on function public.rab_tandai_cetak(uuid, text, smallint, text) from public;
-grant execute on function public.rab_tandai_cetak(uuid, text, smallint, text) to anon, authenticated;
+<div class="overlay hidden" id="ovNama">
+  <div class="modal">
+    <h3>Izin Cetak</h3>
+    <p>Masukkan nama pemohon untuk mendapatkan izin cetak dan kode verifikasi.</p>
+    <input id="namaPemohon" type="text" maxlength="100" placeholder="Nama lengkap pemohon">
+    <div class="err" id="namaErr"></div>
+    <div class="mact">
+      <button class="btn" id="btnBatalNama">Batal</button>
+      <button class="btn primary" id="btnIzin">Cetak / PDF</button>
+    </div>
+  </div>
+</div>
 
 
+<script>
+/* ================= KONFIGURASI SUPABASE (isi dari Project Settings > API) ================= */
+const SUPABASE_URL = "https://tutgjaxuvjbyxiibxhtz.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
+/* ========================================================================================== */
 
--- 5. HAK AKSES TABEL ---------------------------------------------------
-revoke all on public.rab_arsip, public.rab_kunjungan, public.rab_admin from anon, authenticated;
-grant insert on public.rab_arsip, public.rab_kunjungan to anon, authenticated;
-grant select, update, delete on public.rab_arsip to authenticated;
-grant select on public.rab_kunjungan to authenticated;
-grant execute on function public.is_rab_admin() to anon, authenticated;
+(function(){
+  var DESA = "Desa Susuk Dalam", KEC = "Kecamatan Sandaran", KAB = "Kabupaten Kutai Timur";
+  var mode = "material", last = null, pakaiTpk = false;   /* Mode Pagu: bawaan tanpa TPK */
+  var generated = false, berubah = false, gen = null;
+  var $ = function(id){ return document.getElementById(id); };
+  var fmt = function(n){ return "Rp " + Math.round(n).toLocaleString("id-ID"); };
+  var parseMoney = function(s){ var d = String(s).replace(/\D/g,""); return d ? parseInt(d,10) : 0; };
+  var parsePct = function(s){ var v = parseFloat(String(s).replace(",", ".")); return isNaN(v) ? 0 : v/100; };
+  var parseNum = function(s){ var v = parseFloat(String(s).replace(/\./g,"").replace(",", ".")); return isNaN(v) ? null : v; };
+  var pctLabel = function(x){ return (Math.round(x*1000)/10).toString().replace(".", ",") + "%"; };
+  var dbReady = SUPABASE_URL.indexOf("http") === 0 && SUPABASE_ANON_KEY.length > 20;
 
--- Selesai. Cek di Table Editor: rab_arsip, rab_kunjungan, rab_admin
+  $("tahun").value = new Date().getFullYear();
+  $("thn").textContent = new Date().getFullYear();
+
+  function rtLabel(){
+    var d = $("rt").value.replace(/\D/g,"");
+    return d ? "RT." + (d.length < 2 ? "0" + d : d) : "";
+  }
+  function lokasiLengkap(){
+    var rt = rtLabel();
+    return (rt ? rt + ", " : "") + DESA + ", " + KEC + ", " + KAB;
+  }
+  var MAKS_UPAH = 0.30, TPK = 0.03, PAJAK_BAHAN = 0.125, PAJAK_SEWA = 0.13;
+  var FAKTOR = { mm:0.001, cm:0.01, m:1, km:1000 };
+  function angka(x, maks){ return x.toLocaleString("id-ID", { maximumFractionDigits: maks }); }
+
+  /* ---------- Bahan Dominan -> Jenis Bangunan -> Ukuran ---------- */
+  /* n = nama kolom, s = singkatan di hasil cetak, u = satuan bawaan, nol = boleh 0 */
+  var F = {
+    p:  { n:"Panjang", s:"P", u:"m" },
+    l:  { n:"Lebar", s:"L", u:"m" },
+    t:  { n:"Tebal", s:"T", u:"cm" },
+    tg: { n:"Tinggi", s:"Tinggi", u:"m" },
+    d:  { n:"Dalam", s:"Dalam", u:"m" },
+    lb: { n:"Lebar dalam", s:"lebar", u:"cm" },
+    la: { n:"Lebar atas dalam", s:"lebar atas", u:"cm" },
+    ld: { n:"Lebar dasar dalam", s:"lebar dasar", u:"cm", nol:true, hint:"0 = V runcing" },
+    hd: { n:"Tinggi dalam", s:"tinggi", u:"cm" },
+    td: { n:"Tebal dinding/bibir", s:"tebal dinding", u:"cm" },
+    tb: { n:"Tebal dasar", s:"tebal dasar", u:"cm" }
+  };
+  var TIPE = {
+    lantai: { lbl:"Ukuran Lantai", f:["p","l"] },
+    pl:     { f:["p","l"] },
+    plt:    { f:["p","l","t"] },
+    ptg:    { f:["p","tg"] },
+    ptgt:   { f:["p","tg","t"] },
+    pltg:   { f:["p","l","tg"], u:{ l:"cm", tg:"cm" } },
+    pld:    { f:["p","l","d"] },
+    p:      { f:["p"] },
+    tg:     { f:["tg"] },
+    drU:    { f:["p","lb","hd","td","tb"], koma:true },
+    drV:    { f:["p","la","ld","hd","td","tb"], koma:true },
+    bebas:  { f:["p","l","t"], opsional:["l","t"], n:{ t:"Tinggi/Tebal" } }
+  };
+  var DR_U = ["Drainase U","drU"], DR_V = ["Drainase V","drV"];
+  var JENIS = {
+    "Beton Bertulang": [["Jalan Cor","plt"], DR_U, DR_V, ["Gorong-gorong/Box Culvert","p"], ["Jembatan","pl"], ["Talud/Turap","ptgt"], ["Gedung/Bangunan","lantai"], ["Sumur/Bak Air","pld"]],
+    "Rabat Beton (beton tanpa tulangan)": [["Jalan Rabat/JUT","plt"], ["Lantai/Halaman","plt"], DR_U, DR_V],
+    "Pasangan Batu (batu kali/gunung)": [["Talud/Penahan Tanah","ptgt"], DR_V, DR_U, ["Pondasi","pltg"]],
+    "Pasangan Bata": [["Gedung/Bangunan","lantai"], ["MCK","lantai"], ["Pagar","ptg"], DR_U, ["Sumur/Bak Air","pld"]],
+    "Paving Block": [["Jalan Paving","pl"], ["Halaman/Lapangan","pl"]],
+    "Kayu Ulin": [["Rumah/Gedung","lantai"], ["Jembatan","pl"], ["Jalan Titian","pl"], ["Dermaga/Tambatan","pl"], ["Turap Ulin","ptg"], ["Pagar","ptg"]],
+    "Kayu Putih": [["Rumah/Gedung","lantai"], ["Pagar","ptg"]],
+    "Baja/Besi": [["Jembatan","pl"], ["Rangka Atap","pl"], ["Pagar","ptg"], ["Tiang/Menara","tg"]],
+    "Sirtu/Timbunan Tanah": [["Jalan Sirtu","plt"], ["Penimbunan Lahan","plt"]]
+  };
+  function semuaJenis(){                       /* bahan Lainnya: semua jenis tanpa dobel */
+    var ada = {}, out = [];
+    Object.keys(JENIS).forEach(function(b){ JENIS[b].forEach(function(j){ if (!ada[j[0]]) { ada[j[0]] = 1; out.push(j); } }); });
+    return out;
+  }
+  var simpanDim = {}, tipeTampil = null;
+  function namaKolom(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) || F[k].n; }
+  function singkat(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) ? "T" : F[k].s; }
+  function tipeAktif(){
+    var sel = $("jenis");
+    if (!sel.value || !sel.selectedOptions[0]) return null;
+    return sel.selectedOptions[0].dataset.tipe || null;
+  }
+  function jenisLabel(){
+    var v = $("jenis").value;
+    if (v === "Lainnya") return $("jenisLain").value.trim();
+    return v;
+  }
+  function isiJenis(){
+    var b = $("bahanUtama").value, sel = $("jenis"), lama = sel.value;
+    if (!b) { sel.innerHTML = ""; show("grupJenis", false); renderUkuran(); return; }
+    var daftar = b === "Lainnya" ? semuaJenis() : (JENIS[b] || []);
+    sel.innerHTML = '<option value="">Pilih jenis bangunan/pekerjaan</option>' +
+      daftar.map(function(j){ return '<option value="' + esc(j[0]) + '" data-tipe="' + j[1] + '">' + esc(j[0]) + '</option>'; }).join("") +
+      '<option value="Lainnya" data-tipe="bebas">Lainnya (ketik sendiri)</option>';
+    var masih = Array.prototype.some.call(sel.options, function(o){ return o.value === lama && lama; });
+    sel.value = masih ? lama : "";
+    show("grupJenis", true);
+    show("jenisLain", sel.value === "Lainnya");
+    renderUkuran();
+  }
+  function renderUkuran(){
+    var tp = tipeAktif();
+    show("grupUkuran", !!tp);
+    if (!tp) { tipeTampil = null; $("dimBox").innerHTML = ""; return; }
+    var T = TIPE[tp];
+    $("ukuranLbl").textContent = (T.lbl || "Ukuran") + (T.opsional ? " (wajib, minimal Panjang)" : " (wajib, semua diisi)");
+    if (tipeTampil === tp) return;
+    tipeTampil = tp;
+    var opsiUnit = function(pilih){
+      return ["mm","cm","m","km"].map(function(u){ return '<option value="' + u + '"' + (u === pilih ? " selected" : "") + ">" + u + "</option>"; }).join("");
+    };
+    $("dimBox").innerHTML = T.f.map(function(k){
+      var sm = simpanDim[k], unit = sm ? sm.u : ((T.u && T.u[k]) || F[k].u);
+      var opt = T.opsional && T.opsional.indexOf(k) >= 0;
+      return '<div class="dim"><span class="dl">' + namaKolom(tp, k) + (F[k].hint ? "<small>" + F[k].hint + "</small>" : "") + "</span>" +
+        '<input id="dim_' + k + '" data-k="' + k + '" type="text" inputmode="decimal" maxlength="12" placeholder="' + (opt ? "opsional" : "0") + '" value="' + (sm ? esc(sm.v) : "") + '">' +
+        '<select id="u_' + k + '" data-k="' + k + '" class="unit">' + opsiUnit(unit) + "</select></div>";
+    }).join("");
+  }
+  function catatDim(k){ simpanDim[k] = { v: $("dim_" + k).value, u: $("u_" + k).value }; }
+
+  /* hasil: null = belum lengkap; { error } = ukuran tidak masuk akal */
+  function dimensi(){
+    var tp = tipeAktif(); if (!tp) return null;
+    var T = TIPE[tp], isi = {}, lengkap = true;
+    T.f.forEach(function(k){
+      var el = $("dim_" + k), ue = $("u_" + k);
+      if (!el || !ue) { lengkap = false; return; }
+      var v = parseNum(el.value), u = ue.value;
+      var opt = T.opsional && T.opsional.indexOf(k) >= 0;
+      if (v === null || v < 0 || (v === 0 && !F[k].nol)) { if (!opt) lengkap = false; return; }
+      if (opt && T.opsional && k === "t" && !isi.l) return;      /* bebas: tebal hanya dihitung bila lebar diisi */
+      isi[k] = { v:v, u:u, m:v * FAKTOR[u] };
+    });
+    if (!lengkap) return null;
+    var g = function(k){ return isi[k] ? isi[k].m : 0; };
+    var vol, satuan;
+    if (tp === "drU") {
+      vol = (2 * g("td") * g("hd") + (g("lb") + 2 * g("td")) * g("tb")) * g("p");
+      satuan = "m³";
+    } else if (tp === "drV") {
+      if (g("ld") > g("la")) return { error: "Lebar dasar dalam tidak boleh lebih besar dari lebar atas dalam." };
+      var miring = Math.sqrt(g("hd") * g("hd") + Math.pow((g("la") - g("ld")) / 2, 2));
+      vol = (2 * g("td") * miring + (g("ld") + 2 * g("td")) * g("tb")) * g("p");
+      satuan = "m³";
+    } else {
+      var ks = Object.keys(isi);
+      vol = 1; ks.forEach(function(k){ vol *= isi[k].m; });
+      satuan = ks.length === 1 ? "m" : (ks.length === 2 ? "m²" : "m³");
+    }
+    var kunci = T.f.filter(function(k){ return isi[k]; });
+    var bagian = kunci.map(function(k){ return singkat(tp, k) + " " + angka(isi[k].v, 3) + " " + isi[k].u; });
+    var teks = T.koma ? bagian.join(", ") : bagian.join(" x ");
+    if (kunci.length > 1 || isi[kunci[0]].u !== "m") teks += " = " + angka(vol, 3) + " " + satuan;
+    var pertama = function(arr){ for (var i = 0; i < arr.length; i++) if (isi[arr[i]] && isi[arr[i]].m > 0) return isi[arr[i]].m; return null; };
+    return {
+      teks: teks, volume: vol, satuan: satuan, label: T.lbl || "Ukuran",
+      p: pertama(["p"]), l: pertama(["l","lb","la"]), t: pertama(["t","tg","d","hd"])
+    };
+  }
+  function bahanKonstruksi(){
+    var v = $("bahanUtama").value;
+    if (v === "Lainnya") return $("bahanLain").value.trim();
+    return v;
+  }
+  function sifatLabel(){
+    var v = $("sifat").value;
+    return { "Permanen":"Permanen (> 15 tahun)", "Semi Permanen":"Semi Permanen (5 - 15 tahun)", "Sementara/Darurat":"Sementara/Darurat (< 5 tahun)" }[v] || "";
+  }
+
+  /* ---------- Perhitungan ---------- */
+  function hitung(){
+    notice("");
+    if (generated) { generated = false; gen = null; berubah = true; }
+    var nilai = parseMoney($("nilai").value);
+    var sewa = mode === "material" ? parseMoney($("sewa").value) : 0;   /* mode Pagu: semua biaya sudah dalam pagu */
+    var bahanSaja = mode === "pagu" && !pakaiTpk;          /* Mode Pagu tanpa TPK: tanpa upah, seluruh pagu untuk bahan */
+    var t = bahanSaja ? 0 : Math.min(parsePct($("pTukang").value), MAKS_UPAH);
+    var k = (mode === "pagu" && !pakaiTpk) ? 0 : TPK;     /* ditetapkan; Mode Pagu boleh tanpa TPK */
+    var p = PAJAK_BAHAN, ps = PAJAK_SEWA;
+    $("lokasiPreview").textContent = lokasiLengkap();
+    var dm = dimensi();
+    var namaHasil = dm && !dm.error ? (tipeAktif() === "tg" ? "Tinggi" : { "m³":"Volume", "m²":"Luas", "m":"Panjang" }[dm.satuan]) : "";
+    $("volPreview").textContent = !dm ? "Isi ukuran, hasil terhitung otomatis."
+      : (dm.error ? dm.error : namaHasil + ": " + angka(dm.volume, 3) + " " + dm.satuan);
+    if (t + k >= 1) { tampil(null); return; }
+    if (mode === "material" && !nilai && !sewa) { tampil(null); return; }
+    if (mode === "pagu" && !nilai) { tampil(null); return; }
+
+    var pajakSewa = Math.round(sewa * ps);
+    var total, tukang, tpk;
+    if (mode === "material") {
+      var dasar = nilai * (1 + p) + sewa + pajakSewa;
+      total = Math.ceil((dasar / (1 - t - k)) - 1e-7);
+      tukang = Math.floor(total * t + 1e-7);
+      tpk = Math.floor(total * k + 1e-7);
+    } else {
+      total = nilai;
+      tukang = Math.round(total * t);
+      tpk = Math.round(total * k);
+    }
+    var sisa = total - tukang - tpk - sewa - pajakSewa;
+    var cukup = sisa >= 0;
+    var material = 0, pajak = 0, dpp = 0, ppn = 0, pph = 0;
+    if (cukup && mode === "pagu") {
+      /* sesuai Siskeudes: DPP = bahan / 1,11; PPN 11% dan PPh 22 1,5% dari DPP; sisanya dibayar ke penyedia */
+      dpp = sisa / 1.11;
+      ppn = Math.round(dpp * 0.11 + 1e-7);
+      pph = Math.round(dpp * 0.015 + 1e-7);
+      material = sisa - ppn - pph;
+      pajak = ppn + pph;
+    } else if (cukup) {
+      material = Math.floor(sisa / (1 + p) + 1e-7);
+      /* mode Material: bahan dikunci persis sesuai input, sisa pembulatan masuk ke pajak bahan */
+      if (material >= nilai) material = nilai;
+      pajak = sisa - material;
+    }
+    var aman = mode === "material"
+      ? (cukup && material >= nilai)
+      : (cukup && (tukang + tpk + sewa + pajakSewa + material + pajak) === total);
+
+    tampil({ nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk,
+             pajak:pajak, material:material, aman:aman, cukup:cukup, bahan:sisa, bahanSaja:bahanSaja, dpp:dpp, ppn:ppn, pph:pph, t:t, k:k, p:p, ps:ps });
+  }
+
+  function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  function tampil(r){
+    last = r;
+    if (!r) { render(); return; }
+
+    var info = [["Nama Kegiatan", $("nama").value.trim() || "-"]];
+    var dm = dimensi();
+    if (bahanKonstruksi()) info.push(["Bahan Dominan", bahanKonstruksi()]);
+    if (jenisLabel()) info.push(["Jenis Bangunan", jenisLabel()]);
+    if (dm && !dm.error) info.push([dm.label, dm.teks]);
+    if (sifatLabel()) info.push(["Sifat Konstruksi", sifatLabel()]);
+    info.push(
+      ["Jenis Dana", $("dana").value || "-"],
+      ["Tahun Anggaran", $("tahun").value || "-"],
+      ["Lokasi", lokasiLengkap()],
+      ["Pelaksanaan", "Swakelola oleh TPK"],
+      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.bahanSaja ? "Pagu Anggaran (bahan saja)" : "Pagu Anggaran")]
+    );
+    $("info").innerHTML = info.map(function(x){ return "<tr><td>"+x[0]+"</td><td>: "+esc(x[1])+"</td></tr>"; }).join("");
+
+    var rows = [
+      [mode === "material" ? "Biaya Bahan/Material (termasuk pajak)" : "Biaya Bahan/Material Tersedia (termasuk pajak)", r.material + r.pajak, "main"]
+    ];
+    if (r.sewa > 0) rows.push(["Biaya Sewa Peralatan (termasuk pajak)", r.sewa + r.pajakSewa, "main"]);
+    if (!r.bahanSaja) rows.push(["Biaya Upah Tenaga Kerja", r.tukang, ""]);
+    if (r.k > 0) rows.push(["TPK (" + pctLabel(r.k) + ")", r.tpk, ""]);
+    rows.push(
+      [mode === "material" ? "TOTAL BIAYA (RAB)" : "PAGU ANGGARAN", r.total, "total"]
+    );
+    $("tbl").innerHTML = rows.map(function(x){
+      return '<tr class="'+x[2]+'"><td>'+x[0]+'</td><td class="v">'+fmt(x[1])+'</td></tr>';
+    }).join("");
+
+    var kotak = $("pbj");
+    if (mode === "pagu") {
+      /* Rincian pajak bahan sesuai Siskeudes: tampil di layar dan ikut dicetak */
+      kotak.classList.remove("screen-only");
+      var rinci = [["DPP", r.dpp, "sub"], ["PPN 11%", r.ppn, "sub"], ["PPh 22 1,5%", r.pph, "sub"], ["Dibayar ke Penyedia", r.material, "tot"]];
+      kotak.innerHTML = '<div class="pbj-t">Rincian Pajak Bahan</div>' +
+        rinci.map(function(x){ return '<div class="pbj-r ' + x[2] + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
+    } else {
+      /* PBJ Murni (tanpa pajak): hanya tampil di layar, tidak ikut dicetak */
+      kotak.classList.add("screen-only");
+      var pbj = [["Bahan/Material", r.material]];
+      if (r.sewa > 0) pbj.push(["Sewa Peralatan", r.sewa]);
+      if (r.sewa > 0) pbj.push(["Jumlah PBJ Murni", r.material + r.sewa]);
+      kotak.innerHTML = '<div class="pbj-t">PBJ Murni (tanpa pajak)</div>' +
+        pbj.map(function(x, i){ return '<div class="pbj-r' + (i === 2 ? ' tot' : '') + '"><span>' + x[0] + '</span><b>' + fmt(x[1]) + '</b></div>'; }).join("");
+    }
+
+    var st = $("status");
+    st.className = "status " + (r.aman ? "ok" : "bad");
+    if (!r.cukup) st.textContent = "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa";
+    else if (mode === "material") st.textContent = r.aman ? (r.sewa > 0 ? "AMAN, bahan dan sewa utuh" : "AMAN, bahan utuh") : "Periksa kembali, bahan kurang";
+    else st.textContent = r.aman ? "AMAN, sesuai pagu" : "Periksa kembali, jumlah tidak sesuai pagu";
+    render();
+  }
+
+  /* ---------- Tampilan: hasil hanya muncul setelah Generate ---------- */
+  function render(){
+    $("btnGenerate").classList.toggle("hidden", generated);
+    $("btnPrint").classList.toggle("hidden", !generated);
+    $("result").classList.toggle("hidden", !generated);
+    if (generated) notice("");
+  }
+  /* alasan belum bisa Generate; kosong berarti siap */
+  function alasanBelumSiap(){
+    /* urutan sesuai urutan kolom di formulir */
+    if (!last) return mode === "material" ? "Isi total biaya bahan/material atau sewa peralatan." : "Isi pagu anggaran.";
+    if (!last.cukup) return "Pagu tidak cukup untuk sewa peralatan, kurangi nilai sewa.";
+    var kata = $("nama").value.trim().split(/\s+/).filter(function(w){ return w.length > 0; });
+    if (kata.length < 2) return "Isi nama kegiatan minimal 2 kata.";
+    if ($("bahanUtama").value === "Lainnya" && !$("bahanLain").value.trim()) return "Ketik bahan dominan.";
+    if (!bahanKonstruksi()) return "Pilih bahan dominan.";
+    if ($("jenis").value === "Lainnya" && !$("jenisLain").value.trim()) return "Ketik jenis bangunan/pekerjaan.";
+    if (!jenisLabel()) return "Pilih jenis bangunan/pekerjaan.";
+    var dm = dimensi();
+    if (!dm) return "Lengkapi " + (TIPE[tipeAktif()].lbl || "ukuran").toLowerCase() + " terlebih dahulu.";
+    if (dm.error) return dm.error;
+    if (!$("sifat").value) return "Pilih sifat konstruksi.";
+    if (!$("dana").value) return "Pilih jenis dana.";
+    if (!rtLabel()) return "Isi lokasi RT.";
+    return "";
+  }
+  function notice(msg){
+    var n = $("notice");
+    if (!msg) { n.classList.add("hidden"); return; }
+    n.textContent = msg; n.classList.remove("hidden");
+  }
+
+  /* ---------- Arsip & kunjungan ke Supabase ---------- */
+  function headersDb(){
+    var h = { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json" };
+    /* Key lama (eyJ...) juga dikirim di Authorization; publishable key (sb_publishable_...) cukup di apikey */
+    if (SUPABASE_ANON_KEY.indexOf("eyJ") === 0) h["Authorization"] = "Bearer " + SUPABASE_ANON_KEY;
+    return h;
+  }
+  function kirim(tabel, data){
+    if (!dbReady) return;
+    var h = headersDb(); h["Prefer"] = "return=minimal";
+    try {
+      fetch(SUPABASE_URL + "/rest/v1/" + tabel, { method:"POST", keepalive:true, headers:h, body:JSON.stringify(data) }).catch(function(){});
+    } catch(e) {}
+  }
+
+  function buatToken(){
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    var b = new Uint8Array(16); crypto.getRandomValues(b);
+    b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+    var h = Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join("");
+    return h.slice(0,8)+"-"+h.slice(8,12)+"-"+h.slice(12,16)+"-"+h.slice(16,20)+"-"+h.slice(20);
+  }
+
+  function dataArsip(){
+    var th = parseInt($("tahun").value, 10);
+    var dm = dimensi(); if (dm && dm.error) dm = null;
+    var r3 = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
+    return {
+      mode: mode,
+      nama_kegiatan: $("nama").value.trim().slice(0,200) || null,
+      panjang: dm ? r3(dm.p) : null,
+      lebar: dm ? r3(dm.l) : null,
+      tinggi: dm ? r3(dm.t) : null,
+      volume: (dm && dm.volume < 1e12) ? Math.round(dm.volume * 100) / 100 : null,
+      satuan: dm ? dm.satuan : null,
+      bahan_utama: bahanKonstruksi().slice(0,60) || null,
+      jenis_bangunan: jenisLabel().slice(0,60) || null,
+      ukuran: dm ? dm.teks.slice(0,300) : null,
+      sifat_konstruksi: $("sifat").value || null,
+      jenis_dana: $("dana").value || null,
+      rt: rtLabel() || null,
+      tahun: (th >= 2000 && th <= 2100) ? th : null,
+      nilai_input: last.nilai,
+      tukang: last.tukang, tpk: last.tpk, pajak: last.pajak,
+      material: last.material, sewa: last.sewa, pajak_sewa: last.pajakSewa, total: last.total,
+      p_tukang: last.t, p_tpk: last.k, p_pajak: last.p, p_pajak_sewa: last.ps
+    };
+  }
+
+  /* ---------- Deteksi perangkat: jenis, sistem operasi, browser, model HP ---------- */
+  async function infoPerangkat(){
+    var ua = navigator.userAgent, r = { perangkat: "Laptop", os: "Lainnya", browser: "Lainnya", model: null };
+    var m;
+    if (/iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua)) ||
+        (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) r.perangkat = "Tablet";
+    else if (/Mobi|iPhone|iPod|Android/i.test(ua)) r.perangkat = "HP";
+
+    if ((m = ua.match(/Android\s([\d.]+)/))) r.os = "Android " + m[1].split(".")[0];
+    else if ((m = ua.match(/(?:iPhone|iPad|iPod).*?OS\s(\d+)/))) r.os = (/iPad/.test(ua) ? "iPadOS " : "iOS ") + m[1];
+    else if (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) r.os = "iPadOS";
+    else if (/Windows/.test(ua)) r.os = "Windows";
+    else if (/Mac OS X/.test(ua)) r.os = "macOS";
+    else if (/CrOS/.test(ua)) r.os = "ChromeOS";
+    else if (/Linux/.test(ua)) r.os = "Linux";
+
+    if ((m = ua.match(/EdgA?\/(\d+)/))) r.browser = "Edge " + m[1];
+    else if ((m = ua.match(/OPR\/(\d+)/))) r.browser = "Opera " + m[1];
+    else if ((m = ua.match(/SamsungBrowser\/(\d+)/))) r.browser = "Samsung Internet " + m[1];
+    else if ((m = ua.match(/CriOS\/(\d+)/))) r.browser = "Chrome " + m[1];
+    else if ((m = ua.match(/(?:FxiOS|Firefox)\/(\d+)/))) r.browser = "Firefox " + m[1];
+    else if ((m = ua.match(/Chrome\/(\d+)/))) r.browser = "Chrome " + m[1];
+    else if ((m = ua.match(/Version\/(\d+).*Safari/))) r.browser = "Safari " + m[1];
+
+    /* Chrome/Edge: model HP & versi OS yang lebih akurat */
+    var uad = navigator.userAgentData;
+    if (uad && uad.getHighEntropyValues) {
+      try {
+        var h = await uad.getHighEntropyValues(["model", "platformVersion"]);
+        if (h.model) r.model = String(h.model).slice(0, 60);
+        var mayor = parseInt(h.platformVersion, 10);
+        if (h.platform === "Windows" && mayor > 0) r.os = mayor >= 13 ? "Windows 11" : "Windows 10";
+        if (h.platform === "Android" && mayor > 0) r.os = "Android " + mayor;
+      } catch(e) {}
+    }
+    /* browser lain (mis. Samsung Internet) masih mencantumkan model di identitas browser */
+    if (!r.model && (m = ua.match(/Android\s[\d.]+;\s([^;)]+?)(?:\sBuild\/[^;)]*)?[;)]/)) && m[1].trim() !== "K") r.model = m[1].trim().slice(0, 60);
+    r.os = r.os.slice(0, 40); r.browser = r.browser.slice(0, 40);
+    return r;
+  }
+  var perangkatSaya = null;
+  infoPerangkat().then(function(r){ perangkatSaya = r; });
+
+  async function simpanGenerate(token, lok, percobaan){
+    if (!dbReady) return true;
+    var d = dataArsip();
+    d.aksi = "generate"; d.token = token;
+    d.lat = Math.round(lok.lat * 1e6) / 1e6;
+    d.lng = Math.round(lok.lng * 1e6) / 1e6;
+    d.akurasi = Math.min(Math.round(lok.acc * 10) / 10, 99999999);
+    d.percobaan = percobaan;
+    var pr = perangkatSaya || await infoPerangkat();
+    d.perangkat = pr.perangkat; d.os = pr.os; d.browser = pr.browser; d.model_hp = pr.model;
+    var h = headersDb(); h["Prefer"] = "return=minimal";
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rab_arsip", { method:"POST", headers:h, body:JSON.stringify(d) });
+      return res.ok;
+    } catch(e) { return false; }
+  }
+
+  async function mintaIzinCetak(token, nama, rating, saran){
+    if (!dbReady) return { kode: "RAB-DEMO" };
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_tandai_cetak", {
+        method:"POST", headers:headersDb(), body:JSON.stringify({ p_token: token, p_nama: nama, p_rating: rating || null, p_saran: saran || null })
+      });
+      var j = await res.json().catch(function(){ return null; });
+      if (!res.ok) return { error: (j && j.message) || "Izin cetak gagal, coba lagi." };
+      return { kode: j };
+    } catch(e) { return { error: "Tidak ada koneksi internet, coba lagi." }; }
+  }
+
+  (function catatKunjungan(){
+    try { if (sessionStorage.getItem("rab_v")) return; sessionStorage.setItem("rab_v","1"); } catch(e) {}
+    var sumber = "langsung";
+    try { if (document.referrer) sumber = new URL(document.referrer).hostname.slice(0,120); } catch(e) {}
+    kirim("rab_kunjungan", {
+      path: location.pathname.slice(0,100),
+      perangkat: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "hp" : "laptop",
+      sumber: sumber
+    });
+  })();
+
+  /* ---------- Mode & event ---------- */
+  function setMode(m){
+    mode = m;
+    document.querySelectorAll(".tab").forEach(function(b){ b.classList.toggle("active", b.dataset.mode === m); });
+    if (m === "material") {
+      $("inTitle").textContent = "Input Bahan dan Sewa";
+      $("inSub").textContent = "Masukkan total biaya bahan/material dan sewa peralatan tanpa pajak. Total RAB keluar otomatis, bahan dan sewa tidak berkurang.";
+      $("nilaiLabel").textContent = "Total Biaya Bahan/Material (tanpa pajak)";
+    } else {
+      $("inTitle").textContent = "Input Pagu";
+      $("inSub").textContent = "Masukkan total pagu anggaran. Rincian bahan/material, upah tenaga kerja, dan TPK keluar otomatis.";
+      $("nilaiLabel").textContent = "Pagu Anggaran";
+    }
+    $("nilai").value = "";
+    $("sewa").value = "";
+    $("grupSewa").classList.toggle("hidden", m !== "material");
+    $("grupTpk").classList.toggle("hidden", m !== "pagu");
+    aturKolomTpk();
+    hitung();
+  }
+  document.querySelectorAll(".tab").forEach(function(b){ b.addEventListener("click", function(){ setMode(b.dataset.mode); }); });
+  function aturKolomTpk(){
+    document.querySelectorAll("#segTpk button").forEach(function(b){ b.classList.toggle("active", (b.dataset.tpk === "pakai") === pakaiTpk); });
+    $("kolomTpk").classList.toggle("hidden", mode === "pagu" && !pakaiTpk);
+    $("kolomUpah").classList.toggle("hidden", mode === "pagu" && !pakaiTpk);
+  }
+  document.querySelectorAll("#segTpk button").forEach(function(b){
+    b.addEventListener("click", function(){ pakaiTpk = b.dataset.tpk === "pakai"; aturKolomTpk(); hitung(); });
+  });
+
+  ["nilai","sewa"].forEach(function(id){
+    $(id).addEventListener("input", function(e){
+      var n = parseMoney(e.target.value);
+      e.target.value = n ? n.toLocaleString("id-ID") : "";
+      hitung();
+    });
+  });
+  $("rt").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
+  $("tahun").addEventListener("input", function(e){ e.target.value = e.target.value.replace(/\D/g,""); hitung(); });
+  $("dimBox").addEventListener("input", function(e){
+    var k = e.target.dataset.k; if (!k || e.target.tagName !== "INPUT") return;
+    e.target.value = e.target.value.replace(/[^\d,]/g,"");
+    catatDim(k); hitung();
+  });
+  $("dimBox").addEventListener("change", function(e){
+    var k = e.target.dataset.k; if (!k || e.target.tagName !== "SELECT") return;
+    catatDim(k); hitung();
+  });
+  $("sifat").addEventListener("change", hitung);
+  $("jenis").addEventListener("change", function(e){
+    var lain = e.target.value === "Lainnya";
+    show("jenisLain", lain);
+    renderUkuran();
+    if (lain) $("jenisLain").focus();
+    hitung();
+  });
+  $("bahanUtama").addEventListener("change", function(e){
+    var opt = e.target.selectedOptions[0];
+    var lain = e.target.value === "Lainnya";
+    $("bahanLain").classList.toggle("hidden", !lain);
+    if (opt && opt.dataset.sifat) $("sifat").value = opt.dataset.sifat;
+    isiJenis();
+    if (lain) $("bahanLain").focus();
+    hitung();
+  });
+  $("pTukang").addEventListener("input", function(e){
+    var lebih = parsePct(e.target.value) > MAKS_UPAH;
+    if (lebih) e.target.value = "30";
+    $("upahNote").classList.toggle("hidden", !lebih);
+    if (lebih) setTimeout(function(){ $("upahNote").classList.add("hidden"); }, 3000);
+  });
+  ["pTukang","nama","bahanLain","jenisLain"].forEach(function(id){ $(id).addEventListener("input", hitung); });
+  $("dana").addEventListener("change", hitung);
+
+  /* ---------- Generate: persetujuan, lokasi GPS 20 detik ---------- */
+  var DURASI = 20000, BATAS_AKURASI = 15, watchId = null, timer = null, terbaik = null, gagalAkurasi = 0;
+
+  function show(id, on){ $(id).classList.toggle("hidden", !on); }
+  function fmtAkurasi(m){ return m >= 1000 ? "± " + angka(m / 1000, 1) + " km" : "± " + Math.round(m) + " m"; }
+
+  $("btnGenerate").addEventListener("click", function(){
+    var alasan = alasanBelumSiap();
+    if (alasan) { notice(alasan); return; }
+    notice("");
+    $("chkSetuju").checked = false; $("btnLanjut").disabled = true;
+    show("ovConsent", true);
+  });
+  $("chkSetuju").addEventListener("change", function(e){ $("btnLanjut").disabled = !e.target.checked; });
+  $("btnBatalSetuju").addEventListener("click", function(){ show("ovConsent", false); });
+  $("btnLanjut").addEventListener("click", function(){ show("ovConsent", false); mulaiLokasi(); });
+  $("btnBatalLoad").addEventListener("click", function(){ batalLokasi("Generate dibatalkan."); });
+
+  function hentikan(){
+    if (timer) { clearInterval(timer); timer = null; }
+    if (watchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+  }
+  function batalLokasi(msg){ hentikan(); show("ovLoading", false); notice(msg); }
+
+  function mulaiLokasi(){
+    if (!navigator.geolocation) { notice("Perangkat atau browser ini tidak mendukung lokasi, RAB tidak dapat dibuat."); return; }
+    terbaik = null;
+    $("barFill").style.width = "0%";
+    $("loadText").textContent = "Mohon tunggu 20 detik.";
+    show("ovLoading", true);
+    var mulai = Date.now();
+    watchId = navigator.geolocation.watchPosition(function(pos){
+      var c = pos.coords;
+      if (!terbaik || c.accuracy < terbaik.acc) terbaik = { lat: c.latitude, lng: c.longitude, acc: c.accuracy };
+    }, function(err){
+      if (err.code === 1) batalLokasi("Izin lokasi ditolak. Aktifkan lokasi perangkat dan izinkan browser untuk membuat RAB.");
+    }, { enableHighAccuracy: true, maximumAge: 0, timeout: DURASI });
+    timer = setInterval(function(){
+      var jalan = Date.now() - mulai;
+      $("barFill").style.width = Math.min(100, jalan / DURASI * 100) + "%";
+      $("loadText").textContent = "Menyusun RAB... " + Math.max(0, Math.ceil((DURASI - jalan) / 1000)) + " detik";
+      if (jalan >= DURASI) selesaiLokasi();
+    }, 200);
+  }
+
+  async function selesaiLokasi(){
+    hentikan();
+    if (!terbaik) { batalLokasi("Lokasi tidak didapat. Pastikan lokasi aktif, lalu coba lagi."); return; }
+    /* percobaan pertama wajib <= 15 m; percobaan kedua diterima berapa pun akurasinya */
+    if (terbaik.acc > BATAS_AKURASI && gagalAkurasi < 1) {
+      gagalAkurasi++;
+      batalLokasi("Lokasi belum terkunci dengan tepat. Silakan Generate ulang.");
+      return;
+    }
+    var percobaan = gagalAkurasi >= 1 ? 2 : 1;
+    $("loadText").textContent = "Menyimpan RAB...";
+    var token = buatToken();
+    var ok = await simpanGenerate(token, terbaik, percobaan);
+    if (!ok) { batalLokasi("Gagal menyimpan data. Periksa koneksi internet, lalu Generate ulang."); return; }
+    show("ovLoading", false);
+    gagalAkurasi = 0;
+    gen = { token: token, acc: terbaik.acc };
+    generated = true; berubah = false;
+    render();
+    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  /* ---------- Izin Cetak: nama pemohon wajib, kode dari server ---------- */
+  $("btnPrint").addEventListener("click", function(){
+    if (!generated || !gen) return;
+    $("namaErr").textContent = "";
+    show("ovNama", true);
+    setTimeout(function(){ $("namaPemohon").focus(); }, 50);
+  });
+  $("btnBatalNama").addEventListener("click", function(){ show("ovNama", false); });
+  $("namaPemohon").addEventListener("keydown", function(e){ if (e.key === "Enter") $("btnIzin").click(); });
+
+  /* ---------- Penyimpanan tanda di browser (aman bila diblokir) ---------- */
+  function simpanLokal(k, v){ try { localStorage.setItem(k, v); } catch(e) {} }
+  function bacaLokal(k){ try { return localStorage.getItem(k); } catch(e) { return null; } }
+  function ratingTersimpan(){ var v = parseInt(bacaLokal("accrab_rating"), 10); return v >= 1 && v <= 5 ? v : 0; }
+
+  /* ---------- PWA: deteksi terpasang & tawaran pasang ---------- */
+  var tawaranPasang = null;
+  var isHP = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  var isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  function terpasang(){
+    return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches)
+      || window.navigator.standalone === true || bacaLokal("accrab_pwa") === "1";
+  }
+  window.addEventListener("beforeinstallprompt", function(e){ e.preventDefault(); tawaranPasang = e; });
+  window.addEventListener("appinstalled", function(){ simpanLokal("accrab_pwa", "1"); tawaranPasang = null; });
+  function perluSaranPasang(){
+    if (!isHP || terpasang() || ratingTersimpan() < 4) return false;
+    return isIOS || !!tawaranPasang;          /* Android: hanya jika browser menawarkan pemasangan */
+  }
+
+  /* ---------- Alur cetak: nama -> rating (sekali) -> saran pasang -> cetak ---------- */
+  var namaCetak = "", bintang = 0;
+
+  $("btnIzin").addEventListener("click", function(){
+    if (!generated || !gen) { show("ovNama", false); return; }
+    var nama = $("namaPemohon").value.replace(/\s+/g, " ").trim();
+    if (nama.length < 3) { $("namaErr").textContent = "Nama pemohon wajib diisi (minimal 3 huruf)."; return; }
+    if (/lamri/i.test(nama)) { $("namaErr").textContent = "Nama ini tidak dapat digunakan. Gunakan nama pemohon yang sebenarnya."; return; }
+    namaCetak = nama;
+    if (ratingTersimpan()) { prosesIzin(null, null, "namaErr"); return; }
+    show("ovNama", false);
+    bintang = 0; tandaiBintang(0); $("saran").value = ""; $("ratingErr").textContent = "";
+    show("ovRating", true);
+  });
+
+  var LABEL_BINTANG = ["Belum dipilih", "Sangat kurang", "Kurang", "Cukup", "Baik", "Sangat baik"];
+  function tandaiBintang(v){
+    document.querySelectorAll("#stars button").forEach(function(b){ b.classList.toggle("on", parseInt(b.dataset.v, 10) <= v); });
+    $("starLbl").textContent = LABEL_BINTANG[v];
+    $("btnKirimRating").disabled = v < 1;
+  }
+  document.querySelectorAll("#stars button").forEach(function(b){
+    b.addEventListener("click", function(){ bintang = parseInt(b.dataset.v, 10); tandaiBintang(bintang); });
+  });
+  $("btnBatalRating").addEventListener("click", function(){ show("ovRating", false); });
+  $("btnKirimRating").addEventListener("click", function(){
+    if (bintang < 1) return;
+    prosesIzin(bintang, $("saran").value.trim().slice(0, 300), "ratingErr");
+  });
+
+  async function prosesIzin(rating, saran, errId){
+    if (!generated || !gen) { show("ovNama", false); show("ovRating", false); return; }
+    var btn = rating ? $("btnKirimRating") : $("btnIzin");
+    var teks = btn.textContent;
+    btn.disabled = true; btn.textContent = "Memverifikasi...";
+    var hasil = await mintaIzinCetak(gen.token, namaCetak, rating, saran);
+    btn.disabled = false; btn.textContent = teks;
+    if (hasil.error) { $(errId).textContent = hasil.error; return; }
+    if (rating) simpanLokal("accrab_rating", String(rating));
+    isiVerifikasi(namaCetak, hasil.kode);
+    show("ovNama", false); show("ovRating", false);
+    if (perluSaranPasang()) {
+      $("pasangText").textContent = isIOS
+        ? "Terima kasih atas penilaiannya! Pasang ACC-RAB di iPhone: ketuk tombol Bagikan di Safari, lalu pilih \"Tambah ke Layar Utama\"."
+        : "Terima kasih atas penilaiannya! Pasang ACC-RAB di HP supaya lebih cepat dibuka langsung dari layar utama, tanpa mengetik alamat web.";
+      $("btnPasang").textContent = isIOS ? "Mengerti" : "Pasang";
+      show("ovPasang", true);
+    } else {
+      cetak(hasil.kode);
+    }
+    kodeTerakhir = hasil.kode;
+  }
+  var kodeTerakhir = "";
+
+  $("btnNantiPasang").addEventListener("click", function(){ show("ovPasang", false); cetak(kodeTerakhir); });
+  $("btnPasang").addEventListener("click", async function(){
+    if (!isIOS && tawaranPasang) {
+      tawaranPasang.prompt();
+      try {
+        var pilihan = await tawaranPasang.userChoice;
+        if (pilihan && pilihan.outcome === "accepted") simpanLokal("accrab_pwa", "1");
+      } catch(e) {}
+      tawaranPasang = null;
+    }
+    show("ovPasang", false);
+    cetak(kodeTerakhir);
+  });
+
+  function isiVerifikasi(nama, kode){
+    var waktu = new Date().toLocaleString("id-ID", { timeZone:"Asia/Makassar", day:"numeric", month:"long", year:"numeric", hour:"2-digit", minute:"2-digit" }) + " WITA";
+    var baris = [
+      ["Status", "<span class=\"ok\">DIIZINKAN</span>"],
+      ["Nama Pemohon", esc(nama)],
+      ["Waktu Cetak", esc(waktu)],
+      ["Lokasi", "Terverifikasi"],
+      ["Kode Verifikasi", "<b>" + esc(kode) + "</b>"]
+    ];
+    $("verif").innerHTML = '<div class="vt">VERIFIKASI IZIN CETAK</div><table>' +
+      baris.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + x[1] + "</td></tr>"; }).join("") + "</table>";
+  }
+
+  function cetak(kode){
+    /* nama file PDF otomatis = judul halaman saat dicetak */
+    var judulAsli = document.title;
+    /* tanpa titik: Android menganggap teks setelah titik terakhir sebagai ekstensi */
+    var bersih = function(t){ return t.replace(/[\\\/:*?"<>|.]+/g, " ").replace(/\s+/g, " ").trim(); };
+    document.title = kode + " (" + bersih($("nama").value).slice(0, 120) + ")";
+    var kembalikan = function(){ document.title = judulAsli; window.removeEventListener("afterprint", kembalikan); };
+    window.addEventListener("afterprint", kembalikan);
+    setTimeout(function(){ window.print(); }, 250);
+  }
+
+  /* ---------- Link footer: di HP wajib pasang ACC-RAB dulu ---------- */
+  var URL_LAMRI = "https://lamri.vercel.app";
+  function bukaLamri(){ window.open(URL_LAMRI, "_blank", "noopener"); }
+  $("linkLamri").addEventListener("click", function(e){
+    if (!isHP || terpasang()) return;                 /* laptop/PC atau sudah terpasang: langsung */
+    if (isIOS) {
+      e.preventDefault();
+      $("pasangLinkText").textContent = "Pasang aplikasi ACC-RAB terlebih dahulu: ketuk tombol Bagikan di Safari, lalu pilih \"Tambah ke Layar Utama\". Setelah itu buka ACC-RAB dari layar utama.";
+      $("btnPasangLink").classList.add("hidden");
+      show("ovPasangLink", true);
+      return;
+    }
+    if (!tawaranPasang) return;                       /* browser tidak menawarkan pemasangan: langsung */
+    e.preventDefault();
+    $("pasangLinkText").textContent = "Pasang aplikasi ACC-RAB terlebih dahulu untuk melanjutkan ke lamri.vercel.app.";
+    $("btnPasangLink").classList.remove("hidden");
+    show("ovPasangLink", true);
+  });
+  $("btnTutupPasangLink").addEventListener("click", function(){ show("ovPasangLink", false); });
+  $("btnPasangLink").addEventListener("click", async function(){
+    if (!tawaranPasang) { show("ovPasangLink", false); bukaLamri(); return; }
+    tawaranPasang.prompt();
+    var ok = false;
+    try { var pilihan = await tawaranPasang.userChoice; ok = pilihan && pilihan.outcome === "accepted"; } catch(e) {}
+    tawaranPasang = null;
+    show("ovPasangLink", false);
+    if (ok) { simpanLokal("accrab_pwa", "1"); bukaLamri(); }
+  });
+
+  /* ---------- Service worker (PWA) ---------- */
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    window.addEventListener("load", function(){ navigator.serviceWorker.register("/sw.js").catch(function(){}); });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
