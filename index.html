@@ -136,6 +136,10 @@
   .rc-live .st{margin-top:8px;font-size:13px;font-weight:bold}
   .rc-live .st.ok{color:var(--ok)} .rc-live .st.no{color:var(--bad)}
   .rc-final{width:100%;margin-top:14px}
+  .rc-tabbaru{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--blue);background:#fff;color:var(--blue);border-radius:8px;padding:9px 14px;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit}
+  .rc-tabbaru.hidden{display:none}
+  .rc-toast button{display:block;margin-top:8px;background:#fff;color:var(--bad);border:none;border-radius:6px;padding:7px 12px;font-weight:bold;font-size:13px;cursor:pointer;font-family:inherit}
+  .rc-toast a{color:#fff;text-decoration:underline}
   .rc-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 32px);max-width:520px;background:var(--bad);color:#fff;font-size:14px;font-weight:bold;padding:12px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;line-height:1.35}
   .rc-cnt{position:sticky;top:0;z-index:2;background:#fbfdff;padding:4px 0;border-bottom:1px solid var(--line)}
   .rc-out.bad{color:var(--bad);font-weight:bold}
@@ -367,10 +371,15 @@
         <div id="result" class="hidden">
       <table class="info" id="info"></table>
       <div class="rc-live screen-only hidden" id="rcLive"></div>
+      <div class="rc-live screen-only hidden" id="estBox"></div>
       <table id="tbl"></table>
       <div class="pbj" id="pbj"></div>
       <div class="rc-box screen-only hidden" id="rincianBox">
-        <label class="rc-toggle"><input type="checkbox" id="rcAktif"> Aktifkan Rincian RAB</label>
+        <label class="rc-toggle" id="rcToggleLbl"><input type="checkbox" id="rcAktif"> Aktifkan Rincian RAB</label>
+        <button type="button" class="rc-tabbaru hidden" id="btnTabBaru" title="Buka di tab baru" aria-label="Buka RAB baru di tab baru">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+          RAB baru
+        </button>
         <div class="fixed">Jika diaktifkan, angka RAB dihitung dari rincian material dan sewa (angka Generate awal diabaikan). Ukuran bangunan di atas boleh diubah. Klik Generate RAB Final untuk menetapkan angka dan membuka tombol cetak. Rincian ikut dicetak sebagai lampiran di lembar kedua.</div>
         <div id="rcEditor"></div>
         <div id="rcToast" class="rc-toast hidden" role="alert"></div>
@@ -831,6 +840,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     $("rincianBox").classList.toggle("hidden", !(generated && mode === "material"));
     ["tbl","pbj","status"].forEach(function(id){ $(id).classList.toggle("hidden", belumFinal); });
     $("rcLive").classList.toggle("hidden", !rj);
+    var habis = !!(RC && RC.kedaluwarsa);
+    $("rcToggleLbl").classList.toggle("hidden", habis);
+    $("btnTabBaru").classList.toggle("hidden", !habis);
+    var E = generated && mode === "material" && !rj ? estimasiKalibrasi() : null;
+    $("estBox").classList.toggle("hidden", !E);
+    if (E) $("estBox").innerHTML = '<div class="est" style="margin:0"><b>Estimasi maksimal (kalibrasi Ulin Rp ' + rpPolos(ESTIMASI_ULIN) + "/m²)</b><br>Luas " + angka(E.luas, 2) +
+      " m² x Rp " + rpPolos(ESTIMASI_ULIN) + " = <b>Rp " + rpPolos(E.nilai) + "</b><br><span style=\"color:var(--muted)\">Perkiraan saja, bukan patokan. Aktifkan Rincian RAB untuk menghitung RAB dari rincian.</span></div>";
     if (generated) notice("");
   }
   /* alasan belum bisa Generate; kosong berarti siap */
@@ -1604,7 +1620,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     h += '<div class="lt">RAB dari rincian' + (RC.final ? " (FINAL)" : "") + "</div>" +
       baris.map(function(b){ return '<div class="lr"><span>' + b[0] + "</span><span>Rp " + rpPolos(b[1]) + "</span></div>"; }).join("") +
       '<div class="lr tot"><span>Total RAB</span><span>Rp ' + rpPolos(R.total || 0) + (E ? " (" + angka((R.total || 0) / E.nilai * 100, 1) + "%)" : "") + "</span></div>";
-    h += RC.final ? '<div class="st ok">RAB Final tersimpan. Tombol Cetak / PDF sudah tersedia.</div>'
+    h += RC.final ? '<div class="st ok">RAB Final tersimpan. Tombol Cetak / PDF sudah tersedia.' +
+                      (RC.kedaluwarsa ? " Masa 10 menit habis: gunakan tombol RAB baru untuk RAB berikutnya." : ' Tombol centang berlaku <span id="rcSisa">' + teksSisa() + "</span> lagi.") + "</div>"
                   : '<div class="st no">Belum final. Lengkapi rincian di bawah, lalu klik Generate RAB Final.</div>';
     el.innerHTML = h;
   }
@@ -1636,6 +1653,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       R.total = d.total; R.tukang = d.tukang; R.tpk = d.tpk; R.material = d.material; R.pajak = d.pajak; R.sewa = d.sewa; R.pajakSewa = d.pajak_sewa;
     }
     RC.final = R;
+    RC.finalAt = Date.now(); RC.kedaluwarsa = false; RC.diingatkan = false; RC.pernahFinal = true;
     arsipKunci = "final|" + (dm ? dm.teks : "");
     tampil(R); render(); perbaruiRC();
     $("result").scrollIntoView({ behavior:"smooth", block:"start" });
@@ -1756,11 +1774,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function batalFinal(){ if (RC && RC.final) { RC.final = null; if (rabAwal) last = rabAwal; render(); } }
   /* ---------- kunci anggaran: isian yang membuat sisa minus ditolak ---------- */
   var toastTimer = null;
-  function toastRC(pesan){
+  function toastRC(pesan, tombol, aksi, lama){
     var el = $("rcToast");
-    el.textContent = pesan; el.classList.remove("hidden");
+    el.textContent = pesan;
+    if (tombol) {
+      var b = document.createElement("button"); b.type = "button"; b.textContent = tombol;
+      b.addEventListener("click", function(){ el.classList.add("hidden"); aksi(); });
+      el.appendChild(b);
+    }
+    el.classList.remove("hidden");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){ el.classList.add("hidden"); }, 4500);
+    toastTimer = setTimeout(function(){ el.classList.add("hidden"); }, lama || 4500);
   }
   $("rcEditor").addEventListener("input", function(e){
     var t = e.target, f = t.dataset.f; if (!f || t.tagName !== "INPUT" || t.type === "radio") return;
@@ -1849,11 +1873,25 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   $("dimBox").addEventListener("input", function(e){
     var k = e.target.dataset.k; if (!k || e.target.tagName !== "INPUT") return;
     e.target.value = e.target.value.replace(/[^\d,]/g,"");
+    if (sudahFinal()) return;                         /* tunggu Enter / keluar kolom, lalu pindah ke tab baru */
     catatDim(k);
     if (rincianJalan()) ubahUkuranRincian(); else hitung();
   });
+  $("dimBox").addEventListener("keydown", function(e){
+    if (e.key === "Enter" && e.target.tagName === "INPUT") { e.preventDefault(); e.target.blur(); }
+  });
   $("dimBox").addEventListener("change", function(e){
-    var k = e.target.dataset.k; if (!k || e.target.tagName !== "SELECT") return;
+    var k = e.target.dataset.k; if (!k) return;
+    if (sudahFinal()) {
+      var lama = simpanDim[k] || { v:"", u:$("u_" + k).value };
+      var baru = { v: $("dim_" + k).value, u: $("u_" + k).value };
+      if (baru.v === lama.v && baru.u === lama.u) return;
+      $("dim_" + k).value = lama.v; $("u_" + k).value = lama.u;          /* tab ini tetap memakai ukuran semula */
+      var dims = JSON.parse(JSON.stringify(simpanDim)); dims[k] = baru;
+      bukaTabBaru(dims);
+      return;
+    }
+    if (e.target.tagName !== "SELECT") return;
     catatDim(k);
     if (rincianJalan()) ubahUkuranRincian(); else hitung();
   });
@@ -1960,7 +1998,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     gagalAkurasi = 0;
     gen = { token: token, acc: terbaik.acc };
     generated = true; berubah = false; rabAwal = last;
-    if (RC) RC.final = null;
+    if (RC) { RC.final = null; RC.finalAt = 0; RC.kedaluwarsa = false; RC.diingatkan = false; RC.pernahFinal = false; }
     var dmA = dimensi(); arsipKunci = "awal|" + (dmA && !dmA.error ? dmA.teks : "");
     render();
     if (RC && RC.aktif) renderRC(); else perbaruiRC();
@@ -2113,6 +2151,95 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var kembalikan = function(){ document.title = judulAsli; window.removeEventListener("afterprint", kembalikan); };
     window.addEventListener("afterprint", kembalikan);
     setTimeout(function(){ window.print(); }, 250);
+  }
+
+  /* ---------- Masa berlaku RAB Final 10 menit ---------- */
+  var MASA_FINAL = 10 * 60 * 1000;
+  function sudahFinal(){ return !!(generated && RC && RC.pernahFinal); }
+  function sisaFinal(){ return RC && RC.finalAt ? RC.finalAt + MASA_FINAL - Date.now() : 0; }
+  function teksSisa(){
+    var d = Math.max(0, Math.ceil(sisaFinal() / 1000));
+    return Math.floor(d / 60) + ":" + String(d % 60).padStart(2, "0");
+  }
+  function finalkanSekarang(){
+    if (!RC.aktif) { RC.aktif = true; $("rcAktif").checked = true; renderRC(); render(); }
+    var b = document.querySelector('#rcEditor [data-act="final"]');
+    if (b) finalkanRAB(b);
+  }
+  function cekWaktuFinal(){
+    if (!generated || !RC || !RC.finalAt || RC.kedaluwarsa) return;
+    var s = sisaFinal();
+    if (s <= 0) {
+      RC.kedaluwarsa = true;
+      if (!RC.aktif) { RC.aktif = true; $("rcAktif").checked = true; }
+      renderRC(); render();
+      toastRC("Masa 10 menit RAB Final habis. Hasil editor tetap bisa dicetak. Untuk RAB berikutnya gunakan tombol RAB baru.", null, null, 7000);
+      return;
+    }
+    if (s <= 60000 && !RC.diingatkan) {
+      RC.diingatkan = true;
+      toastRC("1 menit lagi RAB Final berakhir. Klik Generate RAB Final lagi supaya centang tetap bisa dipakai untuk melihat hasil awal.", "Finalkan sekarang", finalkanSekarang, 55000);
+    }
+    var el = $("rcSisa"); if (el) el.textContent = teksSisa();
+  }
+  setInterval(cekWaktuFinal, 1000);
+  document.addEventListener("visibilitychange", function(){ if (!document.hidden) cekWaktuFinal(); });
+
+  /* ---------- RAB baru di tab baru (tanpa GPS) ---------- */
+  var ISIAN_FORM = ["nilai","sewa","pTukang","nama","bahanUtama","bahanLain","jenis","jenisLain","sifat","dana","tahun","rt"];
+  function bukaTabBaru(dims){
+    if (!gen) return;
+    var data = { induk: gen.token, dibuat: Date.now(), form: {}, dims: dims || JSON.parse(JSON.stringify(simpanDim)) };
+    ISIAN_FORM.forEach(function(id){ data.form[id] = $(id).value; });
+    var kunci = Math.random().toString(36).slice(2, 10);
+    try { localStorage.setItem("accrab_lanjut_" + kunci, JSON.stringify(data)); } catch(e) { toastRC("Browser tidak mengizinkan penyimpanan sementara. Generate biasa di tab baru."); return; }
+    var url = location.pathname + "?lanjut=" + kunci;
+    var w = window.open(url, "_blank");
+    if (!w) {
+      var el = $("rcToast");
+      toastRC("Tab baru diblokir browser.", "Buka RAB baru", function(){ window.open(url, "_blank"); }, 15000);
+      if (el) {}
+    } else toastRC("RAB baru dibuka di tab baru. Tab ini tetap tersimpan.");
+  }
+  $("btnTabBaru").addEventListener("click", function(){ bukaTabBaru(); });
+
+  (function lanjutDariTabLama(){
+    var m = /[?&]lanjut=([a-z0-9]+)/.exec(location.search); if (!m) return;
+    var raw = null;
+    try { raw = localStorage.getItem("accrab_lanjut_" + m[1]); localStorage.removeItem("accrab_lanjut_" + m[1]); } catch(e) {}
+    try { history.replaceState(null, "", location.pathname); } catch(e) {}
+    if (!raw) return;
+    var data; try { data = JSON.parse(raw); } catch(e) { return; }
+    if (!data || Date.now() - data.dibuat > 10 * 60 * 1000) return;
+    var isi = function(id, v){ var el = $(id); if (!el || v === undefined) return; el.value = v; el.dispatchEvent(new Event(el.tagName === "SELECT" ? "change" : "input", { bubbles:true })); };
+    setMode("material");
+    ["nilai","sewa","pTukang","nama","bahanUtama","bahanLain","jenis","jenisLain"].forEach(function(id){ isi(id, data.form[id]); });
+    Object.keys(data.dims || {}).forEach(function(k){
+      if ($("u_" + k)) isi("u_" + k, data.dims[k].u);
+      if ($("dim_" + k)) isi("dim_" + k, data.dims[k].v);
+    });
+    ["sifat","dana","tahun","rt"].forEach(function(id){ isi(id, data.form[id]); });
+    generateTurunan(data.induk);
+  })();
+  async function generateTurunan(induk){
+    var alasan = alasanBelumSiap();
+    if (alasan) { notice("RAB baru: " + alasan + " Lengkapi lalu Generate."); return; }
+    var token = null;
+    if (dbReady) {
+      try {
+        var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_generate_turunan", { method:"POST", headers:headersDb(), body:JSON.stringify({ p_parent: induk, p_data: dataArsip() }) });
+        var j = await res.json().catch(function(){ return null; });
+        if (!res.ok) { notice((j && j.code === "PGRST202") ? "Database belum diperbarui (update-15). Silakan Generate biasa." : ((j && j.message) || "Gagal membuat RAB baru. Silakan Generate biasa.")); return; }
+        token = j;
+      } catch(e) { notice("Tidak ada koneksi internet. Silakan Generate biasa."); return; }
+    } else token = buatToken();
+    gen = { token: token, acc: null };
+    generated = true; berubah = false; rabAwal = last;
+    if (RC) { RC.final = null; RC.finalAt = 0; RC.kedaluwarsa = false; RC.diingatkan = false; RC.pernahFinal = false; }
+    var dmA = dimensi(); arsipKunci = "awal|" + (dmA && !dmA.error ? dmA.teks : "");
+    render(); perbaruiRC();
+    notice("");
+    toastRC("RAB baru dibuat tanpa ambil lokasi ulang. Aktifkan Rincian RAB untuk mulai merinci.", null, null, 6000);
   }
 
   /* ---------- Link footer: di HP wajib pasang ACC-RAB dulu ---------- */
