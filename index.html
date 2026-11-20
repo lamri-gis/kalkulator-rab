@@ -1029,13 +1029,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     ["Stand Kuda-kuda",5,10,2], ["Kasau",4,6,4], ["Reng",2,3,4]
   ];
   var ARAH_HADAP = { U:"Utara", S:"Selatan", T:"Timur", B:"Barat" };
-  var RC = null, kodeLampiran = "", rcUid = 0, rabAwal = null;
+  var RC = null, kodeLampiran = "", rcUid = 0, rabAwal = null, arsipKunci = "";
   var ESTIMASI_ULIN = 4000000;      /* kalibrasi: estimasi maksimal rumah/gedung ulin per m² (tukang + material + pajak) */
   function rincianJalan(){ return !!(RC && RC.aktif && generated && mode === "material"); }
   function ubahUkuranRincian(){
     var dm = dimensi();
     $("volPreview").textContent = !dm ? "Isi ukuran, hasil terhitung otomatis." : (dm.error ? dm.error : "Luas: " + angka(dm.volume, 3) + " " + dm.satuan);
-    RC.final = null; RC.ukuranBerubah = true;
+    RC.final = null;
     renderRC(); render();
   }
 
@@ -1636,6 +1636,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       R.total = d.total; R.tukang = d.tukang; R.tpk = d.tpk; R.material = d.material; R.pajak = d.pajak; R.sewa = d.sewa; R.pajakSewa = d.pajak_sewa;
     }
     RC.final = R;
+    arsipKunci = "final|" + (dm ? dm.teks : "");
     tampil(R); render(); perbaruiRC();
     $("result").scrollIntoView({ behavior:"smooth", block:"start" });
   }
@@ -1745,22 +1746,11 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
+  /* centang = tampilan editor (rincian), tanpa centang = hasil Generate awal; isian editor tetap tersimpan sampai halaman dimuat ulang */
   $("rcAktif").addEventListener("change", function(e){
     if (!RC) buatRC();
     RC.aktif = e.target.checked;
-    if (!RC.aktif) {
-      if (RC.final || RC.ukuranBerubah) {
-        /* angka final atau ukuran sudah berubah dari Generate awal: wajib Generate ulang */
-        var alasan = RC.final ? "RAB Final sudah tersimpan" : "ukuran bangunan sudah diubah";
-        RC.final = null; RC.ukuranBerubah = false;
-        generated = false; gen = null; berubah = true;
-        renderRC(); hitung(); render();
-        notice("Rincian RAB dimatikan. Karena " + alasan + ", silakan Generate ulang.");
-        return;
-      }
-      RC.final = null;
-      if (rabAwal) tampil(rabAwal);
-    }
+    if (!RC.aktif && rabAwal) tampil(rabAwal);
     renderRC(); render();
   });
   function batalFinal(){ if (RC && RC.final) { RC.final = null; if (rabAwal) last = rabAwal; render(); } }
@@ -1970,7 +1960,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     gagalAkurasi = 0;
     gen = { token: token, acc: terbaik.acc };
     generated = true; berubah = false; rabAwal = last;
-    if (RC) { RC.final = null; RC.ukuranBerubah = false; }
+    if (RC) RC.final = null;
+    var dmA = dimensi(); arsipKunci = "awal|" + (dmA && !dmA.error ? dmA.teks : "");
     render();
     if (RC && RC.aktif) renderRC(); else perbaruiRC();
     $("result").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2037,11 +2028,35 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     prosesIzin(bintang, $("saran").value.trim().slice(0, 300), "ratingErr");
   });
 
+  /* arsip harus sama dengan angka yang dicetak (hasil awal atau RAB Final dari rincian) */
+  async function sinkronArsip(){
+    var dm = dimensi(); if (dm && dm.error) dm = null;
+    var pakaiFinal = rincianJalan() && RC.final;
+    var kunci = (pakaiFinal ? "final" : "awal") + "|" + (dm ? dm.teks : "");
+    if (kunci === arsipKunci || !dbReady) { arsipKunci = kunci; return ""; }
+    var R = pakaiFinal ? RC.final : rabAwal;
+    var r3x = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
+    try {
+      var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_finalkan", { method:"POST", headers:headersDb(), body:JSON.stringify({
+        p_token: gen.token, p_material: R.nilai, p_sewa: R.sewa, p_p_tukang: R.t,
+        p_panjang: dm ? r3x(dm.p) : null, p_lebar: dm ? r3x(dm.l) : null, p_tinggi: dm ? r3x(dm.t) : null,
+        p_volume: dm && dm.volume < 1e12 ? Math.round(dm.volume * 100) / 100 : null, p_satuan: dm ? dm.satuan : null,
+        p_ukuran: dm ? dm.teks.slice(0, 300) : null, p_rincian: pakaiFinal ? dataRincian() : {} }) });
+      var j = await res.json().catch(function(){ return null; });
+      if (!res.ok) {
+        if (j && j.code === "PGRST202") { arsipKunci = kunci; return ""; }   /* database lama: lanjut seperti biasa */
+        return (j && j.message) || "Gagal menyelaraskan arsip, coba lagi.";
+      }
+      arsipKunci = kunci; return "";
+    } catch(e) { return "Tidak ada koneksi internet, coba lagi."; }
+  }
   async function prosesIzin(rating, saran, errId){
     if (!generated || !gen) { show("ovNama", false); show("ovRating", false); return; }
     var btn = rating ? $("btnKirimRating") : $("btnIzin");
     var teks = btn.textContent;
     btn.disabled = true; btn.textContent = "Memverifikasi...";
+    var gagalSinkron = await sinkronArsip();
+    if (gagalSinkron) { btn.disabled = false; btn.textContent = teks; $(errId).textContent = gagalSinkron; return; }
     var hasil = await mintaIzinCetak(gen.token, namaCetak, rating, saran);
     btn.disabled = false; btn.textContent = teks;
     if (hasil.error) { $(errId).textContent = hasil.error; return; }
