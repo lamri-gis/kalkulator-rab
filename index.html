@@ -1437,7 +1437,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
         if (!nm || !(jml > 0)) return;
         var total = Math.round(jml * hg);
         H.out[x.id] = "Rp " + rpPolos(total);
-        tujuan.push({ m:nm, spek:"", keb:jml, sat:x.sat.trim() || "-", harga:hg, total:total, bebas:true });
+        tujuan.push({ m:nm, spek:"", keb:jml, sat:satuanTerdaftar(nm, tujuan === H.sewa ? "sewa" : "lain") || x.sat.trim() || "-", harga:hg, total:total, bebas:true });
       });
     };
     bebas(RC.lain, H.mat);
@@ -1529,11 +1529,41 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       '</div><div class="rc-act"><span class="rc-out" id="out_' + x.id + '"></span>' +
       '<button type="button" class="rc-del" data-act="del" data-g="kayuM" data-id="' + x.id + '">Hapus</button></div></div>';
   }
+  /* daftar material & alat sewa: satuan otomatis jika nama terdaftar */
+  var DAFTAR_MATERIAL = {
+    "Paku Ulin":"Kg", "Paku Biasa":"Kg", "Paku Seng":"Kg", "Paku Payung":"Kg", "Kawat Bendrat":"Kg", "Baut + Mur":"Buah",
+    "Seng Gelombang":"Lembar", "Seng Plat":"Lembar", "Nok/Bubungan Seng":"Lembar", "Spandek":"Lembar", "Sirap Ulin":"Ikat", "Talang":"Batang",
+    "Genteng Tanah Liat":"Buah", "Genteng Metal":"Lembar", "Bubungan Genteng":"Buah", "Asbes Gelombang":"Lembar", "Bubungan Asbes":"Lembar",
+    "Pintu Set Kusen":"Set", "Jendela Set Kusen":"Set", "Engsel":"Pasang", "Kunci Pintu":"Set", "Gagang Pintu":"Buah", "Grendel":"Buah", "Kaca":"Lembar",
+    "Plywood/Tripleks":"Lembar", "Cat Kayu":"Kaleng", "Cat Tembok":"Kaleng", "Thinner":"Liter", "Lem Kayu":"Kg",
+    "Semen":"Sak", "Pasir":"m³", "Batu Koral/Kerikil":"m³", "Besi Beton":"Batang",
+    "Kabel Listrik":"Rol", "Saklar":"Buah", "Stop Kontak":"Buah", "Fitting Lampu":"Buah", "Lampu":"Buah", "MCB":"Buah",
+    "Pipa PVC":"Batang", "Kloset":"Unit", "Kran Air":"Buah"
+  };
+  var DAFTAR_SEWA = {
+    "Genset":"Hari", "Bor Listrik":"Hari", "Mesin Ketam":"Hari", "Pompa Air":"Hari", "Molen":"Hari", "Chainsaw":"Hari",
+    "Gerinda":"Hari", "Mesin Las":"Hari", "Stamper":"Hari", "Scaffolding":"Hari", "Truk/Pick Up":"Rit"
+  };
+  function satuanTerdaftar(nama, g){
+    var daftar = g === "sewa" ? DAFTAR_SEWA : DAFTAR_MATERIAL, n = String(nama || "").trim().toLowerCase();
+    for (var k in daftar) if (k.toLowerCase() === n) return daftar[k];
+    return null;
+  }
+  function htmlDatalist(){
+    var opsi = function(d){ return Object.keys(d).map(function(k){ return '<option value="' + esc(k) + '">'; }).join(""); };
+    return '<datalist id="dlMaterial">' + opsi(DAFTAR_MATERIAL) + '</datalist><datalist id="dlSewa">' + opsi(DAFTAR_SEWA) + "</datalist>";
+  }
+  function htmlSatuan(x, g){
+    var auto = satuanTerdaftar(x.nama, g);
+    return '<div class="rc-f"><label>Satuan</label><input type="text" class="txt' + (auto ? " lock" : "") + '" data-g="' + g + '" data-id="' + x.id + '" data-f="sat" maxlength="20"' +
+      (auto ? ' readonly value="' + esc(auto) + '"' : ' value="' + esc(x.sat) + '" placeholder="ketik satuan"') + "></div>";
+  }
   function htmlBebas(x, g){
     return '<div class="rc-item"><div class="rc-grid rc-bebas">' +
-      fIn(g, x.id, "nama", x.nama, g === "sewa" ? "Nama alat" : "Nama material", "txt", g === "sewa" ? "Contoh: Molen" : "Contoh: Paku 5 inci") +
+      '<div class="rc-f"><label>' + (g === "sewa" ? "Nama alat" : "Nama material") + '</label><input type="text" class="txt" list="' + (g === "sewa" ? "dlSewa" : "dlMaterial") +
+        '" data-g="' + g + '" data-id="' + x.id + '" data-f="nama" value="' + esc(x.nama) + '" maxlength="60" autocomplete="off" placeholder="Ketik, lalu pilih saran"></div>' +
       fIn(g, x.id, "jml", x.jml, "Jumlah", "num", "0") +
-      fIn(g, x.id, "sat", x.sat, "Satuan", "txt", g === "sewa" ? "hari" : "kg") +
+      htmlSatuan(x, g) +
       fIn(g, x.id, "harga", x.harga, "Harga satuan (Rp)", "rp", "0") +
       '</div><div class="rc-act"><span class="rc-out" id="out_' + x.id + '"></span>' +
       '<button type="button" class="rc-del" data-act="del" data-g="' + g + '" data-id="' + x.id + '">Hapus</button></div></div>';
@@ -1592,7 +1622,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
         RC.sewa.map(function(x){ return htmlBebas(x, "sewa"); }).join("") +
         '<button type="button" class="rc-add" data-act="add" data-g="sewa">+ Tambah Alat</button></div>';
     }
-    h += '<button type="button" class="btn primary rc-final" data-act="final">Generate RAB Final</button>';
+    h += '<button type="button" class="btn primary rc-final" data-act="final">Generate RAB Final</button>' + htmlDatalist();
     box.innerHTML = h;
     perbaruiRC();
   }
@@ -1792,6 +1822,14 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (t.classList.contains("rp")) t.value = t.value.replace(/\D/g, "");
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
     o[f] = t.value;
+    if (f === "nama" && (t.dataset.g === "lain" || t.dataset.g === "sewa")) {
+      var auto = satuanTerdaftar(t.value, t.dataset.g);
+      var sat = document.querySelector('#rcEditor [data-g="' + t.dataset.g + '"][data-id="' + t.dataset.id + '"][data-f="sat"]');
+      if (sat) {
+        if (auto) { sat.value = auto; sat.readOnly = true; sat.classList.add("lock"); o.sat = auto; }
+        else if (sat.readOnly) { sat.readOnly = false; sat.classList.remove("lock"); sat.value = ""; sat.placeholder = "ketik satuan"; o.sat = ""; }
+      }
+    }
     batalFinal();
     perbaruiRC();
   });
