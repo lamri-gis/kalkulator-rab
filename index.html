@@ -127,6 +127,7 @@
   .rc-nama{max-width:220px}
   .rc-out{font-size:12px;color:var(--muted);margin-top:5px}
   .rc-h2{font-size:12px;font-weight:bold;color:var(--navy);margin:10px 0 4px;border-top:1px dashed var(--line);padding-top:8px}
+  .rc-onoff{margin:10px 0 8px;font-size:14px}
   .rc-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 32px);max-width:520px;background:var(--bad);color:#fff;font-size:14px;font-weight:bold;padding:12px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;line-height:1.35}
   .rc-cnt{position:sticky;top:0;z-index:2;background:#fbfdff;padding:4px 0;border-bottom:1px solid var(--line)}
   .rc-out.bad{color:var(--bad);font-weight:bold}
@@ -1051,7 +1052,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       lantai:{ tebal:"2", molding:"Ya", opsi:"" },
       dinding:[papanBaru("Dinding Depan","dinding"), papanBaru("Dinding Samping Kanan","dinding"), papanBaru("Dinding Samping Kiri","dinding"),
                papanBaru("Dinding Belakang","dinding"), papanBaru("Segitiga Depan","segitiga"), papanBaru("Segitiga Belakang","segitiga")],
-      sekat:["Sekat Utama","Sekat Kamar","Sekat Kamar Dalam","Sekat WC","Sekat Dapur"].map(function(n){ return papanBaru(n, "sekat"); }),
+      segitigaOn:"", sekatOn:"", sekat:[],
       lain:[barisBebas()], sewa:[barisBebas()]
     };
   }
@@ -1347,8 +1348,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       };
       var tg1 = cariBalok("Tiang Gantung"), tg2 = cariBalok("Tiang Gantung Sekat");
       var adaTG = !!(tg1 && rcNum(tg1.jml) > 0), adaTGS = !!(tg2 && rcNum(tg2.jml) > 0);
-      RC.dinding.forEach(function(it){ bidang(it, adaTG, "Isi tiang gantung terlebih dahulu."); });
-      RC.sekat.forEach(function(it){ bidang(it, adaTGS, "Isi tiang gantung sekat terlebih dahulu."); });
+      RC.dinding.forEach(function(it){ if (it.tipe !== "segitiga" || RC.segitigaOn) bidang(it, adaTG, "Isi tiang gantung terlebih dahulu."); });
+      if (RC.sekatOn) RC.sekat.forEach(function(it){ bidang(it, adaTGS, "Isi tiang gantung sekat terlebih dahulu."); });
 
       ["ulin","putih"].forEach(function(k){
         if (molding[k] > 0) {
@@ -1410,10 +1411,27 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (b.nama === "Gelegar") h += fSel("balok", b.id, "arah", b.arah, "Arah gelegar", [["","Pilih"],["US","Utara-Selatan"],["TB","Timur-Barat"]]);
     return h + '</div><div class="rc-out" id="out_' + b.id + '"></div></div>';
   }
+  /* pilihan sekat berikutnya: Sekat Utama sekali, lainnya bernomor (Kamar 1, Kamar 2, ...) */
+  var JENIS_SEKAT = [["utama","Sekat Utama"],["kamar","Sekat Kamar"],["dapur","Sekat Dapur"],["wc","Sekat WC"]];
+  function nomorBerikut(dasar){
+    var mx = 0, re = new RegExp("^" + dasar + " (\\d+)$");
+    RC.sekat.forEach(function(it){ var m = re.exec(it.nama); if (m) mx = Math.max(mx, parseInt(m[1], 10)); });
+    return mx + 1;
+  }
+  function opsiSekat(){
+    var out = [];
+    JENIS_SEKAT.forEach(function(j){
+      if (j[0] === "utama") { if (!RC.sekat.some(function(it){ return it.nama === "Sekat Utama"; })) out.push(["utama", "Sekat Utama"]); }
+      else out.push([j[0], j[1] + " " + nomorBerikut(j[1])]);
+    });
+    out.push(["lain", "Sekat lainnya (ketik nama)"]);
+    return out;
+  }
   function htmlBidang(it, g){
     var h = '<div class="rc-item"><div class="rc-h">';
     h += it.custom ? '<input type="text" class="txt rc-nama" data-g="' + g + '" data-id="' + it.id + '" data-f="nama" value="' + esc(it.nama) + '" maxlength="40" placeholder="Nama sekat">' +
-      '<button type="button" class="rc-del" data-act="del" data-g="' + g + '" data-id="' + it.id + '">Hapus</button>' : esc(it.nama);
+      '<button type="button" class="rc-del" data-act="del" data-g="' + g + '" data-id="' + it.id + '">Hapus</button>'
+      : esc(it.nama) + (g === "sekat" ? '<button type="button" class="rc-del" data-act="del" data-g="' + g + '" data-id="' + it.id + '">Hapus</button>' : "");
     h += '</div><div class="rc-grid">';
     var auto = lebarOtomatis(it);
     var kotakLebar = auto !== null
@@ -1471,9 +1489,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
         '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>' +
         '<div class="rc-f" id="lantaiTebalWrap"></div>' + fSel("lantai", "", "molding", RC.lantai.molding, "Molding", PIL_MOLD) +
         '</div><div class="rc-out" id="lantaiInfo"></div><div id="lantaiOpsi"></div><div class="rc-out" id="out_lantai"></div></div>';
-      h += RC.dinding.map(function(it){ return htmlBidang(it, "dinding"); }).join("");
-      h += RC.sekat.map(function(it){ return htmlBidang(it, "sekat"); }).join("");
-      h += '<button type="button" class="rc-add" data-act="add" data-g="sekat">+ Tambah Sekat</button>';
+      h += RC.dinding.filter(function(it){ return it.tipe !== "segitiga"; }).map(function(it){ return htmlBidang(it, "dinding"); }).join("");
+      h += '<label class="rc-toggle rc-onoff"><input type="checkbox" data-g="rc" data-id="" data-f="segitigaOn"' + (RC.segitigaOn ? " checked" : "") + "> Segitiga atas (sopi-sopi)</label>";
+      if (RC.segitigaOn) h += RC.dinding.filter(function(it){ return it.tipe === "segitiga"; }).map(function(it){ return htmlBidang(it, "dinding"); }).join("");
+      h += '<label class="rc-toggle rc-onoff"><input type="checkbox" data-g="rc" data-id="" data-f="sekatOn"' + (RC.sekatOn ? " checked" : "") + "> Sekat dalam</label>";
+      if (RC.sekatOn) {
+        h += RC.sekat.map(function(it){ return htmlBidang(it, "sekat"); }).join("");
+        h += '<div class="rc-item"><div class="rc-grid"><div class="rc-f"><label>Tambah sekat</label><select id="sekatJenis">' +
+          opsiSekat().map(function(o){ return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + "</option>"; }).join("") +
+          '</select></div></div><button type="button" class="rc-add" data-act="add" data-g="sekat" style="margin-top:8px">+ Tambah Sekat</button></div>';
+      }
     }
     h += '<div class="rc-sub">Material Lainnya</div>' + RC.lain.map(function(x){ return htmlBebas(x, "lain"); }).join("") +
       '<button type="button" class="rc-add" data-act="add" data-g="lain">+ Tambah Material</button></div>';
@@ -1628,10 +1653,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     perbaruiRC();
   });
   $("rcEditor").addEventListener("change", function(e){
-    var t = e.target, f = t.dataset.f; if (!f || !(t.tagName === "SELECT" || t.type === "radio")) return;
+    var t = e.target, f = t.dataset.f; if (!f || !(t.tagName === "SELECT" || t.type === "radio" || t.type === "checkbox")) return;
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
     var lama = o[f], lamaBentuk = o.bentuk, sebelum = hitungRC();
-    o[f] = t.value;
+    o[f] = t.type === "checkbox" ? (t.checked ? "1" : "") : t.value;
     if (f === "kayu" && t.value !== "ulin" && o.bentuk) o.bentuk = "persegi";
     var tolak = lewatAnggaran(sebelum, hitungRC());
     if (tolak) { o[f] = lama; if (lamaBentuk !== undefined) o.bentuk = lamaBentuk; toastRC(tolak); }
@@ -1642,7 +1667,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var g = t.dataset.g, act = t.dataset.act;
     var list = { sekat:RC.sekat, lain:RC.lain, sewa:RC.sewa }[g];
     if (!list) return;
-    if (act === "add") list.push(g === "sekat" ? papanBaru("", "sekat", true) : barisBebas());
+    if (act === "add") {
+      if (g === "sekat") {
+        var pilih = $("sekatJenis") ? $("sekatJenis").value : "lain", nm = "";
+        JENIS_SEKAT.forEach(function(j){ if (j[0] === pilih) nm = j[0] === "utama" ? j[1] : j[1] + " " + nomorBerikut(j[1]); });
+        list.push(nm ? papanBaru(nm, "sekat") : papanBaru("", "sekat", true));
+      } else list.push(barisBebas());
+    }
     if (act === "del") { var i = list.findIndex(function(x){ return x.id === t.dataset.id; }); if (i >= 0) list.splice(i, 1); if (g !== "sekat" && !list.length) list.push(barisBebas()); }
     if (act === "pas") {
       var o = rcObj(g, t.dataset.id), jml = rcNum(o.jml), H = hitungRC();
