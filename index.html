@@ -126,6 +126,8 @@
   .rc-f input,.rc-f select,.rc-nama{width:100%;padding:7px 8px;font-size:14px;border:1px solid #c9d4df;border-radius:6px;background:var(--input);font-family:inherit}
   .rc-nama{max-width:220px}
   .rc-out{font-size:12px;color:var(--muted);margin-top:5px}
+  .rc-h2{font-size:12px;font-weight:bold;color:var(--navy);margin:10px 0 4px;border-top:1px dashed var(--line);padding-top:8px}
+  .rc-cnt{position:sticky;top:0;z-index:2;background:#fbfdff;padding:4px 0;border-bottom:1px solid var(--line)}
   .rc-out.bad{color:var(--bad);font-weight:bold}
   .rc-act{display:flex;align-items:center;gap:6px;margin-top:6px}
   .rc-act .rc-out{flex:1;margin:0}
@@ -985,15 +987,17 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   /* ---------- Rincian RAB (khusus Mode Material, setelah Generate) ---------- */
   var HARGA = { papan:{ ulin:7500000, putih:4000000 }, molding:{ ulin:1000000, putih:500000 }, balokPutih:3000000 };
   var LEBAR_PAPAN = 0.20;
+  var LEBIH_PAPAN = 0.10;      /* setiap lembar papan dibeli lebih 10 cm */
+  var LEBIH_SAMBUNG = 0.25;    /* balok pondasi yang disambung: setiap potong lebih 25 cm */
+  var LEBIH_GELEGAR = 0.25;    /* gelegar yang disambung: setiap potong lebih 25 cm */
   var NAMA_KAYU = { ulin:"Ulin", putih:"Kayu Putih" };
   var LABEL_KAYU = { ulin:"Ulin", putih:"Kayu Putih (Meranti, dll)" };
   var BALOK_DEF = [
-    ["Tiang Dasar",10,10,4], ["Pondasi Tiang Dasar",10,10,1], ["Gelegar",5,10,4], ["Tiang Gantung",10,10,4],
+    ["Tiang Gantung",10,10,4],
     ["Tiang Gantung Sekat",5,10,4], ["Pondasi Tiang Gantung",10,10,1], ["Rangka Dinding",5,7,4], ["Kuda-kuda",5,10,4],
     ["Stand Kuda-kuda",5,10,2], ["Kasau",4,6,4], ["Reng",2,3,4]
   ];
   var ARAH_HADAP = { U:"Utara", S:"Selatan", T:"Timur", B:"Barat" };
-  var ARAH_GELEGAR = { US:"Utara-Selatan", TB:"Timur-Barat" };
   var RC = null, kodeLampiran = "", rcUid = 0;
 
   function rcId(){ return "r" + (++rcUid); }
@@ -1015,11 +1019,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function buatRC(){
     var dm = dimensi(); if (dm && dm.error) dm = null;
     RC = {
-      aktif:false, lantaiKe:"1",
+      aktif:false,
       lebar: dm && dm.l ? rcIn(dm.l) : "", panjang: dm && dm.p ? rcIn(dm.p) : "", hadap:"",
       balok: BALOK_DEF.map(function(d){
         return { id:rcId(), nama:d[0], kayu:kayuBawaan(), bentuk:"persegi", t:rcIn(d[1]), l:rcIn(d[2]), p:rcIn(d[3]), segi:"8", ka:"", kb:"", jml:"", arah:"" };
       }),
+      st:{ arah:"", baris:"", pKayu:kayuBawaan(), pT:"10", pL:"8", potong:"", tongkat:"", tKayu:kayuBawaan(), tT:"10", tL:"10", tinggi:"",
+           gKayu:kayuBawaan(), gT:"5", gL:"10", gJml:"" },
       lantai:{ tebal:"2", molding:"Ya", opsi:"" },
       dinding:[papanBaru("Dinding Depan","dinding"), papanBaru("Dinding Samping Kanan","dinding"), papanBaru("Dinding Samping Kiri","dinding"),
                papanBaru("Dinding Belakang","dinding"), papanBaru("Segitiga Depan","segitiga"), papanBaru("Segitiga Belakang","segitiga")],
@@ -1085,16 +1091,148 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     potong.forEach(function(p){ peta[p] = (peta[p] || 0) + baris * kali; });
   }
   function kodePapan(tebal, p){ return angka(tebal, 2) + ":20P" + angka(p, 2); }
+  /* potongan balok pondasi: utuh sampai 6 m; lebih dari itu disambung dengan jumlah potong paling sedikit,
+     ukuran potong presisi (selisih maksimal 1 m), contoh 10 = 5 + 5, 14 = 4 + 5 + 5 / 5 + 4 + 5 / 5 + 5 + 4 */
+  function opsiBalok(L){
+    if (L <= 6 + 1e-9) return [[bulat2(L)]];
+    var langkah = Math.abs(L - Math.round(L)) < 1e-6 ? 1 : (Math.abs(L * 2 - Math.round(L * 2)) < 1e-6 ? 0.5 : 0);
+    var k = Math.ceil(L / 6 - 1e-9), out = [];
+    if (langkah) {
+      (function cari(pref, sisa){
+        if (pref.length === k - 1) { if (sisa > 0 && sisa <= 6 + 1e-9) out.push(pref.concat([bulat2(sisa)])); return; }
+        for (var v = langkah; v <= 6 + 1e-9; v += langkah) if (sisa - v > 1e-9) cari(pref.concat([v]), sisa - v);
+      })([], L);
+      out = out.filter(function(a){ return Math.max.apply(null, a) - Math.min.apply(null, a) <= 1 + 1e-9; });
+    }
+    if (!out.length) out.push(ulang(Math.ceil(L / k * 100 - 1e-6) / 100, k));
+    return out.slice(0, 8);
+  }
 
   /* ---------- hitung seluruh rincian ---------- */
   function cariBalok(nama){ for (var i = 0; i < RC.balok.length; i++) if (RC.balok[i].nama === nama) return RC.balok[i]; return null; }
   function hitungRC(){
-    var H = { mat:[], sewa:[], out:{}, err:{}, jumlahMat:0, jumlahSewa:0, kubikBalok:0, kubikPapan:0, lantaiOpsi:[], lantaiInfo:"" };
+    var H = { mat:[], sewa:[], out:{}, err:{}, jumlahMat:0, jumlahSewa:0, kubikBalok:0, kubikPapan:0, lantaiOpsi:[], lantaiInfo:"", potongOpsi:[], gelOpsi:[], minTebal:0, struk:null };
     if (!RC) return H;
     var kayu = rumahKayu();
 
     if (kayu) {
-      /* Balok */
+      /* ---------- Struktur bawah: pondasi, tiang dasar, gelegar, papan lantai ---------- */
+      var S = RC.st, Lb = rcNum(RC.lebar), Pj = rcNum(RC.panjang);
+      var tulisBalok = function(nama, kayuB, t, l, peta){
+        Object.keys(peta).map(Number).sort(function(a, b){ return b - a; }).forEach(function(len){
+          var jml = peta[len], kub = r3(t * l / 10000 * len * jml), harga = hargaBalok(kayuB, "persegi", t * l, len), total = Math.round(kub * harga);
+          H.kubikBalok += kub;
+          H.mat.push({ m:nama, spek:"Balok " + NAMA_KAYU[kayuB] + " (" + angka(t, 2) + angka(l, 2) + "P" + angka(len, 2) + ") " + jml + " btg", keb:kub, sat:"Kubik", harga:harga, total:total });
+        });
+      };
+      var ringkasBalok = function(t, l, peta, kayuB){
+        var jml = 0, kub = 0, rp = 0;
+        Object.keys(peta).forEach(function(k){
+          var kb = r3(t * l / 10000 * Number(k) * peta[k]); jml += peta[k]; kub += kb; rp += Math.round(kb * hargaBalok(kayuB, "persegi", t * l, Number(k)));
+        });
+        return jml + " btg · " + kubikTeks(r3(kub)) + " m³ · Rp " + rpPolos(rp);
+      };
+      var stOk = false, gelOk = false, Lp = 0, A = 0, nb = 0, jb = 0, sg = 0;
+      var tT = rcNum(S.tT), tL = rcNum(S.tL), tinggi = rcNum(S.tinggi);
+      var tiangOk = Math.min(tT, tL) >= 10 - 1e-9 && tinggi > 0;
+      if (Math.min(tT, tL) < 10 - 1e-9) H.err.stTiangUk = "Ukuran tiang dasar minimal 10 x 10 cm.";
+      else if (!(tinggi > 0)) H.err.stTiangUk = "Isi tinggi tiang dasar.";
+      else H.out.stTiangUk = "Tiang dasar " + angka(tT, 2) + angka(tL, 2) + "P" + angka(tinggi, 2) + " (" + rpPolos(hargaBalok(S.tKayu, "persegi", tT * tL, tinggi)) + "/m³). Jumlah tiang terdeteksi setelah pondasi dan tongkat diisi.";
+      if (!tiangOk) H.err.stBaris = "Isi ukuran dan tinggi tiang dasar terlebih dahulu.";
+      else if (!(Lb > 0 && Pj > 0)) H.err.stBaris = "Isi lebar depan dan panjang rumah.";
+      else if (!S.arah) H.err.stBaris = "Pilih arah pondasi.";
+      else {
+        Lp = S.arah === "bujur" ? Pj : Lb;           /* panjang satu baris pondasi */
+        A  = S.arah === "bujur" ? Lb : Pj;           /* sisi tempat baris-baris pondasi berjajar */
+        var sarB = [];
+        for (var n = 2; n <= 200; n++) { var jj = A / (n - 1); if (jj < 1 - 1e-9) break; if (jj <= 2 + 1e-9) sarB.push(n + " baris (" + angka(jj, 2) + " m)"); }
+        nb = Math.round(rcNum(S.baris));
+        if (!sarB.length) H.err.stBaris = "Sisi " + angka(A, 2) + " m tidak bisa dibagi baris berjarak 1 sampai 2 m.";
+        else if (!(nb >= 2)) H.err.stBaris = "Ketik jumlah baris pondasi. Pilihan: " + sarB.join(", ") + ".";
+        else {
+          jb = A / (nb - 1);
+          if (jb < 1 - 1e-9 || jb > 2 + 1e-9) H.err.stBaris = nb + " baris = jarak " + angka(jb, 2) + " m, tidak boleh (harus 1 sampai 2 m). Pilihan: " + sarB.join(", ") + ".";
+          else {
+            H.out.stBaris = nb + " baris pondasi " + (S.arah === "bujur" ? "membujur" : "melintang") + ", jarak antarbaris " + angka(jb, 2) + " m, panjang tiap baris " + angka(Lp, 2) + " m.";
+            /* balok pondasi */
+            var pT = rcNum(S.pT), pL = rcNum(S.pL);
+            H.potongOpsi = opsiBalok(Lp);
+            var potong = null;
+            H.potongOpsi.forEach(function(a){ if (kunciPotong(a) === S.potong) potong = a; });
+            if (H.potongOpsi.length === 1) { potong = H.potongOpsi[0]; S.potong = kunciPotong(potong); }   /* 6 m atau kurang: utuh */
+            if (Math.max(pT, pL) < 10 - 1e-9 || Math.min(pT, pL) < 8 - 1e-9) H.err.stPond = "Ukuran balok pondasi minimal 10 x 8 cm.";
+            else if (!potong) H.err.stPond = "Pilih potongan pondasi.";
+            else {
+              /* disambung: setiap potong dibeli lebih 25 cm (contoh 5 + 5 menjadi 5,25 + 5,25) */
+              var beli = potong.length > 1 ? potong.map(function(x){ return bulat2(x + LEBIH_SAMBUNG); }) : potong;
+              var petaP = {}; hitungLembar(petaP, beli, nb, 1);
+              H.out.stPond = "Potongan " + kunciPotong(potong) + (potong.length > 1 ? " (dibeli " + kunciPotong(beli) + ", lebih 25 cm untuk sambungan)" : "") + " · " + ringkasBalok(pT, pL, petaP, S.pKayu);
+              tulisBalok("Pondasi", S.pKayu, pT, pL, petaP);
+              /* tongkat: jarak sama, 1 sampai 2 m, setiap sambungan kena tiang */
+              var sambung = [], pos = 0;
+              potong.slice(0, -1).forEach(function(x){ pos += x; sambung.push(pos); });
+              var cocok = function(nt){
+                var s = Lp / (nt - 1);
+                if (s < 1 - 1e-9 || s > 2 + 1e-9) return false;
+                return sambung.every(function(q){ var r = q / s; return Math.abs(r - Math.round(r)) < 1e-6; });
+              };
+              var sarT = [];
+              for (var nt = 2; nt <= 400; nt++) { if (Lp / (nt - 1) < 1 - 1e-9) break; if (cocok(nt)) sarT.push(nt); }
+              sarT.sort(function(a, b){ return Math.abs(Lp / (a - 1) - jb) - Math.abs(Lp / (b - 1) - jb); });
+              var teksSar = sarT.slice(0, 3).map(function(x){ return x + " tongkat (" + angka(Lp / (x - 1), 2) + " m)"; }).join(", ");
+              var ntk = Math.round(rcNum(S.tongkat));
+              if (!sarT.length) H.err.stTongkat = "Tidak ada jarak tiang 1 sampai 2 m yang kena semua sambungan. Ganti potongan pondasi.";
+              else if (!(ntk >= 2)) H.err.stTongkat = "Ketik jumlah tongkat per baris. Saran: " + teksSar + ".";
+              else if (!cocok(ntk)) {
+                var sx = Lp / (ntk - 1);
+                H.err.stTongkat = ntk + " tongkat = jarak " + angka(sx, 2) + " m, tidak bisa (" +
+                  (sx < 1 - 1e-9 ? "kurang dari 1 m" : (sx > 2 + 1e-9 ? "lebih dari 2 m" : "sambungan tidak kena tiang")) + "). Saran: " + teksSar + ".";
+              } else {
+                var totalTiang = nb * ntk;
+                H.out.stTongkat = ntk + " tongkat per baris, jarak " + angka(Lp / (ntk - 1), 2) + " m · total " + nb + " x " + ntk + " = " + totalTiang + " tiang.";
+                {
+                  var petaT = {}; petaT[bulat2(tinggi)] = totalTiang;
+                  H.out.stTiang = "Tiang Dasar " + angka(tT, 2) + angka(tL, 2) + "P" + angka(tinggi, 2) + " · " + ringkasBalok(tT, tL, petaT, S.tKayu);
+                  tulisBalok("Tiang Dasar", S.tKayu, tT, tL, petaT);
+                  stOk = true;
+                }
+              }
+            }
+          }
+        }
+      }
+      /* gelegar: tegak lurus pondasi, jarak maksimal 60 cm, tepi persegi */
+      if (stOk) {
+        var gT = rcNum(S.gT), gL = rcNum(S.gL);
+        H.gelOpsi = [];
+        for (var m = Math.ceil(Lp / 0.6 - 1e-9) + 1; m <= Math.floor(Lp / 0.4 + 1e-9) + 1; m++) H.gelOpsi.push(m);
+        var mg = Math.round(rcNum(S.gJml));
+        if (Math.min(gT, gL) < 5 - 1e-9 || Math.max(gT, gL) < 8 - 1e-9) H.err.gel = "Ukuran gelegar minimal 5 x 8 cm.";
+        else if (H.gelOpsi.indexOf(mg) < 0) H.err.gel = "Pilih jumlah gelegar (jarak maksimal 60 cm).";
+        else {
+          sg = Lp / (mg - 1);
+          /* panjang gelegar = sisi A; lebih dari 6 m disambung tepat di atas baris pondasi */
+          var potG = [], awal = 0;
+          while (A - awal > 6 + 1e-9) {
+            var maju = Math.floor((6 + 1e-9) / jb) * jb;
+            potG.push(bulat2(maju)); awal += maju;
+          }
+          potG.push(bulat2(A - awal));
+          var beliG = potG.length > 1 ? potG.map(function(x){ return bulat2(x + LEBIH_GELEGAR); }) : potG;
+          var sisiTepi = Math.max(8, gT, gL), petaTepi = {}, petaBiasa = {};
+          hitungLembar(petaTepi, beliG, 2, 1);
+          if (mg > 2) hitungLembar(petaBiasa, beliG, mg - 2, 1);
+          H.out.gel = mg + " gelegar, jarak " + angka(sg * 100, 1) + " cm, panjang " + kunciPotong(potG) + " m" +
+            (potG.length > 1 ? " (dibeli " + kunciPotong(beliG) + ", lebih 25 cm untuk sambungan)" : "") + " · tepi " + angka(sisiTepi, 2) + "x" + angka(sisiTepi, 2) +
+            " (" + ringkasBalok(sisiTepi, sisiTepi, petaTepi, S.gKayu) + ")" + (mg > 2 ? " · biasa " + angka(gT, 2) + "x" + angka(gL, 2) + " (" + ringkasBalok(gT, gL, petaBiasa, S.gKayu) + ")" : "");
+          tulisBalok("Gelegar Tepi", S.gKayu, sisiTepi, sisiTepi, petaTepi);
+          if (mg > 2) tulisBalok("Gelegar", S.gKayu, gT, gL, petaBiasa);
+          gelOk = true;
+        }
+      }
+      H.struk = { Lp:Lp, A:A, nb:nb, jb:jb, sg:sg, ok:gelOk };
+
+      /* Balok lainnya (diisi manual) */
       var ada = {};
       RC.balok.forEach(function(b){
         var jml = rcNum(b.jml), p = rcNum(b.p), bentuk = b.kayu === "ulin" ? b.bentuk : "persegi";
@@ -1114,7 +1252,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
         }
         if (!(jml > 0)) return;
         if (!(luas > 0 && p > 0)) { H.err[b.id] = "Lengkapi ukuran."; return; }
-        if (b.nama === "Gelegar" && !b.arah) H.err[b.id] = "Pilih arah gelegar (mata angin) untuk papan lantai.";
         var kub = r3(luas / 10000 * p * jml), harga = hargaBalok(b.kayu, bentuk, luas, p), total = Math.round(kub * harga);
         ada[b.nama] = true;
         H.kubikBalok += kub;
@@ -1126,45 +1263,43 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       var molding = { ulin:0, putih:0 };
       var tulisPapan = function(nama, peta, kayuP, tebalCm, pakaiMolding){
         Object.keys(peta).map(Number).sort(function(a, b){ return b - a; }).forEach(function(len){
-          var lbr = peta[len], kub = r3(lbr * LEBAR_PAPAN * (tebalCm / 100) * len), harga = HARGA.papan[kayuP], total = Math.round(kub * harga);
+          var pb = bulat2(len + LEBIH_PAPAN);
+          var lbr = peta[len], kub = r3(lbr * LEBAR_PAPAN * (tebalCm / 100) * pb), harga = HARGA.papan[kayuP], total = Math.round(kub * harga);
           H.kubikPapan += kub;
           if (pakaiMolding) molding[kayuP] += kub;
-          H.mat.push({ m:nama, spek:"Papan " + NAMA_KAYU[kayuP] + " (" + kodePapan(tebalCm, len) + ") " + lbr + " lbr", keb:kub, sat:"Kubik", harga:harga, total:total });
+          H.mat.push({ m:nama, spek:"Papan " + NAMA_KAYU[kayuP] + " (" + kodePapan(tebalCm, pb) + ") " + lbr + " lbr", keb:kub, sat:"Kubik", harga:harga, total:total });
         });
       };
       var ringkasPeta = function(peta, tebalCm){
         var lbr = 0, kub = 0;
-        Object.keys(peta).forEach(function(k){ lbr += peta[k]; kub += r3(peta[k] * LEBAR_PAPAN * (tebalCm / 100) * Number(k)); });
+        Object.keys(peta).forEach(function(k){ lbr += peta[k]; kub += r3(peta[k] * LEBAR_PAPAN * (tebalCm / 100) * bulat2(Number(k) + LEBIH_PAPAN)); });
         return { lbr:lbr, kub:kub };
       };
 
-      /* Lantai: wajib gelegar + arah; arah papan tegak lurus gelegar */
-      var gel = cariBalok("Gelegar"), Lb = rcNum(RC.lebar), Pj = rcNum(RC.panjang), tbL = rcNum(RC.lantai.tebal);
+      /* Lantai: arah papan sama dengan pondasi; tebal minimal menurut jarak gelegar */
       var wL = RC.lantai.molding === "Ya" ? 0.16 : LEBAR_PAPAN;
-      if (!(gel && rcNum(gel.jml) > 0)) H.err.lantai = "Isi gelegar terlebih dahulu.";
-      else if (!gel.arah) H.err.lantai = "Pilih arah gelegar terlebih dahulu.";
-      else if (!(Lb > 0 && Pj > 0) || !RC.hadap) H.err.lantai = "Lengkapi lebar, arah hadap, dan panjang rumah.";
+      if (!gelOk) H.err.lantai = "Lengkapi pondasi, tiang dasar, dan gelegar terlebih dahulu.";
       else {
-        var sumbuDepan = (RC.hadap === "U" || RC.hadap === "S") ? "TB" : "US";
-        var sumbuPapan = gel.arah === "US" ? "TB" : "US";
-        var melintang = sumbuPapan === sumbuDepan;
-        var run = melintang ? Lb : Pj, lebarBaris = melintang ? Pj : Lb;
-        var baris = Math.ceil(lebarBaris / wL - 1e-9);
-        H.lantaiInfo = "Papan lantai " + (melintang ? "melintang" : "membujur") + " (" + ARAH_GELEGAR[sumbuPapan] + "), panjang bentang " + angka(run, 2) + " m, " + baris + " baris.";
-        var opsi = opsiPotong(run, melintang).map(function(a){
+        var sgCm = Math.round(sg * 1000) / 10;
+        H.minTebal = sgCm > 55 + 1e-6 ? 3 : (sgCm > 50 + 1e-6 ? 2.5 : 2);
+        var tbL = Math.max(rcNum(RC.lantai.tebal), H.minTebal);
+        var melintang = S.arah === "lintang";
+        var baris = Math.ceil(A / wL - 1e-9);
+        H.lantaiInfo = "Papan lantai " + (melintang ? "melintang" : "membujur") + " (searah pondasi), bentang " + angka(Lp, 2) + " m, " + baris +
+          " baris. Jarak gelegar " + angka(sgCm, 1) + " cm: tebal minimal " + angka(H.minTebal, 1) + " cm.";
+        var opsi = opsiPotong(Lp, melintang).map(function(a){
           var peta = {}; hitungLembar(peta, a, baris, 1);
           var rk = ringkasPeta(peta, tbL);
           return { kunci:kunciPotong(a), peta:peta, lbr:rk.lbr, kub:rk.kub };
         });
-        var minKub = Math.min.apply(null, opsi.map(function(o){ return o.kub; }));
-        opsi.forEach(function(o){ o.hemat = opsi.length > 1 && Math.abs(o.kub - minKub) < 1e-9; });
         H.lantaiOpsi = opsi;
         var dipilih = null;
         opsi.forEach(function(o){ if (o.kunci === RC.lantai.opsi) dipilih = o; });
-        if (!dipilih) H.err.lantai = "Pilih salah satu opsi papan lantai.";
+        if (opsi.length === 1) dipilih = opsi[0];
+        if (!dipilih) H.err.lantai = "Pilih salah satu potongan papan lantai.";
         else {
           tulisPapan("Lantai", dipilih.peta, "ulin", tbL, RC.lantai.molding === "Ya");
-          H.out.lantai = angka(Lb * Pj, 2) + " m² · " + dipilih.kunci + " · " + dipilih.lbr + " lbr · " + kubikTeks(dipilih.kub) + " m³";
+          H.out.lantai = angka(Lb * Pj, 2) + " m² · tebal " + angka(tbL, 1) + " cm · " + dipilih.kunci + " · " + dipilih.lbr + " lbr · " + kubikTeks(dipilih.kub) + " m³";
         }
       }
 
@@ -1276,15 +1411,32 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var h = '<div class="rc-sec"><div class="rc-t">Rincian Material</div><div class="rc-cnt" id="rcCntMat"></div>';
     if (rumahKayu()) {
       h += '<div class="rc-sub">Data Rumah</div><div class="rc-item"><div class="rc-grid">' +
-        fSel("rc", "", "lantaiKe", RC.lantaiKe, "Lantai ke-", [["1","1"],["2","2"],["3","3"]]) +
         fIn("rc", "", "lebar", RC.lebar, "Lebar depan (m)") +
         fSel("rc", "", "hadap", RC.hadap, "Rumah menghadap", [["","Pilih"],["U","Utara"],["S","Selatan"],["T","Timur"],["B","Barat"]]) +
         fIn("rc", "", "panjang", RC.panjang, "Panjang ke belakang (m)") + "</div></div>";
-      h += '<div class="rc-sub">Balok</div>' + RC.balok.map(htmlBalok).join("");
+      var S = RC.st;
+      h += '<div class="rc-sub">Tiang Dasar dan Pondasi</div><div class="rc-item">' +
+        '<div class="rc-h2" style="border-top:none;margin-top:0;padding-top:0">Tiang dasar (minimal 10 x 10)</div><div class="rc-grid">' +
+        fSel("st", "", "tKayu", S.tKayu, "Kayu", PIL_KAYU) + fIn("st", "", "tT", S.tT, "Tebal (cm)") + fIn("st", "", "tL", S.tL, "Lebar (cm)") +
+        fIn("st", "", "tinggi", S.tinggi, "Tinggi tiang (m)", "num", "0") + '</div><div class="rc-out" id="out_stTiangUk"></div>' +
+        '<div class="rc-h2">Pondasi</div><div class="rc-grid">' +
+        fSel("st", "", "arah", S.arah, "Arah pondasi", [["","Pilih"],["bujur","Membujur (depan ke belakang)"],["lintang","Melintang (sejajar depan)"]]) +
+        fIn("st", "", "baris", S.baris, "Jumlah baris pondasi", "num", "0") +
+        '</div><div class="rc-out" id="out_stBaris"></div>' +
+        '<div class="rc-h2">Balok pondasi (minimal 10 x 8)</div><div class="rc-grid">' +
+        fSel("st", "", "pKayu", S.pKayu, "Kayu", PIL_KAYU) + fIn("st", "", "pT", S.pT, "Tebal (cm)") + fIn("st", "", "pL", S.pL, "Lebar (cm)") +
+        '<div class="rc-f" id="potongWrap"></div></div><div class="rc-out" id="out_stPond"></div>' +
+        '<div class="rc-h2">Tongkat (tiang dasar)</div><div class="rc-grid">' +
+        fIn("st", "", "tongkat", S.tongkat, "Tongkat per baris", "num", "0") +
+        '</div><div class="rc-out" id="out_stTongkat"></div><div class="rc-out" id="out_stTiang"></div></div>';
+      h += '<div class="rc-sub">Gelegar (tegak lurus pondasi)</div><div class="rc-item"><div class="rc-grid">' +
+        fSel("st", "", "gKayu", S.gKayu, "Kayu", PIL_KAYU) + fIn("st", "", "gT", S.gT, "Tebal (cm)") + fIn("st", "", "gL", S.gL, "Lebar (cm)") +
+        '<div class="rc-f" id="gelJmlWrap"></div></div><div class="rc-out" id="out_gel"></div></div>';
+      h += '<div class="rc-sub">Balok Lainnya</div>' + RC.balok.map(htmlBalok).join("");
       h += '<div class="rc-sub">Papan</div>';
-      h += '<div class="rc-item"><div class="rc-h">Lantai (wajib papan ulin)</div><div class="rc-grid">' +
+      h += '<div class="rc-item"><div class="rc-h">Lantai (wajib papan ulin, searah pondasi)</div><div class="rc-grid">' +
         '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>' +
-        fSel("lantai", "", "tebal", RC.lantai.tebal, "Tebal", PIL_TEBAL) + fSel("lantai", "", "molding", RC.lantai.molding, "Molding", PIL_MOLD) +
+        '<div class="rc-f" id="lantaiTebalWrap"></div>' + fSel("lantai", "", "molding", RC.lantai.molding, "Molding", PIL_MOLD) +
         '</div><div class="rc-out" id="lantaiInfo"></div><div id="lantaiOpsi"></div><div class="rc-out" id="out_lantai"></div></div>';
       h += RC.dinding.map(function(it){ return htmlBidang(it, "dinding"); }).join("");
       h += RC.sekat.map(function(it){ return htmlBidang(it, "sekat"); }).join("");
@@ -1319,10 +1471,20 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       var id = el.id.slice(4); if (!(id in H.out) && !(id in H.err)) { el.textContent = ""; el.classList.remove("bad"); }
     });
     if ($("lantaiInfo")) $("lantaiInfo").textContent = H.lantaiInfo;
+    var selDinamis = function(wrapId, f, label, pilihan, nilai){
+      var w = $(wrapId); if (!w) return;
+      w.innerHTML = "<label>" + label + '</label><select data-g="' + (f === "tebal" ? "lantai" : "st") + '" data-id="" data-f="' + f + '"' + (pilihan.length ? "" : " disabled") + ">" +
+        opsiSelect([["", pilihan.length ? "Pilih" : "-"]].concat(pilihan), nilai) + "</select>";
+    };
+    selDinamis("potongWrap", "potong", "Potongan pondasi", H.potongOpsi.map(function(a){ var k = kunciPotong(a); return [k, k + " m"]; }), RC.st.potong);
+    selDinamis("gelJmlWrap", "gJml", "Jumlah gelegar", H.gelOpsi.map(function(m){
+      return [String(m), m + " (" + angka(H.struk.Lp / (m - 1) * 100, 1) + " cm)"]; }), RC.st.gJml);
+    if (H.minTebal && rcNum(RC.lantai.tebal) < H.minTebal - 1e-9) RC.lantai.tebal = rcIn(H.minTebal);
+    selDinamis("lantaiTebalWrap", "tebal", "Tebal", PIL_TEBAL.filter(function(o){ return rcNum(o[0]) >= (H.minTebal || 2) - 1e-9; }), RC.lantai.tebal);
     if ($("lantaiOpsi")) {
       $("lantaiOpsi").innerHTML = H.lantaiOpsi.map(function(o){
         return '<label class="rc-radio"><input type="radio" name="lantaiOpsi" data-g="lantai" data-id="" data-f="opsi" value="' + esc(o.kunci) + '"' + (o.kunci === RC.lantai.opsi ? " checked" : "") + "> " +
-          esc(o.kunci) + " m · " + o.lbr + " lbr · " + kubikTeks(o.kub) + " m³" + (o.hemat ? " <b>(hemat)</b>" : "") + "</label>";
+          esc(o.kunci) + " m · " + o.lbr + " lbr · " + kubikTeks(o.kub) + " m³" + "</label>";
       }).join("");
     }
     if ($("rcCntMat")) $("rcCntMat").innerHTML = tabelSisa("Material", last.material, H.jumlahMat, last.pajak, PAJAK_BAHAN) +
@@ -1349,11 +1511,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!H.mat.length && !H.sewa.length) { el.innerHTML = ""; return; }
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"], ["Kode Verifikasi", kodeLampiran || "-"]];
     if (rumahKayu()) {
-      var gel = cariBalok("Gelegar");
-      info.push(["Lantai", "Lantai ke-" + RC.lantaiKe]);
       if (rcNum(RC.lebar) > 0 && rcNum(RC.panjang) > 0)
         info.push(["Ukuran Rumah", "Lebar depan " + angka(rcNum(RC.lebar), 2) + " m x panjang " + angka(rcNum(RC.panjang), 2) + " m" + (RC.hadap ? ", menghadap " + ARAH_HADAP[RC.hadap] : "")]);
-      if (gel && gel.arah && rcNum(gel.jml) > 0) info.push(["Arah Gelegar", ARAH_GELEGAR[gel.arah]]);
+      var K = H.struk;
+      if (K && K.jb) info.push(["Pondasi", (RC.st.arah === "bujur" ? "Membujur" : "Melintang") + ", " + K.nb + " baris jarak " + angka(K.jb, 2) + " m" +
+        (RC.st.potong ? ", potongan " + RC.st.potong + " m" : "") + (rcNum(RC.st.tongkat) >= 2 ? ", " + Math.round(rcNum(RC.st.tongkat)) + " tongkat per baris" : "")]);
+      if (K && K.ok) info.push(["Gelegar", Math.round(rcNum(RC.st.gJml)) + " batang, jarak " + angka(K.sg * 100, 1) + " cm"]);
     }
     var h = '<div class="lamp-judul">LAMPIRAN RINCIAN RAB</div><table class="info">' +
       info.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + esc(x[1]) + "</td></tr>"; }).join("") + "</table>";
@@ -1367,11 +1530,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!(RC && RC.aktif && mode === "material")) return null;
     var H = hitungRC();
     if (!H.mat.length && !H.sewa.length) return null;
-    var gel = cariBalok("Gelegar"), kayu = rumahKayu();
+    var kayu = rumahKayu(), K = H.struk || {};
     var ubah = function(rows){ return rows.map(function(r){ return [r.m, r.spek, r.keb, r.sat, r.harga, r.total]; }); };
     return {
-      rumah: kayu ? { lantai_ke: RC.lantaiKe, lebar: rcNum(RC.lebar), panjang: rcNum(RC.panjang), hadap: ARAH_HADAP[RC.hadap] || null,
-                      gelegar: gel && gel.arah ? ARAH_GELEGAR[gel.arah] : null } : null,
+      rumah: kayu ? { lebar: rcNum(RC.lebar), panjang: rcNum(RC.panjang), hadap: ARAH_HADAP[RC.hadap] || null,
+                      pondasi: RC.st.arah || null, baris: K.nb || null, jarak_baris: K.jb ? r3(K.jb) : null, potongan: RC.st.potong || null,
+                      tongkat: Math.round(rcNum(RC.st.tongkat)) || null, gelegar: Math.round(rcNum(RC.st.gJml)) || null, jarak_gelegar_cm: K.sg ? Math.round(K.sg * 1000) / 10 : null } : null,
       material: ubah(H.mat), sewa: ubah(H.sewa),
       jumlah_material: H.jumlahMat, jumlah_sewa: H.jumlahSewa,
       kubik_balok: r3(H.kubikBalok), kubik_papan: r3(H.kubikPapan)
@@ -1382,6 +1546,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function rcObj(g, id){
     if (g === "rc") return RC;
     if (g === "lantai") return RC.lantai;
+    if (g === "st") return RC.st;
     var list = { balok:RC.balok, dinding:RC.dinding, sekat:RC.sekat, lain:RC.lain, sewa:RC.sewa }[g] || [];
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
