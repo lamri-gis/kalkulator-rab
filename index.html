@@ -127,6 +127,7 @@
   .rc-nama{max-width:220px}
   .rc-out{font-size:12px;color:var(--muted);margin-top:5px}
   .rc-h2{font-size:12px;font-weight:bold;color:var(--navy);margin:10px 0 4px;border-top:1px dashed var(--line);padding-top:8px}
+  .rc-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 32px);max-width:520px;background:var(--bad);color:#fff;font-size:14px;font-weight:bold;padding:12px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;line-height:1.35}
   .rc-cnt{position:sticky;top:0;z-index:2;background:#fbfdff;padding:4px 0;border-bottom:1px solid var(--line)}
   .rc-out.bad{color:var(--bad);font-weight:bold}
   .rc-act{display:flex;align-items:center;gap:6px;margin-top:6px}
@@ -361,6 +362,7 @@
         <label class="rc-toggle"><input type="checkbox" id="rcAktif"> Aktifkan Rincian RAB</label>
         <div class="fixed">Rincian material murni (tanpa pajak) dan sewa peralatan. Jika diaktifkan, rincian ikut dicetak sebagai lampiran di lembar kedua.</div>
         <div id="rcEditor"></div>
+        <div id="rcToast" class="rc-toast hidden" role="alert"></div>
       </div>
       <div id="status" class="status"></div>
       <div class="print-only verif" id="verif"></div>
@@ -1565,19 +1567,48 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     RC.aktif = e.target.checked;
     renderRC();
   });
+  /* ---------- kunci anggaran: isian yang membuat sisa minus ditolak ---------- */
+  var toastTimer = null;
+  function toastRC(pesan){
+    var el = $("rcToast");
+    el.textContent = pesan; el.classList.remove("hidden");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.add("hidden"); }, 4500);
+  }
+  function lewatAnggaran(sebelum, sesudah){
+    if (!last) return "";
+    if (sesudah.jumlahMat > last.material && sesudah.jumlahMat > sebelum.jumlahMat)
+      return "Tidak bisa: melebihi anggaran material. Sisa anggaran " + rpTanda(last.material - sebelum.jumlahMat) + ", isian ini membutuhkan " + rpTanda(sesudah.jumlahMat - sebelum.jumlahMat) + ".";
+    if (sesudah.jumlahSewa > last.sewa && sesudah.jumlahSewa > sebelum.jumlahSewa)
+      return "Tidak bisa: melebihi anggaran sewa. Sisa anggaran " + rpTanda(last.sewa - sebelum.jumlahSewa) + ", isian ini membutuhkan " + rpTanda(sesudah.jumlahSewa - sebelum.jumlahSewa) + ".";
+    return "";
+  }
+  function rcMinus(){
+    if (!(RC && RC.aktif && mode === "material" && last)) return "";
+    var H = hitungRC();
+    if (H.jumlahMat > last.material) return "Rincian material melebihi anggaran " + rpTanda(last.material - H.jumlahMat) + ". Kurangi isian rincian sebelum mencetak.";
+    if (H.jumlahSewa > last.sewa) return "Rincian sewa melebihi anggaran " + rpTanda(last.sewa - H.jumlahSewa) + ". Kurangi isian rincian sebelum mencetak.";
+    return "";
+  }
   $("rcEditor").addEventListener("input", function(e){
     var t = e.target, f = t.dataset.f; if (!f || t.tagName !== "INPUT" || t.type === "radio") return;
     if (t.classList.contains("num")) t.value = t.value.replace(/[^\d,]/g, "");
     if (t.classList.contains("rp")) t.value = t.value.replace(/\D/g, "");
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
+    var lama = o[f], sebelum = hitungRC();
     o[f] = t.value;
+    var tolak = lewatAnggaran(sebelum, hitungRC());
+    if (tolak) { o[f] = lama; t.value = lama; toastRC(tolak); }
     perbaruiRC();
   });
   $("rcEditor").addEventListener("change", function(e){
     var t = e.target, f = t.dataset.f; if (!f || !(t.tagName === "SELECT" || t.type === "radio")) return;
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
+    var lama = o[f], lamaBentuk = o.bentuk, sebelum = hitungRC();
     o[f] = t.value;
     if (f === "kayu" && t.value !== "ulin" && o.bentuk) o.bentuk = "persegi";
+    var tolak = lewatAnggaran(sebelum, hitungRC());
+    if (tolak) { o[f] = lama; if (lamaBentuk !== undefined) o.bentuk = lamaBentuk; toastRC(tolak); }
     renderRC();
   });
   $("rcEditor").addEventListener("click", function(e){
@@ -1766,6 +1797,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   /* ---------- Izin Cetak: nama pemohon wajib, kode dari server ---------- */
   $("btnPrint").addEventListener("click", function(){
     if (!generated || !gen) return;
+    var minus = rcMinus();
+    if (minus) { notice(minus); toastRC(minus); return; }
     $("namaErr").textContent = "";
     show("ovNama", true);
     setTimeout(function(){ $("namaPemohon").focus(); }, 50);
