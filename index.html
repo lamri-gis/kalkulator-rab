@@ -128,6 +128,14 @@
   .rc-out{font-size:12px;color:var(--muted);margin-top:5px}
   .rc-h2{font-size:12px;font-weight:bold;color:var(--navy);margin:10px 0 4px;border-top:1px dashed var(--line);padding-top:8px}
   .rc-onoff{margin:10px 0 8px;font-size:14px}
+  .rc-live{border:2px solid var(--blue);border-radius:10px;padding:12px;margin:10px 0;background:#f7fbff}
+  .rc-live .lt{font-size:13px;font-weight:bold;color:var(--navy);margin-bottom:4px}
+  .rc-live .lr{display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:2px 0}
+  .rc-live .lr.tot{font-size:15px;font-weight:bold;border-top:1px solid var(--line);margin-top:4px;padding-top:6px}
+  .rc-live .est{background:#fff8e1;border:1px solid #f0d58a;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px}
+  .rc-live .st{margin-top:8px;font-size:13px;font-weight:bold}
+  .rc-live .st.ok{color:var(--ok)} .rc-live .st.no{color:var(--bad)}
+  .rc-final{width:100%;margin-top:14px}
   .rc-toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);width:calc(100% - 32px);max-width:520px;background:var(--bad);color:#fff;font-size:14px;font-weight:bold;padding:12px 14px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:60;line-height:1.35}
   .rc-cnt{position:sticky;top:0;z-index:2;background:#fbfdff;padding:4px 0;border-bottom:1px solid var(--line)}
   .rc-out.bad{color:var(--bad);font-weight:bold}
@@ -138,6 +146,7 @@
   .rc-del{border-color:var(--bad);color:var(--bad)}
   .rc-radio{display:block;font-size:13px;font-weight:normal;margin:4px 0;cursor:pointer}
   .rc-radio input{margin-right:6px}
+  .rc-ring{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 12px;font-size:13px}
   .rc-sisa{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px}
   .rc-sisa th,.rc-sisa td{padding:4px 5px;border-bottom:1px solid var(--line);text-align:right}
   .rc-sisa th:first-child,.rc-sisa td:first-child{text-align:left}
@@ -357,11 +366,12 @@
     <h2 class="screen-only">Hasil</h2>
         <div id="result" class="hidden">
       <table class="info" id="info"></table>
+      <div class="rc-live screen-only hidden" id="rcLive"></div>
       <table id="tbl"></table>
       <div class="pbj" id="pbj"></div>
       <div class="rc-box screen-only hidden" id="rincianBox">
         <label class="rc-toggle"><input type="checkbox" id="rcAktif"> Aktifkan Rincian RAB</label>
-        <div class="fixed">Rincian material murni (tanpa pajak) dan sewa peralatan. Jika diaktifkan, rincian ikut dicetak sebagai lampiran di lembar kedua.</div>
+        <div class="fixed">Jika diaktifkan, angka RAB dihitung dari rincian material dan sewa (angka Generate awal diabaikan). Ukuran bangunan di atas boleh diubah. Klik Generate RAB Final untuk menetapkan angka dan membuka tombol cetak. Rincian ikut dicetak sebagai lampiran di lembar kedua.</div>
         <div id="rcEditor"></div>
         <div id="rcToast" class="rc-toast hidden" role="alert"></div>
       </div>
@@ -528,14 +538,14 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   };
   var DR_U = ["Drainase U","drU"], DR_V = ["Drainase V","drV"];
   var JENIS = {
-    "Beton Bertulang": [["Jalan Cor","plt"], DR_U, DR_V, ["Gorong-gorong/Box Culvert","p"], ["Jembatan","pl"], ["Talud/Turap","ptgt"], ["Gedung/Bangunan","lantai"], ["Sumur/Bak Air","pld"]],
+    "Beton Bertulang": [["Jalan Cor","plt"], DR_U, DR_V, ["Gorong-gorong/Box Culvert","p"], ["Jembatan","pl"], ["Talud/Turap","ptgt"], ["Gedung/Bangunan","lantai"], ["Sumur/Bak Air","pld"], ["Gazebo","pl"], ["Halte","pl"], ["Tribun","pl"]],
     "Rabat Beton (beton tanpa tulangan)": [["Jalan Rabat/JUT","plt"], ["Lantai/Halaman","plt"], DR_U, DR_V],
     "Pasangan Batu (batu kali/gunung)": [["Talud/Penahan Tanah","ptgt"], DR_V, DR_U, ["Pondasi","pltg"]],
     "Pasangan Bata": [["Gedung/Bangunan","lantai"], ["MCK","lantai"], ["Pagar","ptg"], DR_U, ["Sumur/Bak Air","pld"]],
     "Paving Block": [["Jalan Paving","pl"], ["Halaman/Lapangan","pl"]],
-    "Kayu Ulin": [["Rumah/Gedung","lantai"], ["Jembatan","pl"], ["Jalan Titian","pl"], ["Dermaga/Tambatan","pl"], ["Turap Ulin","ptg"], ["Pagar","ptg"]],
-    "Kayu Putih": [["Rumah/Gedung","lantai"], ["Pagar","ptg"]],
-    "Baja/Besi": [["Jembatan","pl"], ["Rangka Atap","pl"], ["Pagar","ptg"], ["Tiang/Menara","tg"]],
+    "Kayu Ulin": [["Rumah/Gedung","lantai"], ["Jembatan","pl"], ["Jalan Titian","pl"], ["Dermaga/Tambatan","pl"], ["Turap Ulin","ptg"], ["Pagar","ptg"], ["Gazebo","pl"], ["Halte","pl"], ["Tribun","pl"]],
+    "Kayu Putih": [["Rumah/Gedung","lantai"], ["Pagar","ptg"], ["Gazebo","pl"], ["Halte","pl"], ["Tribun","pl"]],
+    "Baja/Besi": [["Jembatan","pl"], ["Rangka Atap","pl"], ["Pagar","ptg"], ["Tiang/Menara","tg"], ["Gazebo","pl"], ["Halte","pl"], ["Tribun","pl"]],
     "Sirtu/Timbunan Tanah": [["Jalan Sirtu","plt"], ["Penimbunan Lahan","plt"]]
   };
   function semuaJenis(){                       /* bahan Lainnya: semua jenis tanpa dobel */
@@ -675,9 +685,23 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
 
   /* ---------- Perhitungan ---------- */
+  /* rumus Mode Material (dipakai juga untuk RAB Final dari rincian) */
+  function rumusMaterial(nilai, sewa, t){
+    var k = TPK, p = PAJAK_BAHAN, ps = PAJAK_SEWA;
+    var pajakSewa = Math.round(sewa * ps);
+    var total = Math.ceil(((nilai * (1 + p) + sewa + pajakSewa) / (1 - t - k)) - 1e-7);
+    var tukang = Math.floor(total * t + 1e-7), tpk = Math.floor(total * k + 1e-7);
+    var sisa = total - tukang - tpk - sewa - pajakSewa;
+    var material = Math.floor(sisa / (1 + p) + 1e-7);
+    if (material >= nilai) material = nilai;
+    var pajak = sisa - material;
+    return { nilai:nilai, sewa:sewa, pajakSewa:pajakSewa, total:total, tukang:tukang, tpk:tpk, pajak:pajak, material:material,
+             aman: sisa >= 0 && material >= nilai, cukup: sisa >= 0, bahan:sisa, bahanSaja:false, dpp:0, ppn:0, pph:0, t:t, k:k, p:p, ps:ps };
+  }
   function hitung(){
     notice("");
     if (generated) { generated = false; gen = null; berubah = true; }
+    if (RC) RC.final = null;
     var nilai = parseMoney($("nilai").value);
     var sewa = mode === "material" ? parseMoney($("sewa").value) : 0;   /* mode Pagu: semua biaya sudah dalam pagu */
     var bahanSaja = mode === "pagu" && !pakaiTpk;          /* Mode Pagu tanpa TPK: tanpa upah, seluruh pagu untuk bahan */
@@ -754,7 +778,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       ["Tahun Anggaran", $("tahun").value || "-"],
       ["Lokasi", lokasiLengkap()],
       ["Pelaksanaan", r.bahanSaja ? "Pengadaan melalui Penyedia" : "Swakelola oleh TPK"],
-      ["Dasar Hitung", mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.bahanSaja ? "Pagu Anggaran (tanpa TPK)" : "Pagu Anggaran")]
+      ["Dasar Hitung", r.dariRincian ? "Rincian RAB (final)" : mode === "material" ? (r.sewa > 0 ? "Nilai Bahan dan Sewa" : "Nilai Bahan") : (r.bahanSaja ? "Pagu Anggaran (tanpa TPK)" : "Pagu Anggaran")]
     );
     var lamp = rcTerlampir();
     if (lamp.mat) info.push(["Rincian Material", "Terlampir"]);
@@ -800,10 +824,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
   /* ---------- Tampilan: hasil hanya muncul setelah Generate ---------- */
   function render(){
+    var rj = rincianJalan(), belumFinal = rj && !RC.final;
     $("btnGenerate").classList.toggle("hidden", generated);
-    $("btnPrint").classList.toggle("hidden", !generated);
+    $("btnPrint").classList.toggle("hidden", !generated || belumFinal);
     $("result").classList.toggle("hidden", !generated);
     $("rincianBox").classList.toggle("hidden", !(generated && mode === "material"));
+    ["tbl","pbj","status"].forEach(function(id){ $(id).classList.toggle("hidden", belumFinal); });
+    $("rcLive").classList.toggle("hidden", !rj);
     if (generated) notice("");
   }
   /* alasan belum bisa Generate; kosong berarti siap */
@@ -1002,7 +1029,15 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     ["Stand Kuda-kuda",5,10,2], ["Kasau",4,6,4], ["Reng",2,3,4]
   ];
   var ARAH_HADAP = { U:"Utara", S:"Selatan", T:"Timur", B:"Barat" };
-  var RC = null, kodeLampiran = "", rcUid = 0;
+  var RC = null, kodeLampiran = "", rcUid = 0, rabAwal = null;
+  var ESTIMASI_ULIN = 4000000;      /* kalibrasi: estimasi maksimal rumah/gedung ulin per m² (tukang + material + pajak) */
+  function rincianJalan(){ return !!(RC && RC.aktif && generated && mode === "material"); }
+  function ubahUkuranRincian(){
+    var dm = dimensi();
+    $("volPreview").textContent = !dm ? "Isi ukuran, hasil terhitung otomatis." : (dm.error ? dm.error : "Luas: " + angka(dm.volume, 3) + " " + dm.satuan);
+    RC.final = null; RC.ukuranBerubah = true;
+    renderRC(); render();
+  }
 
   function rcId(){ return "r" + (++rcUid); }
   function rcNum(v){ var x = parseNum(v); return x === null || x < 0 ? 0 : x; }
@@ -1038,6 +1073,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function papanBaru(nama, tipe, custom){
     return { id:rcId(), nama:nama, tipe:tipe, custom:!!custom, lebar:"", tinggi:"", arah:"", sisi:"1", kayu:kayuBawaan(), tebal:"2", molding:"Ya" };
   }
+  function kayuBaru(){ return { id:rcId(), nama:"", kayu:kayuBawaan(), jenis:"balok", t:"", l:"", p:"", jml:"" }; }
   function barisBebas(){ return { id:rcId(), nama:"", jml:"", sat:"", harga:"" }; }
   function buatRC(){
     var dm = dimensi(); if (dm && dm.error) dm = null;
@@ -1045,15 +1081,15 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       aktif:false,
       lebar: dm && dm.l ? rcIn(dm.l) : "", panjang: dm && dm.p ? rcIn(dm.p) : "", hadap:"",
       balok: BALOK_DEF.map(function(d){
-        return { id:rcId(), nama:d[0], kayu:kayuBawaan(), bentuk:"persegi", t:rcIn(d[1]), l:rcIn(d[2]), p:rcIn(d[3]), segi:"8", ka:"", kb:"", jml:"", arah:"" };
+        return { id:rcId(), nama:d[0], kayu:d[0] === "Reng" ? kayuBawaan() : "ulin", bentuk:"persegi", t:rcIn(d[1]), l:rcIn(d[2]), p:rcIn(d[3]), segi:"8", ka:"", kb:"", jml:"", arah:"" };
       }),
-      st:{ arah:"", baris:"", pKayu:kayuBawaan(), pT:"10", pL:"8", potong:"", tongkat:"", tKayu:kayuBawaan(), tT:"10", tL:"10", tinggi:"",
-           gKayu:kayuBawaan(), gT:"5", gL:"10", gJml:"" },
+      st:{ arah:"", baris:"", pKayu:"ulin", pT:"10", pL:"8", potong:"", tongkat:"", tKayu:"ulin", tT:"10", tL:"10", tinggi:"",
+           gKayu:"ulin", gT:"5", gL:"10", gJml:"" },
       lantai:{ tebal:"2", molding:"Ya", opsi:"" },
       dinding:[papanBaru("Dinding Depan","dinding"), papanBaru("Dinding Samping Kanan","dinding"), papanBaru("Dinding Samping Kiri","dinding"),
                papanBaru("Dinding Belakang","dinding"), papanBaru("Segitiga Depan","segitiga"), papanBaru("Segitiga Belakang","segitiga")],
       segitigaOn:"", sekatOn:"", sekat:[],
-      lain:[barisBebas()], sewa:[barisBebas()]
+      kayuM:[kayuBaru()], lain:[barisBebas()], sewa:[barisBebas()]
     };
   }
 
@@ -1141,6 +1177,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (kayu) {
       /* ---------- Struktur bawah: pondasi, tiang dasar, gelegar, papan lantai ---------- */
       var S = RC.st, UK = ukuranRumah(), Lb = UK.lb, Pj = UK.pj;
+      S.pKayu = S.tKayu = S.gKayu = "ulin";                     /* struktur rumah wajib ulin */
+      RC.balok.forEach(function(b){ if (b.nama !== "Reng") b.kayu = "ulin"; });
       var tulisBalok = function(nama, kayuB, t, l, peta){
         Object.keys(peta).map(Number).sort(function(a, b){ return b - a; }).forEach(function(len){
           var jml = peta[len], kub = r3(t * l / 10000 * len * jml), harga = hargaBalok(kayuB, "persegi", t * l, len), total = Math.round(kub * harga);
@@ -1359,6 +1397,23 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       });
     }
 
+    /* Rincian manual: baris kayu (harga terkunci, ukuran apa adanya) */
+    if (!kayu) {
+      RC.kayuM.forEach(function(x){
+        var t = rcNum(x.t), l = rcNum(x.l), p = rcNum(x.p), jml = rcNum(x.jml), nm = x.nama.trim();
+        if (!(jml > 0) && !nm) return;
+        if (!nm) { H.err[x.id] = "Isi nama kayu."; return; }
+        if (!(t > 0 && l > 0 && p > 0 && jml > 0)) { H.err[x.id] = "Lengkapi ukuran dan jumlah."; return; }
+        var papan = x.jenis === "papan";
+        var kode = papan ? angka(t, 2) + ":" + angka(l, 2) + "P" + angka(p, 2) : angka(t, 2) + angka(l, 2) + "P" + angka(p, 2);
+        var kub = r3(t * l / 10000 * p * jml), harga = papan ? HARGA.papan[x.kayu] : hargaBalok(x.kayu, "persegi", t * l, p), total = Math.round(kub * harga);
+        if (papan) H.kubikPapan += kub; else H.kubikBalok += kub;
+        var sat = papan ? "lbr" : "btg";
+        H.out[x.id] = kode + " · " + angka(jml, 2) + " " + sat + " · " + kubikTeks(kub) + " m³ · " + rpPolos(harga) + "/m³ · Rp " + rpPolos(total);
+        H.mat.push({ m:nm, spek:(papan ? "Papan " : "Balok ") + NAMA_KAYU[x.kayu] + " (" + kode + ") " + angka(jml, 2) + " " + sat, keb:kub, sat:"Kubik", harga:harga, total:total });
+      });
+    }
+
     /* Material lainnya dan sewa */
     var bebas = function(list, tujuan){
       list.forEach(function(x){
@@ -1370,7 +1425,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       });
     };
     bebas(RC.lain, H.mat);
-    if (last && last.sewa > 0) bebas(RC.sewa, H.sewa);
+    bebas(RC.sewa, H.sewa);
     H.jumlahMat = H.mat.reduce(function(s, r){ return s + r.total; }, 0);
     H.jumlahSewa = H.sewa.reduce(function(s, r){ return s + r.total; }, 0);
     return H;
@@ -1399,7 +1454,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   var PIL_ARAH = [["","Pilih"],["H","Horizontal (H)"],["V","Vertikal (V)"]];
 
   function htmlBalok(b){
-    var h = '<div class="rc-item"><div class="rc-h">' + esc(b.nama) + '</div><div class="rc-grid">' + fSel("balok", b.id, "kayu", b.kayu, "Kayu", PIL_KAYU);
+    var bebasKayu = b.nama === "Reng";                       /* rangka wajib ulin; hanya reng boleh kayu putih */
+    if (!bebasKayu) b.kayu = "ulin";
+    var h = '<div class="rc-item"><div class="rc-h">' + esc(b.nama) + '</div><div class="rc-grid">' +
+      (bebasKayu ? fSel("balok", b.id, "kayu", b.kayu, "Kayu", PIL_KAYU) : '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>');
     var bentuk = b.kayu === "ulin" ? b.bentuk : "persegi";
     if (b.kayu === "ulin") h += fSel("balok", b.id, "bentuk", bentuk, "Bentuk", [["persegi","Persegi 4"],["segi","Segi"],["bulat","Bulat"]]);
     if (bentuk === "persegi") h += fIn("balok", b.id, "t", b.t, "Tebal (cm)") + fIn("balok", b.id, "l", b.l, "Lebar (cm)");
@@ -1445,6 +1503,16 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     h += fSel(g, it.id, "kayu", it.kayu, "Kayu", PIL_KAYU) + fSel(g, it.id, "tebal", it.tebal, "Tebal", PIL_TEBAL) + fSel(g, it.id, "molding", it.molding, "Molding", PIL_MOLD);
     return h + '</div><div class="rc-out" id="out_' + it.id + '"></div></div>';
   }
+  function htmlKayuM(x){
+    return '<div class="rc-item"><div class="rc-grid">' +
+      fIn("kayuM", x.id, "nama", x.nama, "Nama", "txt", "Contoh: Tiang gazebo") +
+      fSel("kayuM", x.id, "kayu", x.kayu, "Kayu", PIL_KAYU) +
+      fSel("kayuM", x.id, "jenis", x.jenis, "Jenis", [["balok","Balok"],["papan","Papan"]]) +
+      fIn("kayuM", x.id, "t", x.t, "Tebal (cm)") + fIn("kayuM", x.id, "l", x.l, "Lebar (cm)") + fIn("kayuM", x.id, "p", x.p, "Panjang (m)") +
+      fIn("kayuM", x.id, "jml", x.jml, x.jenis === "papan" ? "Jumlah (lbr)" : "Jumlah (btg)", "num", "0") +
+      '</div><div class="rc-act"><span class="rc-out" id="out_' + x.id + '"></span>' +
+      '<button type="button" class="rc-del" data-act="del" data-g="kayuM" data-id="' + x.id + '">Hapus</button></div></div>';
+  }
   function htmlBebas(x, g){
     return '<div class="rc-item"><div class="rc-grid rc-bebas">' +
       fIn(g, x.id, "nama", x.nama, g === "sewa" ? "Nama alat" : "Nama material", "txt", g === "sewa" ? "Contoh: Molen" : "Contoh: Paku 5 inci") +
@@ -1452,7 +1520,6 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       fIn(g, x.id, "sat", x.sat, "Satuan", "txt", g === "sewa" ? "hari" : "kg") +
       fIn(g, x.id, "harga", x.harga, "Harga satuan (Rp)", "rp", "0") +
       '</div><div class="rc-act"><span class="rc-out" id="out_' + x.id + '"></span>' +
-      '<button type="button" class="rc-pas" data-act="pas" data-g="' + g + '" data-id="' + x.id + '">Pas-kan</button>' +
       '<button type="button" class="rc-del" data-act="del" data-g="' + g + '" data-id="' + x.id + '">Hapus</button></div></div>';
   }
   function renderRC(){
@@ -1468,20 +1535,20 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
       var S = RC.st;
       h += '<div class="rc-sub">Tiang Dasar dan Pondasi</div><div class="rc-item">' +
         '<div class="rc-h2" style="border-top:none;margin-top:0;padding-top:0">Tiang dasar (minimal 10 x 10)</div><div class="rc-grid">' +
-        fSel("st", "", "tKayu", S.tKayu, "Kayu", PIL_KAYU) + fIn("st", "", "tT", S.tT, "Tebal (cm)") + fIn("st", "", "tL", S.tL, "Lebar (cm)") +
+        '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>' + fIn("st", "", "tT", S.tT, "Tebal (cm)") + fIn("st", "", "tL", S.tL, "Lebar (cm)") +
         fIn("st", "", "tinggi", S.tinggi, "Tinggi tiang (m)", "num", "0") + '</div><div class="rc-out" id="out_stTiangUk"></div>' +
         '<div class="rc-h2">Pondasi</div><div class="rc-grid">' +
         fSel("st", "", "arah", S.arah, "Arah pondasi", [["","Pilih"],["bujur","Membujur (depan ke belakang)"],["lintang","Melintang (sejajar depan)"]]) +
         fIn("st", "", "baris", S.baris, "Jumlah baris pondasi", "num", "0") +
         '</div><div class="rc-out" id="out_stBaris"></div>' +
         '<div class="rc-h2">Balok pondasi (minimal 10 x 8)</div><div class="rc-grid">' +
-        fSel("st", "", "pKayu", S.pKayu, "Kayu", PIL_KAYU) + fIn("st", "", "pT", S.pT, "Tebal (cm)") + fIn("st", "", "pL", S.pL, "Lebar (cm)") +
+        '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>' + fIn("st", "", "pT", S.pT, "Tebal (cm)") + fIn("st", "", "pL", S.pL, "Lebar (cm)") +
         '<div class="rc-f" id="potongWrap"></div></div><div class="rc-out" id="out_stPond"></div>' +
         '<div class="rc-h2">Tongkat (tiang dasar)</div><div class="rc-grid">' +
         fIn("st", "", "tongkat", S.tongkat, "Tongkat per baris", "num", "0") +
         '</div><div class="rc-out" id="out_stTongkat"></div><div class="rc-out" id="out_stTiang"></div></div>';
       h += '<div class="rc-sub">Gelegar (tegak lurus pondasi)</div><div class="rc-item"><div class="rc-grid">' +
-        fSel("st", "", "gKayu", S.gKayu, "Kayu", PIL_KAYU) + fIn("st", "", "gT", S.gT, "Tebal (cm)") + fIn("st", "", "gL", S.gL, "Lebar (cm)") +
+        '<div class="rc-f"><label>Kayu</label><input type="text" value="Ulin" readonly class="lock"></div>' + fIn("st", "", "gT", S.gT, "Tebal (cm)") + fIn("st", "", "gL", S.gL, "Lebar (cm)") +
         '<div class="rc-f" id="gelJmlWrap"></div></div><div class="rc-out" id="out_gel"></div></div>';
       h += '<div class="rc-sub">Balok Lainnya</div>' + RC.balok.map(htmlBalok).join("");
       h += '<div class="rc-sub">Papan</div>';
@@ -1500,15 +1567,77 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
           '</select></div></div><button type="button" class="rc-add" data-act="add" data-g="sekat" style="margin-top:8px">+ Tambah Sekat</button></div>';
       }
     }
+    if (!rumahKayu()) h += '<div class="rc-sub">Kayu (ukuran diisi sendiri, harga terkunci)</div>' + RC.kayuM.map(htmlKayuM).join("") +
+      '<button type="button" class="rc-add" data-act="add" data-g="kayuM">+ Tambah Kayu</button>';
     h += '<div class="rc-sub">Material Lainnya</div>' + RC.lain.map(function(x){ return htmlBebas(x, "lain"); }).join("") +
       '<button type="button" class="rc-add" data-act="add" data-g="lain">+ Tambah Material</button></div>';
-    if (last && last.sewa > 0) {
-      h += '<div class="rc-sec"><div class="rc-t">Rincian Sewa</div><div class="rc-cnt" id="rcCntSewa"></div>' +
+    {
+      h += '<div class="rc-sec"><div class="rc-t">Rincian Sewa (opsional)</div><div class="rc-cnt" id="rcCntSewa"></div>' +
         RC.sewa.map(function(x){ return htmlBebas(x, "sewa"); }).join("") +
         '<button type="button" class="rc-add" data-act="add" data-g="sewa">+ Tambah Alat</button></div>';
     }
+    h += '<button type="button" class="btn primary rc-final" data-act="final">Generate RAB Final</button>';
     box.innerHTML = h;
     perbaruiRC();
+  }
+  /* RAB live dari rincian (rumus Mode Material, upah sesuai Generate awal) */
+  function rabRincian(H){
+    if (!rabAwal) return null;
+    if (H.jumlahMat + H.jumlahSewa <= 0) return { total:0, material:0, pajak:0, sewa:0, pajakSewa:0, tukang:0, tpk:0, t:rabAwal.t };
+    return rumusMaterial(H.jumlahMat, H.jumlahSewa, rabAwal.t);
+  }
+  function estimasiKalibrasi(){
+    if (!($("bahanUtama").value === "Kayu Ulin" && $("jenis").value === "Rumah/Gedung")) return null;
+    var uk = ukuranRumah(); if (!(uk.lb > 0 && uk.pj > 0)) return null;
+    var luas = uk.lb * uk.pj;
+    return { luas:luas, nilai: Math.round(luas * ESTIMASI_ULIN) };
+  }
+  function isiLive(H, R, E){
+    var el = $("rcLive"); if (!el) return;
+    if (!rincianJalan()) { el.innerHTML = ""; return; }
+    var h = "";
+    if (E) h += '<div class="est"><b>Estimasi maksimal (kalibrasi Ulin Rp ' + rpPolos(ESTIMASI_ULIN) + "/m²)</b><br>Luas " + angka(E.luas, 2) + " m² x Rp " + rpPolos(ESTIMASI_ULIN) +
+      " = <b>Rp " + rpPolos(E.nilai) + "</b><br><span style=\"color:var(--muted)\">Perkiraan saja (tukang + material + pajak), bukan patokan yang harus dihabiskan. Penentu adalah RAB Final.</span></div>";
+    var baris = [["Material (tanpa pajak)", R.material || 0], ["Pajak bahan 12,5%", R.pajak || 0]];
+    if (R.sewa) baris.push(["Sewa peralatan (tanpa pajak)", R.sewa], ["Pajak sewa 13%", R.pajakSewa]);
+    baris.push(["Upah tenaga kerja", R.tukang || 0], ["TPK (3%)", R.tpk || 0]);
+    h += '<div class="lt">RAB dari rincian' + (RC.final ? " (FINAL)" : "") + "</div>" +
+      baris.map(function(b){ return '<div class="lr"><span>' + b[0] + "</span><span>Rp " + rpPolos(b[1]) + "</span></div>"; }).join("") +
+      '<div class="lr tot"><span>Total RAB</span><span>Rp ' + rpPolos(R.total || 0) + (E ? " (" + angka((R.total || 0) / E.nilai * 100, 1) + "%)" : "") + "</span></div>";
+    h += RC.final ? '<div class="st ok">RAB Final tersimpan. Tombol Cetak / PDF sudah tersedia.</div>'
+                  : '<div class="st no">Belum final. Lengkapi rincian di bawah, lalu klik Generate RAB Final.</div>';
+    el.innerHTML = h;
+  }
+  async function finalkanRAB(btn){
+    var H = hitungRC(), errs = Object.keys(H.err);
+    if (errs.length) { toastRC("Belum bisa final: " + errs.length + " isian belum lengkap. Contoh: " + H.err[errs[0]]); return; }
+    if (H.jumlahMat + H.jumlahSewa <= 0) { toastRC("Rincian RAB masih kosong."); return; }
+    var R = rabRincian(H); R.dariRincian = true;
+    var dm = dimensi(); if (dm && dm.error) dm = null;
+    var r3x = function(x){ return (x !== null && x > 0 && x < 1e9) ? Math.round(x * 1000) / 1000 : null; };
+    var teks = btn.textContent; btn.disabled = true; btn.textContent = "Menyimpan RAB Final...";
+    var hasil = null;
+    if (dbReady) {
+      try {
+        var res = await fetch(SUPABASE_URL + "/rest/v1/rpc/rab_finalkan", { method:"POST", headers:headersDb(), body:JSON.stringify({
+          p_token: gen.token, p_material: H.jumlahMat, p_sewa: H.jumlahSewa, p_p_tukang: R.t,
+          p_panjang: dm ? r3x(dm.p) : null, p_lebar: dm ? r3x(dm.l) : null, p_tinggi: dm ? r3x(dm.t) : null,
+          p_volume: dm && dm.volume < 1e12 ? Math.round(dm.volume * 100) / 100 : null, p_satuan: dm ? dm.satuan : null,
+          p_ukuran: dm ? dm.teks.slice(0, 300) : null, p_rincian: dataRincian() }) });
+        var j = await res.json().catch(function(){ return null; });
+        if (!res.ok) hasil = { error: j && j.code === "PGRST202" ? "Database belum diperbarui (update-14). Hubungi admin." : ((j && j.message) || "Gagal menyimpan RAB Final, coba lagi.") };
+        else hasil = { data: j };
+      } catch(e) { hasil = { error: "Tidak ada koneksi internet, coba lagi." }; }
+    } else hasil = { data: null };
+    btn.disabled = false; btn.textContent = teks;
+    if (hasil.error) { toastRC(hasil.error); return; }
+    var d = hasil.data;
+    if (d && d.total !== R.total) {             /* pakai angka resmi dari database */
+      R.total = d.total; R.tukang = d.tukang; R.tpk = d.tpk; R.material = d.material; R.pajak = d.pajak; R.sewa = d.sewa; R.pajakSewa = d.pajak_sewa;
+    }
+    RC.final = R;
+    tampil(R); render(); perbaruiRC();
+    $("result").scrollIntoView({ behavior:"smooth", block:"start" });
   }
   function tabelSisa(judul, anggaran, terpakai, pajakAnggaran, pPajak){
     var pajakPakai = Math.round(terpakai * pPajak);
@@ -1548,22 +1677,25 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
           esc(o.kunci) + " m · " + o.lbr + " lbr · " + kubikTeks(o.kub) + " m³" + "</label>";
       }).join("");
     }
-    if ($("rcCntMat")) $("rcCntMat").innerHTML = tabelSisa("Material", last.material, H.jumlahMat, last.pajak, PAJAK_BAHAN) +
+    var R = rabRincian(H), E = estimasiKalibrasi();
+    if ($("rcCntMat")) $("rcCntMat").innerHTML = '<div class="rc-ring"><span>Material (tanpa pajak) <b>Rp ' + rpPolos(H.jumlahMat) + "</b></span><span>Total RAB <b>Rp " + rpPolos(R ? R.total : 0) + "</b>" +
+      (E && R ? " (" + angka(R.total / E.nilai * 100, 1) + "% estimasi)" : "") + "</span></div>" +
       '<div class="rc-out">Kubik balok ' + kubikTeks(r3(H.kubikBalok)) + " m³ · papan " + kubikTeks(r3(H.kubikPapan)) + " m³</div>";
-    if ($("rcCntSewa")) $("rcCntSewa").innerHTML = tabelSisa("Sewa", last.sewa, H.jumlahSewa, last.pajakSewa, PAJAK_SEWA);
-    if (generated) tampil(last);
+    if ($("rcCntSewa")) $("rcCntSewa").innerHTML = '<div class="rc-ring"><span>Sewa (tanpa pajak) <b>Rp ' + rpPolos(H.jumlahSewa) + "</b></span></div>";
+    isiLive(H, R, E);
+    if (generated) tampil(RC.final ? RC.final : last);
   }
 
   /* ---------- lampiran cetak (lembar 2) ---------- */
-  function tabelLampiran(rows, anggaran, labelAnggaran, kolom){
+  function tabelLampiran(rows, pajak, labelPajak, kolom){
     var jumlah = rows.reduce(function(s, r){ return s + r.total; }, 0);
     return '<table class="lamp"><thead><tr><th>NO</th><th>' + (kolom || "MATERIAL") + '</th><th>SPESIFIKASI</th><th>KEBUTUHAN</th><th>SATUAN</th><th>SATUAN HARGA (Rp)</th><th>TOTAL HARGA (Rp)</th></tr></thead><tbody>' +
       rows.map(function(r, i){
         return "<tr><td class=\"c\">" + (i + 1) + "</td><td>" + esc(r.m) + "</td><td>" + esc(r.spek) + '</td><td class="n">' +
           (r.sat === "Kubik" ? kubikTeks(r.keb) : angka(r.keb, 3)) + "</td><td>" + esc(r.sat) + '</td><td class="n">' + rpPolos(r.harga) + '</td><td class="n">' + rpPolos(r.total) + "</td></tr>";
       }).join("") +
-      '</tbody><tfoot><tr><td colspan="6">JUMLAH</td><td class="n">' + rpPolos(jumlah) + '</td></tr><tr><td colspan="6">' + labelAnggaran + '</td><td class="n">' + rpPolos(anggaran) +
-      '</td></tr><tr><td colspan="6">SISA</td><td class="n">' + (anggaran - jumlah < 0 ? "-" : "") + rpPolos(Math.abs(anggaran - jumlah)) + "</td></tr></tfoot></table>";
+      '</tbody><tfoot><tr><td colspan="6">JUMLAH (tanpa pajak)</td><td class="n">' + rpPolos(jumlah) + '</td></tr><tr><td colspan="6">' + labelPajak + '</td><td class="n">' + rpPolos(pajak) +
+      '</td></tr><tr><td colspan="6">JUMLAH TERMASUK PAJAK</td><td class="n">' + rpPolos(jumlah + pajak) + "</td></tr></tfoot></table>";
   }
   function renderLampiran(){
     var el = $("lampiran");
@@ -1582,9 +1714,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     }
     var h = '<div class="lamp-judul">LAMPIRAN RINCIAN RAB</div><table class="info">' +
       info.map(function(x){ return "<tr><td>" + x[0] + "</td><td>: " + esc(x[1]) + "</td></tr>"; }).join("") + "</table>";
-    var huruf = "A";
-    if (H.mat.length) { h += '<div class="lamp-t">' + huruf + ". RINCIAN MATERIAL</div>" + tabelLampiran(H.mat, last.material, "ANGGARAN MATERIAL (tanpa pajak)"); huruf = "B"; }
-    if (H.sewa.length) h += '<div class="lamp-t">' + huruf + ". RINCIAN SEWA PERALATAN</div>" + tabelLampiran(H.sewa, last.sewa, "ANGGARAN SEWA (tanpa pajak)", "PERALATAN");
+    var huruf = "A", RL = RC.final || null;
+    if (H.mat.length) { h += '<div class="lamp-t">' + huruf + ". RINCIAN MATERIAL</div>" + tabelLampiran(H.mat, RL ? RL.pajak : Math.round(H.jumlahMat * PAJAK_BAHAN), "PAJAK BAHAN 12,5%"); huruf = "B"; }
+    if (H.sewa.length) h += '<div class="lamp-t">' + huruf + ". RINCIAN SEWA PERALATAN</div>" + tabelLampiran(H.sewa, RL ? RL.pajakSewa : Math.round(H.jumlahSewa * PAJAK_SEWA), "PAJAK SEWA 13%", "PERALATAN");
     h += '<div class="sign">Dihitung dengan Kalkulator RAB Desa by Lamri, S.P., Kaur Perencanaan Desa Susuk Dalam</div>';
     el.innerHTML = h;
   }
@@ -1609,15 +1741,29 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (g === "rc") return RC;
     if (g === "lantai") return RC.lantai;
     if (g === "st") return RC.st;
-    var list = { balok:RC.balok, dinding:RC.dinding, sekat:RC.sekat, lain:RC.lain, sewa:RC.sewa }[g] || [];
+    var list = { balok:RC.balok, dinding:RC.dinding, sekat:RC.sekat, kayuM:RC.kayuM, lain:RC.lain, sewa:RC.sewa }[g] || [];
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
   $("rcAktif").addEventListener("change", function(e){
     if (!RC) buatRC();
     RC.aktif = e.target.checked;
-    renderRC();
+    if (!RC.aktif) {
+      if (RC.final || RC.ukuranBerubah) {
+        /* angka final atau ukuran sudah berubah dari Generate awal: wajib Generate ulang */
+        var alasan = RC.final ? "RAB Final sudah tersimpan" : "ukuran bangunan sudah diubah";
+        RC.final = null; RC.ukuranBerubah = false;
+        generated = false; gen = null; berubah = true;
+        renderRC(); hitung(); render();
+        notice("Rincian RAB dimatikan. Karena " + alasan + ", silakan Generate ulang.");
+        return;
+      }
+      RC.final = null;
+      if (rabAwal) tampil(rabAwal);
+    }
+    renderRC(); render();
   });
+  function batalFinal(){ if (RC && RC.final) { RC.final = null; if (rabAwal) last = rabAwal; render(); } }
   /* ---------- kunci anggaran: isian yang membuat sisa minus ditolak ---------- */
   var toastTimer = null;
   function toastRC(pesan){
@@ -1626,62 +1772,38 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ el.classList.add("hidden"); }, 4500);
   }
-  function lewatAnggaran(sebelum, sesudah){
-    if (!last) return "";
-    if (sesudah.jumlahMat > last.material && sesudah.jumlahMat > sebelum.jumlahMat)
-      return "Tidak bisa: melebihi anggaran material. Sisa anggaran " + rpTanda(last.material - sebelum.jumlahMat) + ", isian ini membutuhkan " + rpTanda(sesudah.jumlahMat - sebelum.jumlahMat) + ".";
-    if (sesudah.jumlahSewa > last.sewa && sesudah.jumlahSewa > sebelum.jumlahSewa)
-      return "Tidak bisa: melebihi anggaran sewa. Sisa anggaran " + rpTanda(last.sewa - sebelum.jumlahSewa) + ", isian ini membutuhkan " + rpTanda(sesudah.jumlahSewa - sebelum.jumlahSewa) + ".";
-    return "";
-  }
-  function rcMinus(){
-    if (!(RC && RC.aktif && mode === "material" && last)) return "";
-    var H = hitungRC();
-    if (H.jumlahMat > last.material) return "Rincian material melebihi anggaran " + rpTanda(last.material - H.jumlahMat) + ". Kurangi isian rincian sebelum mencetak.";
-    if (H.jumlahSewa > last.sewa) return "Rincian sewa melebihi anggaran " + rpTanda(last.sewa - H.jumlahSewa) + ". Kurangi isian rincian sebelum mencetak.";
-    return "";
-  }
   $("rcEditor").addEventListener("input", function(e){
     var t = e.target, f = t.dataset.f; if (!f || t.tagName !== "INPUT" || t.type === "radio") return;
     if (t.classList.contains("num")) t.value = t.value.replace(/[^\d,]/g, "");
     if (t.classList.contains("rp")) t.value = t.value.replace(/\D/g, "");
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
-    var lama = o[f], sebelum = hitungRC();
     o[f] = t.value;
-    var tolak = lewatAnggaran(sebelum, hitungRC());
-    if (tolak) { o[f] = lama; t.value = lama; toastRC(tolak); }
+    batalFinal();
     perbaruiRC();
   });
   $("rcEditor").addEventListener("change", function(e){
     var t = e.target, f = t.dataset.f; if (!f || !(t.tagName === "SELECT" || t.type === "radio" || t.type === "checkbox")) return;
     var o = rcObj(t.dataset.g, t.dataset.id); if (!o) return;
-    var lama = o[f], lamaBentuk = o.bentuk, sebelum = hitungRC();
     o[f] = t.type === "checkbox" ? (t.checked ? "1" : "") : t.value;
     if (f === "kayu" && t.value !== "ulin" && o.bentuk) o.bentuk = "persegi";
-    var tolak = lewatAnggaran(sebelum, hitungRC());
-    if (tolak) { o[f] = lama; if (lamaBentuk !== undefined) o.bentuk = lamaBentuk; toastRC(tolak); }
+    batalFinal();
     renderRC();
   });
   $("rcEditor").addEventListener("click", function(e){
     var t = e.target.closest("button[data-act]"); if (!t) return;
     var g = t.dataset.g, act = t.dataset.act;
-    var list = { sekat:RC.sekat, lain:RC.lain, sewa:RC.sewa }[g];
+    if (act === "final") { finalkanRAB(t); return; }
+    var list = { sekat:RC.sekat, kayuM:RC.kayuM, lain:RC.lain, sewa:RC.sewa }[g];
     if (!list) return;
+    batalFinal();
     if (act === "add") {
       if (g === "sekat") {
         var pilih = $("sekatJenis") ? $("sekatJenis").value : "lain", nm = "";
         JENIS_SEKAT.forEach(function(j){ if (j[0] === pilih) nm = j[0] === "utama" ? j[1] : j[1] + " " + nomorBerikut(j[1]); });
         list.push(nm ? papanBaru(nm, "sekat") : papanBaru("", "sekat", true));
-      } else list.push(barisBebas());
+      } else list.push(g === "kayuM" ? kayuBaru() : barisBebas());
     }
-    if (act === "del") { var i = list.findIndex(function(x){ return x.id === t.dataset.id; }); if (i >= 0) list.splice(i, 1); if (g !== "sekat" && !list.length) list.push(barisBebas()); }
-    if (act === "pas") {
-      var o = rcObj(g, t.dataset.id), jml = rcNum(o.jml), H = hitungRC();
-      if (!o.nama.trim() || !(jml > 0)) { alertRC(t, "Isi nama dan jumlah dulu."); return; }
-      var milik = Math.round(jml * rcNum(o.harga));
-      var target = (g === "sewa" ? last.sewa - H.jumlahSewa : last.material - H.jumlahMat) + milik;
-      o.harga = String(Math.max(0, Math.floor(target / jml + 1e-9)));
-    }
+    if (act === "del") { var i = list.findIndex(function(x){ return x.id === t.dataset.id; }); if (i >= 0) list.splice(i, 1); if (g !== "sekat" && !list.length) list.push(g === "kayuM" ? kayuBaru() : barisBebas()); }
     renderRC();
   });
   function alertRC(btn, pesan){ var el = btn.parentNode.querySelector(".rc-out"); if (el) { el.textContent = pesan; el.classList.add("bad"); } }
@@ -1737,11 +1859,13 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   $("dimBox").addEventListener("input", function(e){
     var k = e.target.dataset.k; if (!k || e.target.tagName !== "INPUT") return;
     e.target.value = e.target.value.replace(/[^\d,]/g,"");
-    catatDim(k); hitung();
+    catatDim(k);
+    if (rincianJalan()) ubahUkuranRincian(); else hitung();
   });
   $("dimBox").addEventListener("change", function(e){
     var k = e.target.dataset.k; if (!k || e.target.tagName !== "SELECT") return;
-    catatDim(k); hitung();
+    catatDim(k);
+    if (rincianJalan()) ubahUkuranRincian(); else hitung();
   });
   $("sifat").addEventListener("change", hitung);
   $("jenisBelanja").addEventListener("change", function(){
@@ -1845,7 +1969,8 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     show("ovLoading", false);
     gagalAkurasi = 0;
     gen = { token: token, acc: terbaik.acc };
-    generated = true; berubah = false;
+    generated = true; berubah = false; rabAwal = last;
+    if (RC) { RC.final = null; RC.ukuranBerubah = false; }
     render();
     if (RC && RC.aktif) renderRC(); else perbaruiRC();
     $("result").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1854,8 +1979,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   /* ---------- Izin Cetak: nama pemohon wajib, kode dari server ---------- */
   $("btnPrint").addEventListener("click", function(){
     if (!generated || !gen) return;
-    var minus = rcMinus();
-    if (minus) { notice(minus); toastRC(minus); return; }
+    if (rincianJalan() && !RC.final) { toastRC("Klik Generate RAB Final terlebih dahulu."); return; }
     $("namaErr").textContent = "";
     show("ovNama", true);
     setTimeout(function(){ $("namaPemohon").focus(); }, 50);
