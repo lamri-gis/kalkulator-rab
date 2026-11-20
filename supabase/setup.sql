@@ -27,6 +27,7 @@ create table if not exists public.rab_arsip (
   jumlah         numeric(14,3) check (jumlah > 0 and jumlah < 1000000000),
   satuan_barang  text check (char_length(satuan_barang) <= 20),
   sifat_barang   text check (sifat_barang in ('Habis Pakai','Aset Tetap')),
+  rincian        jsonb check (rincian is null or octet_length(rincian::text) <= 60000),
   sifat_konstruksi text check (sifat_konstruksi in ('Permanen','Semi Permanen','Sementara/Darurat')),
   jenis_dana     text check (char_length(jenis_dana) <= 60),
   rt             text check (char_length(rt) <= 10),
@@ -152,7 +153,8 @@ create or replace function public.rab_tandai_cetak(
   p_token  uuid,
   p_nama   text,
   p_rating smallint default null,
-  p_saran  text default null
+  p_saran  text default null,
+  p_rincian jsonb default null
 )
 returns text
 language plpgsql
@@ -175,6 +177,9 @@ begin
   if p_rating is not null and (p_rating < 1 or p_rating > 5) then
     raise exception 'Rating harus 1 sampai 5';
   end if;
+  if p_rincian is not null and (jsonb_typeof(p_rincian) <> 'object' or octet_length(p_rincian::text) > 60000) then
+    raise exception 'Rincian RAB tidak valid atau terlalu besar';
+  end if;
 
   select id, kode_verifikasi, rating into v_id, v_kode, v_rating
   from public.rab_arsip
@@ -188,6 +193,11 @@ begin
   -- rating & saran hanya diisi sekali per baris
   if p_rating is not null and v_rating is null then
     update public.rab_arsip set rating = p_rating, saran = v_saran where id = v_id;
+  end if;
+
+  -- rincian RAB (lampiran) disimpan setiap cetak, cetak ulang ikut memperbarui
+  if p_rincian is not null then
+    update public.rab_arsip set rincian = p_rincian where id = v_id;
   end if;
 
   if v_kode is not null then
@@ -209,8 +219,8 @@ begin
 end;
 $$;
 
-revoke all on function public.rab_tandai_cetak(uuid, text, smallint, text) from public;
-grant execute on function public.rab_tandai_cetak(uuid, text, smallint, text) to anon, authenticated;
+revoke all on function public.rab_tandai_cetak(uuid, text, smallint, text, jsonb) from public;
+grant execute on function public.rab_tandai_cetak(uuid, text, smallint, text, jsonb) to anon, authenticated;
 
 
 
