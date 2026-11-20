@@ -510,7 +510,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     tb: { n:"Tebal dasar", s:"tebal dasar", u:"cm" }
   };
   var TIPE = {
-    lantai: { lbl:"Ukuran Lantai", f:["p","l"] },
+    lantai: { lbl:"Ukuran Lantai", f:["l","p"], n:{ p:"Panjang (ke belakang)", l:"Lebar (depan)" } },
     pl:     { f:["p","l"] },
     plt:    { f:["p","l","t"] },
     ptg:    { f:["p","tg"] },
@@ -542,7 +542,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   }
   var simpanDim = {}, tipeTampil = null;
   function namaKolom(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) || F[k].n; }
-  function singkat(tp, k){ return (TIPE[tp].n && TIPE[tp].n[k]) ? "T" : F[k].s; }
+  function singkat(tp, k){ return (tp === "bebas" && k === "t") ? "T" : F[k].s; }
   function tipeAktif(){
     var sel = $("jenis");
     if (!sel.value || !sel.selectedOptions[0]) return null;
@@ -1007,6 +1007,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
   function kubikTeks(x){ return x.toLocaleString("id-ID", { minimumFractionDigits:3, maximumFractionDigits:3 }); }
   function rpPolos(x){ return Math.round(x).toLocaleString("id-ID"); }
   function rpTanda(x){ return (x < 0 ? "-" : "") + "Rp " + Math.abs(Math.round(x)).toLocaleString("id-ID"); }
+  /* ukuran rumah selalu ikut Ukuran Lantai di Data Kegiatan (lebar = sisi depan, panjang = ke belakang) */
+  function ukuranRumah(){
+    var dm = tipeAktif() === "lantai" ? dimensi() : null;
+    if (!dm || dm.error) return { lb:0, pj:0 };
+    return { lb: dm.l || 0, pj: dm.p || 0 };
+  }
   function kayuBawaan(){ return $("bahanUtama").value === "Kayu Putih" ? "putih" : "ulin"; }
   function rumahKayu(){
     var b = $("bahanUtama").value;
@@ -1117,7 +1123,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
 
     if (kayu) {
       /* ---------- Struktur bawah: pondasi, tiang dasar, gelegar, papan lantai ---------- */
-      var S = RC.st, Lb = rcNum(RC.lebar), Pj = rcNum(RC.panjang);
+      var S = RC.st, UK = ukuranRumah(), Lb = UK.lb, Pj = UK.pj;
       var tulisBalok = function(nama, kayuB, t, l, peta){
         Object.keys(peta).map(Number).sort(function(a, b){ return b - a; }).forEach(function(len){
           var jml = peta[len], kub = r3(t * l / 10000 * len * jml), harga = hargaBalok(kayuB, "persegi", t * l, len), total = Math.round(kub * harga);
@@ -1411,9 +1417,10 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var h = '<div class="rc-sec"><div class="rc-t">Rincian Material</div><div class="rc-cnt" id="rcCntMat"></div>';
     if (rumahKayu()) {
       h += '<div class="rc-sub">Data Rumah</div><div class="rc-item"><div class="rc-grid">' +
-        fIn("rc", "", "lebar", RC.lebar, "Lebar depan (m)") +
+        '<div class="rc-f"><label>Lebar depan (m)</label><input type="text" id="rcLb" readonly class="lock"></div>' +
         fSel("rc", "", "hadap", RC.hadap, "Rumah menghadap", [["","Pilih"],["U","Utara"],["S","Selatan"],["T","Timur"],["B","Barat"]]) +
-        fIn("rc", "", "panjang", RC.panjang, "Panjang ke belakang (m)") + "</div></div>";
+        '<div class="rc-f"><label>Panjang ke belakang (m)</label><input type="text" id="rcPj" readonly class="lock"></div>' +
+        '</div><div class="rc-out">Lebar dan panjang otomatis mengikuti Ukuran Lantai di Data Kegiatan.</div></div>';
       var S = RC.st;
       h += '<div class="rc-sub">Tiang Dasar dan Pondasi</div><div class="rc-item">' +
         '<div class="rc-h2" style="border-top:none;margin-top:0;padding-top:0">Tiang dasar (minimal 10 x 10)</div><div class="rc-grid">' +
@@ -1470,6 +1477,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     document.querySelectorAll("#rcEditor .rc-out[id^='out_']").forEach(function(el){
       var id = el.id.slice(4); if (!(id in H.out) && !(id in H.err)) { el.textContent = ""; el.classList.remove("bad"); }
     });
+    if ($("rcLb")) { var uk = ukuranRumah(); $("rcLb").value = uk.lb ? angka(uk.lb, 3) : "-"; $("rcPj").value = uk.pj ? angka(uk.pj, 3) : "-"; }
     if ($("lantaiInfo")) $("lantaiInfo").textContent = H.lantaiInfo;
     var selDinamis = function(wrapId, f, label, pilihan, nilai){
       var w = $(wrapId); if (!w) return;
@@ -1511,8 +1519,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     if (!H.mat.length && !H.sewa.length) { el.innerHTML = ""; return; }
     var info = [["Nama Kegiatan", $("nama").value.trim() || "-"], ["Kode Verifikasi", kodeLampiran || "-"]];
     if (rumahKayu()) {
-      if (rcNum(RC.lebar) > 0 && rcNum(RC.panjang) > 0)
-        info.push(["Ukuran Rumah", "Lebar depan " + angka(rcNum(RC.lebar), 2) + " m x panjang " + angka(rcNum(RC.panjang), 2) + " m" + (RC.hadap ? ", menghadap " + ARAH_HADAP[RC.hadap] : "")]);
+      var UKr = ukuranRumah();
+      if (UKr.lb > 0 && UKr.pj > 0)
+        info.push(["Ukuran Rumah", "Lebar depan " + angka(UKr.lb, 2) + " m x panjang " + angka(UKr.pj, 2) + " m" + (RC.hadap ? ", menghadap " + ARAH_HADAP[RC.hadap] : "")]);
       var K = H.struk;
       if (K && K.jb) info.push(["Pondasi", (RC.st.arah === "bujur" ? "Membujur" : "Melintang") + ", " + K.nb + " baris jarak " + angka(K.jb, 2) + " m" +
         (RC.st.potong ? ", potongan " + RC.st.potong + " m" : "") + (rcNum(RC.st.tongkat) >= 2 ? ", " + Math.round(rcNum(RC.st.tongkat)) + " tongkat per baris" : "")]);
@@ -1533,7 +1542,7 @@ const SUPABASE_ANON_KEY = "sb_publishable_LEgaN6mlMLueC4YTt-GBxg_0Fn6kxlW";
     var kayu = rumahKayu(), K = H.struk || {};
     var ubah = function(rows){ return rows.map(function(r){ return [r.m, r.spek, r.keb, r.sat, r.harga, r.total]; }); };
     return {
-      rumah: kayu ? { lebar: rcNum(RC.lebar), panjang: rcNum(RC.panjang), hadap: ARAH_HADAP[RC.hadap] || null,
+      rumah: kayu ? { lebar: ukuranRumah().lb, panjang: ukuranRumah().pj, hadap: ARAH_HADAP[RC.hadap] || null,
                       pondasi: RC.st.arah || null, baris: K.nb || null, jarak_baris: K.jb ? r3(K.jb) : null, potongan: RC.st.potong || null,
                       tongkat: Math.round(rcNum(RC.st.tongkat)) || null, gelegar: Math.round(rcNum(RC.st.gJml)) || null, jarak_gelegar_cm: K.sg ? Math.round(K.sg * 1000) / 10 : null } : null,
       material: ubah(H.mat), sewa: ubah(H.sewa),
